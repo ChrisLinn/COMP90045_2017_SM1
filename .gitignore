@@ -10,4 +10,4 @@
 !*.mly
 
 # ...even if they are in subdirectories
-# !*/
+!*/
