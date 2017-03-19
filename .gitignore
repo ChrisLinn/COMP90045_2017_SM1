@@ -5,9 +5,8 @@
 !.gitignore
 !*.md
 !*.ml
-!*.mll
 !*.mli
+!*.mll
 !*.mly
-
-# ...even if they are in subdirectories
-# !*/
+!Makefile
+!Makefile.depend

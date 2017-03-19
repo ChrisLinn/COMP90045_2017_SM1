@@ -27,4 +27,3 @@ let main () =
 	| Compile -> Printf.printf "Compile mode is not yet supported!!!"
 
 let _ = main ()
-
