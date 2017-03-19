@@ -1,12 +1,12 @@
-TARGETS = snick
+TARGETS = snack
 TARGETS_BYTE=$(TARGETS:%=%.byte)
 
-MODULES = snick_ast snick_lex snick_parse snick_pprint
+MODULES = snack_ast snack_lex snack_parse snack_pprint
 MLFILES = $(addsuffix .ml, $(MODULES))
 CMOFILES = $(addsuffix .cmo, $(MODULES))
 CMXFILES = $(addsuffix .cmx, $(MODULES))
 
-ALLMODULES = $(MODULES) snick
+ALLMODULES = $(MODULES) snack
 
 OCAMLLEX = ocamllex
 OCAMLYACC = ocamlyacc
@@ -33,15 +33,15 @@ opt: $(TARGETS)
 %.ml %.mli: %.mly
 	$(OCAMLYACC) $^
 
-snick.byte : $(CMOFILES) snick.cmo
+snack.byte : $(CMOFILES) snack.cmo
 	ocamlc -g -o $@ $^
 
-snick : $(CMXFILES) snick.cmx
+snack : $(CMXFILES) snack.cmx
 	ocamlopt -g -o $@ $^
 
 clean :
 	rm -f *.cmo *.cmi *.cmx *.o
-	rm -f snick_lex.ml snick_parse.ml snick_parse.mli snick snick.byte
+	rm -f snack_lex.ml snack_parse.ml snack_parse.mli snack snack.byte
 
 clobber : clean
 	rm -f $(TARGETS) $(TARGETS_BYTE)
@@ -49,7 +49,7 @@ clobber : clean
 .PHONY : clean clobber depend
 
 # include depend
-depend: snick_lex.ml snick_parse.ml
-	$(OCAMLDEP) snick.ml snick.mli $(ALLMODULES:%=%.mli) $(ALLMODULES:%=%.ml) >Makefile.depend
+depend: snack_lex.ml snack_parse.ml
+	$(OCAMLDEP) snack.ml snack.mli $(ALLMODULES:%=%.mli) $(ALLMODULES:%=%.ml) >Makefile.depend
 
 -include Makefile.depend
