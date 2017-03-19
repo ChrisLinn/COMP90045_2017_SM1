@@ -4,10 +4,7 @@
 # But not these files...
 !.gitignore
 !*.md
-!*.ml
-!*.mll
-!*.mli
-!*.mly
-
-# ...even if they are in subdirectories
-# !*/
+!snick.ml
+!lexer.mll
+!parser.mly
+!Makefile
