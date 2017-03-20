@@ -1,5 +1,5 @@
 {
-open Snack_parse
+open Snick_parse
 }
 
 let digit = ['0' - '9']
