@@ -31,6 +31,6 @@ let main () =
   match !mode with
   | PrettyPrint ->
     Snick_pprint.print_program Format.std_formatter prog 
-  | Compile -> ()
+  | Compile -> (Printf.printf "Compiling function is not yet enabled!!!\n")
 
 let _ = main ()
