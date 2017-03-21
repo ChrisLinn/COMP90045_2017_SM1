@@ -41,7 +41,7 @@ snick : $(CMXFILES) snick.cmx
 
 clean :
 	rm -f *.cmo *.cmi *.cmx *.o
-	rm -f snick_lex.ml snick_parse.ml snick_parse.mli snick snick.byte
+	rm -f snick_lex.ml snick_parse.ml snick_parse.mli
 
 clobber : clean
 	rm -f $(TARGETS) $(TARGETS_BYTE)
