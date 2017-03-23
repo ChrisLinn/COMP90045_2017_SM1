@@ -11,7 +11,7 @@ let ident = (alpha | '_') alnum*
 let interval = digits ".." digits
 
 rule token = parse
-	  [' ' '\t' '\n']					{ token lexbuf }     (* skip blanks and line_breaks *)
+	  [' ' '\t' '\n']		{ token lexbuf } (* skip blanks and line_breaks *)
 	| '-'? digits as lxm 				{ INT_CONST (int_of_string lxm) }
 	| '-'? floating as lxm				{ FLOAT_CONST (float_of_string lxm) }
 	| ident as lxm						{ IDENT lxm }
