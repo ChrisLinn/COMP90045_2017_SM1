@@ -4,7 +4,7 @@ open Snick_parse
 
 let digit = ['0' - '9']
 let digits = digit+
-let floating = digits '.' digits
+let floating = '-'? digits '.' digits
 let alpha = ['a' - 'z' 'A' - 'Z']
 let alnum = alpha | '_' | digit
 let ident = (alpha | '_') alnum*
