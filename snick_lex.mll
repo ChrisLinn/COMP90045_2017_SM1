@@ -7,6 +7,8 @@ let digits = digit+
 let floating = digits '.' digits
 let alpha = ['a' - 'z' 'A' - 'Z']
 let alnum = alpha | '_' | '\'' | digit
+  | '(' { LPAREN }
+  | ')' { RPAREN }
 let ident = (alpha | '_') alnum*
 
 rule token = parse
@@ -36,18 +38,18 @@ rule token = parse
 	| "ref"					{ REF }
 	| "val"					{ VAL }
 	| ":="					{ ASSIGN }
+  	| '(' 					{ LPAREN }
+  	| ')' 					{ RPAREN }
+	| '='					{ EQ }
 	| "!="					{ NE }
-	| "="					{ EQ }
 	| ">="					{ GE }
 	| "<="					{ LE }
-	| ">"					{ GT }
-	| "<"					{ LT }
-	| "+"					{ PLUS }
-	| "-"					{ MINUS }
-	| "*"					{ MULTI }
-	| "/"					{ DIVID }
-	| ";"					{ SEMICOLON }
+	| '>'					{ GT }
+	| '<'					{ LT }
+	| '+'					{ PLUS }
+	| '-'					{ MINUS }
+	| '*'					{ MULTI }
+	| '/'					{ DIVID }
+	| ';'					{ SEMICOLON }
 	| ident as lxm			{ IDENT lxm }
 	| eof					{ EOF }
-
-
