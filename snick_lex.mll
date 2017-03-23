@@ -7,7 +7,7 @@ let digits = digit+
 let floating = digits '.' digits
 let alpha = ['a' - 'z' 'A' - 'Z']
 let alnum = alpha | '_' | '\'' | digit
-let ident = (alpha | '_') alnum*
+let ident = (alpha | '_') alnum* ('[' digits ']')?
 
 rule token = parse
 	  [' ' '\t' '\n']		{ token lexbuf }     (* skip blanks and line_breaks *)
