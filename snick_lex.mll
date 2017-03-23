@@ -4,15 +4,16 @@ open Snick_parse
 
 let digit = ['0' - '9']
 let digits = digit+
-let floating = '-'? digits '.' digits
+let floating = digits '.' digits
 let alpha = ['a' - 'z' 'A' - 'Z']
-let alnum = alpha | '_' | digit
+let alnum = alpha | '_' | '\'' | digit
 let ident = (alpha | '_') alnum*
 
 rule token = parse
-	  [' ' '\t' '\n']		{ token lexbuf }
+	  [' ' '\t' '\n']		{ token lexbuf }     (* skip blanks and line_breaks *)
 	| '-'? digits as lxm 	{ INT_CONST(int_of_string lxm) }
 	| '-'? floating as lxm	{ FLOAT_CONST(float_of_string lxm) }
+  	(* keywords *)
 	| "not"					{ NOT }
 	| "and"					{ AND }
 	| "or"					{ OR }
