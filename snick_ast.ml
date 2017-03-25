@@ -1,6 +1,7 @@
 (* Specification of an AST for snick *)
 type ident = string
 type dimension = string
+type index = Int
 
 (* Keep aliases intact for pretty printing. *)
 type snicktype =
@@ -14,13 +15,18 @@ type typedef =
 
 type lvalue = 
     | LId of ident
-    | LIdWithIndex of (ident * Int)
+    | LIdWithIndex of (ident * index)
 
 type binop =
-  | Op_add | Op_sub | Op_mul | Op_eq | Op_lt
+  | Op_add | Op_sub | Op_mul | Op_div
+  | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge
+  | Op_and | Op_or
 
 type unop =
+  | Op_not
   | Op_minus
+
+(*-------------------------------------------------------------------------*)
 
 type expr =
   | Ebool of bool
