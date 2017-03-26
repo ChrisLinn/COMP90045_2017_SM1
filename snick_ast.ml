@@ -11,7 +11,7 @@ type snick_const_type =
 
 type typedef =
     | Var of (snick_const_type * ident)
-    | Array (snick_const_type * ident * dimension)
+    | Array of (snick_const_type * ident * dimension)
 
 type lvalue = 
     | LId of ident
