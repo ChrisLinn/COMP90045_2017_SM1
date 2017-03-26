@@ -10,8 +10,8 @@ type snick_const_type =
     | Float 
 
 type typedef =
-    | (snick_const_type * ident)
-    | (snick_const_type * ident * dimension)
+    | Var of (snick_const_type * ident)
+    | Array (snick_const_type * ident * dimension)
 
 type lvalue = 
     | LId of ident
