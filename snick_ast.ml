@@ -4,18 +4,18 @@ type dimension = string
 type index = Int
 
 (* Keep aliases intact for pretty printing. *)
-type snicktype =
-	| Bool
-	| Int
-	| Float
+type snick_const_type =
+    | Bool
+    | Int
+    | Float 
 
 type typedef =
-    | (snicktype * ident)
-    | (snicktype * ident * dimension)
+    | (snick_const_type * ident)
+    | (snick_const_type * ident * dimension)
 
 type lvalue = 
     | LId of ident
-    | LIdWithIndex of (ident * index)
+    | LId_with_index of (ident * index)
 
 type binop =
   | Op_add | Op_sub | Op_mul | Op_div
@@ -26,14 +26,14 @@ type unop =
   | Op_not
   | Op_minus
 
-(*-------------------------------------------------------------------------*)
-
 type expr =
-  | Ebool of bool
-  | Eint of int
-  | Elval of lvalue
+  | Eid of lvalue
+  | Eid_with_expr_list of (lvalue * (expr list))
+  | Econst of snick_const_type
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
+
+(* up to here -------------------------------------------------------------*)
 
 (* Will need to AST elements with additional data.  *)
 type rvalue =
