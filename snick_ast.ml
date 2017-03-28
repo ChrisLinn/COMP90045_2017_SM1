@@ -1,7 +1,6 @@
 (* Specification of an AST for snick *)
 type ident = string
-type dimension = string
-type index = Int
+type interval = (Int * Int)
 
 (* Keep aliases intact for pretty printing. *)
 type snick_const_type =
@@ -11,11 +10,11 @@ type snick_const_type =
 
 type typedef =
     | Var of (snick_const_type * ident)
-    | Array of (snick_const_type * ident * dimension)
+    | Array of (snick_const_type * ident * interval list)
 
 type lvalue = 
     | LId of ident
-    | LId_with_index of (ident * index)
+    | LArrayItem of (ident * expr list)
 
 type binop =
   | Op_add | Op_sub | Op_mul | Op_div
@@ -28,23 +27,33 @@ type unop =
 
 type expr =
   | Eid of lvalue
-  | Eid_with_expr_list of (lvalue * (expr list))
   | Econst of snick_const_type
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
-
-(* up to here -------------------------------------------------------------*)
 
 (* Will need to AST elements with additional data.  *)
 type rvalue =
   | Rexpr of expr
 
-type decl = (ident * beantype)
+type decl = 
+    | VarDecl of (snick_const_type * ident)
+    | ArrayDecl of (snick_const_type * ident * interval list)
 
-type stmt = 
+type atom_stmt = 
   | Assign of (lvalue * rvalue)
   | Read of lvalue
   | Write of expr
+  | Call of (ident * expr list)
+  | Call_without_para of ident
+
+type comps_stmt =
+  | IfThen of ( expr * stmt list )
+  | IfThenElse of ( expr * stmt list * stmt list )
+  | While of ( expr * stmt list )
+
+type stmt = 
+  | atom_stmt
+  | comps_stmt
 
 type program = {
   decls : typedef list ;
