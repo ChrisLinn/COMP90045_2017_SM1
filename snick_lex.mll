@@ -16,7 +16,7 @@ rule token = parse
 	| '-'? floating as lxm				{ FLOAT_CONST (float_of_string lxm) }
 	| ident as lxm						{ IDENT lxm }
 	| '[' (interval ',')* interval ']'	{ DIMENSION }
-	| '[' digits ']'					{ INDEX }
+	| '[' (digits ',')* digits ']'		{ INDEX }
 	| eof								{ EOF }
   	(* keywords *)
 	| "not"								{ NOT }
