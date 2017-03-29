@@ -1,3 +1,4 @@
+/* ocamlyacc parser for snick */
 %{
 open Snack_ast
 %}
@@ -9,13 +10,16 @@ open Snack_ast
 %token BOOL INT FLOAT
 %token WRITE READ
 %token ASSIGN
-%token LPAREN RPAREN
-%token EQ NE LT GT LE GE
+%token OR
+%token AND
+%token NOT
+%token EQ NE LT LE GT GE
 %token PLUS MINUS
 %token MULTI DIVID
+%token UMINUS
+%token LPAREN RPAREN (* correct precedence? *)
 %token SEMICOLON
 %token EOF
-%token NOT AND OR
 %token WHILE DO OD
 %token IF THEN ELSE FI
 %token PROC END
@@ -24,8 +28,9 @@ open Snack_ast
 %nonassoc EQ NE LT GT LE GE
 %left PLUS MINUS
 %left MULTI DIVID
-%left NOT AND OR
-(*%nonassoc UMINUS*)
+%left AND OR
+%right NOT
+%nonassoc UMINUS
 
 %type <Snick_ast.program> program
 
