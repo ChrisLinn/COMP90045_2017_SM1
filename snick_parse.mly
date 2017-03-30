@@ -3,9 +3,15 @@
 open Snack_ast
 %}
 
+%token EOF
+%token PROC END
+%token SEMICOLON
+%token WHILE DO OD
+%token IF THEN ELSE FI
 %token <bool> BOOL_CONST
 %token <int> INT_CONST
 %token <float> FLOAT_CONST
+%token REF VAL
 %token <string> IDENT
 %token BOOL INT FLOAT
 %token WRITE READ
@@ -17,13 +23,7 @@ open Snack_ast
 %token PLUS MINUS
 %token MULTI DIVID
 %token UMINUS
-%token LPAREN RPAREN (* correct precedence? *)
-%token SEMICOLON
-%token EOF
-%token WHILE DO OD
-%token IF THEN ELSE FI
-%token PROC END
-%token REF VAL
+%token LPAREN RPAREN
 
 %nonassoc EQ NE LT GT LE GE
 %left PLUS MINUS
