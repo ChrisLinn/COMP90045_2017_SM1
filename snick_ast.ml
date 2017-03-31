@@ -12,13 +12,17 @@ type typedef =
     | Var of (snicktype * ident)
     | Array of (snicktype * ident * interval list)
 
-type lvalue = 
-    | LId of ident
-    | LArrayItem of (ident * Int list)
+type variable =
+    | SingleItem of ident
+    | ArrayItem of (ident * Int list)
 
 type paratype = 
     | Val
     | Ref
+
+type param = (paratype * snicktype * variable)  (*or None?*) 
+
+type pheader = (ident * (param list)) (*empty?*)
 
 type binop =
   | Op_add | Op_sub | Op_mul | Op_div
@@ -30,7 +34,7 @@ type unop =
   | Op_minus
 
 type expr =
-  | Eid of lvalue
+  | Eid of variable
   | Econst of snicktype
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
@@ -44,8 +48,8 @@ type decl =
     | ArrayDecl of (snicktype * ident * interval list)
 
 type atom_stmt = 
-  | Assign of (lvalue * rvalue)
-  | Read of lvalue
+  | Assign of (variable * rvalue)
+  | Read of variable
   | Write of expr
   | Call of (ident * expr list)
   | Call_without_para of ident
