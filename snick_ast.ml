@@ -39,16 +39,12 @@ type expr =
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
 
-(* Will need to AST elements with additional data.  *)
-type rvalue =
-  | Rexpr of expr
-
 type decl = 
     | VarDecl of (snicktype * ident)
     | ArrayDecl of (snicktype * ident * interval list)
 
 type atom_stmt = 
-  | Assign of (variable * rvalue)
+  | Assign of (variable * expr)
   | Read of variable
   | Write of expr
   | Call of (ident * expr list)
