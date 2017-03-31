@@ -3,18 +3,22 @@ type ident = string
 type interval = (Int * Int)
 
 (* Keep aliases intact for pretty printing. *)
-type snick_const_type =
+type snicktype =
     | Bool
     | Int
     | Float 
 
 type typedef =
-    | Var of (snick_const_type * ident)
-    | Array of (snick_const_type * ident * interval list)
+    | Var of (snicktype * ident)
+    | Array of (snicktype * ident * interval list)
 
 type lvalue = 
     | LId of ident
-    | LArrayItem of (ident * expr list)
+    | LArrayItem of (ident * Int list)
+
+type paratype = 
+    | Val
+    | Ref
 
 type binop =
   | Op_add | Op_sub | Op_mul | Op_div
@@ -27,7 +31,7 @@ type unop =
 
 type expr =
   | Eid of lvalue
-  | Econst of snick_const_type
+  | Econst of snicktype
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
 
@@ -36,8 +40,8 @@ type rvalue =
   | Rexpr of expr
 
 type decl = 
-    | VarDecl of (snick_const_type * ident)
-    | ArrayDecl of (snick_const_type * ident * interval list)
+    | VarDecl of (snicktype * ident)
+    | ArrayDecl of (snicktype * ident * interval list)
 
 type atom_stmt = 
   | Assign of (lvalue * rvalue)
