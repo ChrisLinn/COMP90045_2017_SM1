@@ -4,7 +4,9 @@
 # But not these files...
 !.gitignore
 !*.md
-!*.ml
+!sinck.ml
+!sinck_ast.ml
+!snick_pprint.ml
 !*.mli
 !*.mll
 !*.mly

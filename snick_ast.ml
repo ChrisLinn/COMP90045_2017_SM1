@@ -1,6 +1,6 @@
 (* Specification of an AST for snick *)
 type ident = string
-type interval = (Int * Int)
+type interval = (int*int)
 
 (* Keep aliases intact for pretty printing. *)
 type snicktype =
@@ -9,20 +9,20 @@ type snicktype =
     | Float 
 
 type typedef =
-    | Var of (snicktype * ident)
-    | Array of (snicktype * ident * interval list)
+    | SingleVarTypeDef of (snicktype * ident)
+    | ArrayTypeDef of (snicktype * ident * interval list)
 
 type variable =
     | SingleItem of ident
-    | ArrayItem of (ident * Int list)
+    | ArrayItem of (ident * int list)
 
 type paratype =
     | Val
     | Ref
 
-type param = (paratype * snicktype * variable)  (*or None?*) 
+type param = (paratype * snicktype * variable)
 
-type pheader = (ident * (param list)) (*empty?*)
+type pheader = (ident * (param list)) (*can list be empty?*)
 
 type binop =
   | Op_add | Op_sub | Op_mul | Op_div
@@ -49,15 +49,13 @@ type atom_stmt =
   | Write of expr
   | Call of (ident * expr list)
   | Call_without_para of ident
-
-type comps_stmt =
+and comps_stmt =
   | IfThen of ( expr * stmt list )
   | IfThenElse of ( expr * stmt list * stmt list )
   | While of ( expr * stmt list )
-
-type stmt = 
-  | atom_stmt
-  | comps_stmt
+and stmt = 
+  | Atom_stmt of atom_stmt
+  | Comps_stmt of comps_stmt
 
 type program = {
   decls : typedef list ;
