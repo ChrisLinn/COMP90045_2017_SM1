@@ -16,7 +16,7 @@ type variable =
     | SingleItem of ident
     | ArrayItem of (ident * Int list)
 
-type paratype = 
+type paratype =
     | Val
     | Ref
 
@@ -34,7 +34,7 @@ type unop =
   | Op_minus
 
 type expr =
-  | Eid of variable
+  | Evar of variable
   | Econst of snicktype
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
