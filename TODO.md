@@ -1,6 +1,6 @@
 # Todo
 
-+ can list be empty?
++ need to update index&dimension logic
 + double check snick_parse
 + comments
 + draft precedence
