@@ -2,8 +2,6 @@
 open Snick_ast
 open Format
 
-let fmatr_fprint = fprintf fmatr
-
 let print_program fmatr = function
     | [] -> () (* should raise error *)
     | x::[] -> print_proc fmatr x
@@ -12,6 +10,9 @@ let print_program fmatr = function
 let print_proc fmatr (proc_header, proc_body) =
     print_proc_header fmatr proc_header; print_proc_body fmatr proc_body 
 
+let print_proc_id fmatr ident = fprintf fmatr " "
+
+let print_proc_params fmatr params =  fprintf fmatr " "
 
 (*
 let print_proc_header fmatr (ident, params) =
@@ -21,9 +22,7 @@ let print_proc_header fmatr (ident, params) =
     
     print_proc_id fmatr ident; print_proc_params fmatr params
 
-let print_proc_id fmatr ident = fmatr_fprint ""
 
-let print_proc_params fmatr params =  fmatr_fprint "\n"
 
 
     print_decls fmt proc.decls;
