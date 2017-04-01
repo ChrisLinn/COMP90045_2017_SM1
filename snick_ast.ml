@@ -11,8 +11,8 @@ type snicktype =
 type interval = (int * int)
 
 type variable =
-    | Single_Variable of ident
-    | Array_Variable of (ident * interval list)
+    | Single_variable of ident
+    | Array_variable of (ident * interval list)
 
 type decl = (snicktype * variable)
 
@@ -30,8 +30,13 @@ type unop =
     | Op_minus
 
 type expr =
-    | Evar of elem
-    | Econst of snicktype
+    (* variable element expression*)
+    | Eelem of elem
+    (* constant expression *)
+    | Ebool of bool
+    | Eint of int
+    | Efloat of float
+    (* opetarion expression *)
     | Ebinop of (expr * binop * expr)
     | Eunop of (unop * expr)
 

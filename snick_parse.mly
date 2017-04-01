@@ -24,15 +24,14 @@ open Snack_ast
 %token EQ NE LT LE GT GE
 %token PLUS MINUS
 %token MULTI DIVID
-%token UMINUS
-%token LBRACK RBRACK
-%token LPAREN RPAREN
+%token LSQBRACK RSQBRACK
+%tokeSQn LPAREN RPAREN
 
 %nonassoc EQ NE LT GT LE GE
 %left PLUS MINUS
 %left MULTI DIVID
 %left AND OR
-%right NOT
+%nonassoc NOT
 %nonassoc UMINUS
 
 %type <Snick_ast.program> program
@@ -81,14 +80,14 @@ decls :
     | { [] }  
 
 decl:
-    | typespec delc_target SEMICOLON { ($1, $2) }
+    | typespec variable SEMICOLON { ($1, $2) }
 
-var_delc:
-    | ident {}
-    | ident dimension {}
+variable:
+    | ident { Single_variable $1 }
+    | ident dimension { Array_variable ($1, $2) }
 
 dimension:
-    LBRACK intervals RBRACK { List.rev $2 }
+    LSQBRACK intervals RSQBRACK { List.rev $2 }
   
 /* Builds intervals in reverse order */
 intervals:
@@ -113,74 +112,37 @@ atom_stmt:
     | WRITE expr SEMICOLON { Write $2 }
     | IDENT LPAREN exprs RPAREN SEMICOLON { Call ($1, List.rev $3) }
 
+comps_stmt:
+    | IF expr THEN stmts FI { If_then ($2, List.rev $4) }
+    | IF expr THEN stmts ELSE stmts FI { If_then_else ($2, List.rev $4, List.rev $6) }
+    | WHILE expr DO stmts OD { While ($2, List.rev $4) }
+
 elem:
-    | IDENT { SingleElem $1 }
-    | IDENT LBRACK exprs LBRACK { ArrayElem ($1, List.rev $3) }
+    | IDENT { Single_elem $1 }
+    | IDENT LSQBRACK exprs RSQBRACK { Array_elem ($1, List.rev $3) }
 
-
-
-
-/*expr:*/
-/*    | BOOL_CONST { Ebool $1 }*/
-/*    | INT_CONST { Eint $1 }*/
-/*    | FLOAT_CONST { Efloat $1 }*/
-/*    | lvalue { Elval $1 }*/
-  /* Binary operators */
-/*    | expr PLUS expr { Ebinop ($1, Op_add, $3) }*/
-/*    | expr MINUS expr { Ebinop ($1, Op_sub, $3) }*/
-/*    | expr MULTI expr { $1 * $2 } */
-/*    | expr DIVID expr { $1 / $2 } */
-/*    | LPAREN expr RPAREN */
-/*    | expr EQ expr */
-/*    | expr NE expr */
-/*    | expr LT expr */
-/*    | expr GT expr */
-/*    | expr LE expr */
-/*    | expr GE expr */
-/*    | expr AND expr */
-/*    | expr OR expr */
-/*    | NOT expr */
-
-/*expr:*/
-/*    | BOOL_CONST { Ebool $1 }              */
-/*    | INT_CONST { Eint $1 }              */
-/*    | lvalue { Elval $1 }              */
-/*    | expr PLUS expr { Ebinop ($1, Op_add, $3) }              */
-/*    | expr MINUS expr { Ebinop ($1, Op_sub, $3) }              */
-/*    | expr MUL expr { Ebinop ($1, Op_mul, $3) }              */
-/*    | expr EQ expr { Ebinop ($1, Op_eq, $3) }              */
-/*    | expr LT expr { Ebinop ($1, Op_lt, $3) }              */
-/*    | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }              */
-/*    | LPAREN expr RPAREN { $2 }              */
-
-/*proc_body:   */
-/*    decls stmts { $1 ; $2 }   */
-
-/*decl:   */
-/*      | typespec IDENT SEMICOLON   */
-/*      | typespec IDENT ASSIGN lvalue SEMICOLON   */
-/*      | typespec IDENT dimension ASSIGN lvalue SEMICOLON   */
-
-/*decls:   */
-/*      | decls decl { $2 :: $1 }   */
-/*      | { [] }   */
-
-/*stmts:   */
-/*      | LBRACK stmts stmt RBRACK { $2 :: $1 }   */
-/*      | { [] }   */
-
-/*stmt:   */
-/*    stmt_body SEMICOLON { $1 }   */
-
-/*stmt_body:   */
-/*      | IDENT ASSIGN expr   */
-/*      | IDENT dimension ASSIGN expr   */
-/*      | READ IDENT   */
-/*      | READ IDENT dimension   */
-/*      | WRITE expr   */
-/*      | IDENT LPAREN expr_list RPAREN   */
-
-/*expr_list:   */
-/*      | IF expr THEN stmts FI   */
-/*      | IF expr THEN stmts ELSE stmts FI   */
-/*      | WHILE expr DO stmts OD   */
+expr:
+    /* Variable element */ 
+    | elem { Eelem $1 }
+    /* Constants */ 
+    | BOOL_CONST { Ebool $1 }
+    | INT_CONST { Eint $1 }
+    | FLOAT_CONST { Efloat $1 }
+    /* Binary operators */ 
+    | expr PLUS expr { Ebinop ($1, Op_add, $3) }
+    | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
+    | expr MULTI expr { Ebinop ($1, Op_mul, $3) }
+    | expr DIVID expr { Ebinop ($1, Op_div, $3) }
+    | expr EQ expr { Ebinop ($1, Op_eq, $3) } 
+    | expr NE expr { Ebinop ($1, Op_ne, $3) } 
+    | expr LT expr { Ebinop ($1, Op_lt, $3) } 
+    | expr GT expr { Ebinop ($1, Op_gt, $3) } 
+    | expr LE expr { Ebinop ($1, Op_le, $3) } 
+    | expr GE expr { Ebinop ($1, Op_ge, $3) } 
+    | expr AND expr { Ebinop ($1, Op_and, $3) } 
+    | expr OR expr { Ebinop ($1, Op_or, $3) } 
+    /* Unary operators */
+    | NOT expr { Eunop (Op_not, $2) }
+    | UMINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
+    /* Expression itself with parentheses */
+    | LPAREN expr RPAREN { $2 }

@@ -1,7 +1,6 @@
 # Todo
 
-+ need to update index&dimension logic
-+ double check snick_parse
++ string type for writting
 + comments
 + draft precedence
-+ error handling
++ error handling and line
