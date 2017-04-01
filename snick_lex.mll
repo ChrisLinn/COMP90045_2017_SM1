@@ -10,7 +10,8 @@ let alnum = alpha | '_' | '\'' | digit
 let ident = (alpha | '_') alnum*
 
 rule token = parse
-	  [' ' '\t' '\n']		{ token lexbuf } (* skip blanks and line_breaks *)
+	| [' ' '\t']		{ token lexbuf } (* skip blanks*)
+	| ['\n'] (*line break*)
 	| '-'? digits as lxm 				{ INT_CONST (int_of_string lxm) }
 	| '-'? floating as lxm				{ FLOAT_CONST (float_of_string lxm) }
 	| ident as lxm						{ IDENT lxm }

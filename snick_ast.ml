@@ -1,28 +1,24 @@
 (* Specification of an AST for snick *)
-type ident = string
-type interval = (int*int)
 
-(* Keep aliases intact for pretty printing. *)
+type ident = string
+
+(* primitive types *)
 type snicktype =
     | Bool
     | Int
     | Float 
 
-type typedef =
-    | SingleVarTypeDef of (snicktype * ident)
-    | ArrayTypeDef of (snicktype * ident * interval list)
+type interval = (int * int)
 
 type variable =
-    | SingleItem of ident
-    | ArrayItem of (ident * int list)
+    | Single_Variable of ident
+    | Array_Variable of (ident * interval list)
 
-type paratype =
-    | Val
-    | Ref
+type decl = (snicktype * variable)
 
-type param = (paratype * snicktype * variable)
-
-type pheader = (ident * (param list))
+type elem =
+    | Single_elem of ident
+    | Array_elem of (ident * int list)
 
 type binop =
     | Op_add | Op_sub | Op_mul | Op_div
@@ -34,32 +30,37 @@ type unop =
     | Op_minus
 
 type expr =
-    | Evar of variable
+    | Evar of elem
     | Econst of snicktype
     | Ebinop of (expr * binop * expr)
     | Eunop of (unop * expr)
 
-type decl = 
-    | VarDecl of (snicktype * ident)
-    | ArrayDecl of (snicktype * ident * interval list)
-
-type atom_stmt = 
-    | Assign of (variable * expr)
-    | Read of variable
-    | Write of expr
-    | Call of (ident * expr list)
-    | Call_without_para of ident
-and comps_stmt =
-    | IfThen of ( expr * stmt list )
-    | IfThenElse of ( expr * stmt list * stmt list )
-    | While of ( expr * stmt list )
-and stmt = 
+type stmt = 
     | Atom_stmt of atom_stmt
     | Comps_stmt of comps_stmt
+and atom_stmt = 
+    | Assign of (elem * expr)
+    | Read of elem
+    | Write of expr
+    | Call of (ident * expr list)
+and comps_stmt =
+    | If_then of (expr * stmt list)
+    | If_then_else of (expr * stmt list * stmt list)
+    | While of (expr * stmt list)
 
-type program = {
-  decls : typedef list ;
+type proc_body = {
+  decls : decl list ;
   stmts : stmt list
 }
+
+type paratype =
+    | Val
+    | Ref
+
+type param = (paratype * snicktype * elem)
+
+type proc_header = (ident * param list)
+
+type proc = (proc_header * proc_body)
  
-type t = program
+type program = proc list

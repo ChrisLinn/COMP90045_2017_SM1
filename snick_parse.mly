@@ -41,132 +41,146 @@ open Snack_ast
 %%
 
 program:
-  procs   { { procs = List.rev $1 } }
+    procs   { { procs = List.rev $1 } }
 
 /* Builds procs in reverse order */
 procs:
-  | procs proc { $2 :: $1 }
-  | proc { [$1] }
+    | procs proc { $2 :: $1 }
+    | proc { [$1] }
 
 proc:
-  PROC proc_header proc_body END { ($2, $3) }
+    PROC proc_header proc_body END { ($2, $3) }
 
 proc_header:
-  IDENT LPAREN pramas RPAREN { ($1, List.rev $3) }
+    IDENT LPAREN pramas RPAREN { ($1, List.rev $3) }
 
 /* Builds pramas in reverse order */
 pramas:
-  | params COMMA param { $3 :: $1 }
-  | param { [$1] }
-  | { [] }
+    | params COMMA param { $3 :: $1 }
+    | param { [$1] }
+    | { [] }
 
 param:
-  para_indc typespec IDENT { ($1, $2, $3) }
+    para_indc typespec IDENT { ($1, $2, $3) }
 
 para_indc:
-  | VAL { Val }
-  | REF { Ref }
+    | VAL { Val }
+    | REF { Ref }
 
 typespec:
-  | BOOL { Bool }
-  | FLOAT { Float }
-  | INT { Int }
+    | BOOL { Bool }
+    | FLOAT { Float }
+    | INT { Int }
 
 proc_body:
-  decls stmts { { decls = List.rev $1; stmts = List.rev $2 } }
+    decls stmts { { decls = List.rev $1; stmts = List.rev $2 } }
 
 /* Builds decls in reverse order */
 decls :
-  | decls decl { $2 :: $1 }
-  | { [] }  
+    | decls decl { $2 :: $1 }
+    | { [] }  
 
 decl:
-  | typespec IDENT SEMICOLON { ($1, $2) }
-  | typespec IDENT DIMENSION SEMICOLON { ($1, $2, $3) } /*!!!!!!!!!!!!*/
+    | typespec delc_target SEMICOLON { ($1, $2) }
+
+var_delc:
+    | ident {}
+    | ident dimension {}
+
+dimension:
+    LBRACK intervals RBRACK { List.rev $2 }
+  
+/* Builds intervals in reverse order */
+intervals:
+    | intervals COMMA interval { $3 :: $1 }
+    | interval { [$1] }
+
+interval:
+    INT_CONST DOT DOT INT_CONST { ($1, $4) }
 
 /* Builds stmts in reverse order */
 stmts:
-  | stmts stmt { $2 :: $1 }
-  | stmt { [$1] }
+    | stmts stmt { $2 :: $1 }
+    | stmt { [$1] }
 
 stmt:
-  | atom_stmt SEMICOLON { $1 }
-  | comp_stmt { $1 }
+    | atom_stmt { $1 }
+    | comps_stmt { $1 }
 
 atom_stmt:
-  | variable ASSIGN rvalue { Assign ($1, $3) }
-  | READ lvalue { Read $2 }
-  | WRITE expr { Write $2 }
-  | IDENT LPAREN exprs RPAREN { Call ($1, List.rev $3) }
+    | elem ASSIGN expr SEMICOLON { Assign ($1, $3) }
+    | READ elem SEMICOLON { Read $2 }
+    | WRITE expr SEMICOLON { Write $2 }
+    | IDENT LPAREN exprs RPAREN SEMICOLON { Call ($1, List.rev $3) }
 
-variable:
-  | IDENT { SingleItem $1 }
-  | IDENT LBRACK exprs LBRACK { ArrayItem ($1, List.rev $3) }
+elem:
+    | IDENT { SingleElem $1 }
+    | IDENT LBRACK exprs LBRACK { ArrayElem ($1, List.rev $3) }
 
 
 
 
 /*expr:*/
-/*  | BOOL_CONST { Ebool $1 }*/
-/*  | INT_CONST { Eint $1 }*/
-/*  | FLOAT_CONST { Efloat $1 }*/
-/*  | lvalue { Elval $1 }*/
+/*    | BOOL_CONST { Ebool $1 }*/
+/*    | INT_CONST { Eint $1 }*/
+/*    | FLOAT_CONST { Efloat $1 }*/
+/*    | lvalue { Elval $1 }*/
   /* Binary operators */
-/*  | expr PLUS expr { Ebinop ($1, Op_add, $3) }*/
-/*  | expr MINUS expr { Ebinop ($1, Op_sub, $3) }*/
-/*  | expr MULTI expr { $1 * $2 } */
-/*  | expr DIVID expr { $1 / $2 } */
-/*  | LPAREN expr RPAREN */
-/*  | expr EQ expr */
-/*  | expr NE expr */
-/*  | expr LT expr */
-/*  | expr GT expr */
-/*  | expr LE expr */
-/*  | expr GE expr */
-/*  | expr AND expr */
-/*  | expr OR expr */
-/*  | NOT expr */
+/*    | expr PLUS expr { Ebinop ($1, Op_add, $3) }*/
+/*    | expr MINUS expr { Ebinop ($1, Op_sub, $3) }*/
+/*    | expr MULTI expr { $1 * $2 } */
+/*    | expr DIVID expr { $1 / $2 } */
+/*    | LPAREN expr RPAREN */
+/*    | expr EQ expr */
+/*    | expr NE expr */
+/*    | expr LT expr */
+/*    | expr GT expr */
+/*    | expr LE expr */
+/*    | expr GE expr */
+/*    | expr AND expr */
+/*    | expr OR expr */
+/*    | NOT expr */
 
 /*expr:*/
-/*  | BOOL_CONST { Ebool $1 }              */
-/*  | INT_CONST { Eint $1 }              */
-/*  | lvalue { Elval $1 }              */
-/*  | expr PLUS expr { Ebinop ($1, Op_add, $3) }              */
-/*  | expr MINUS expr { Ebinop ($1, Op_sub, $3) }              */
-/*  | expr MUL expr { Ebinop ($1, Op_mul, $3) }              */
-/*  | expr EQ expr { Ebinop ($1, Op_eq, $3) }              */
-/*  | expr LT expr { Ebinop ($1, Op_lt, $3) }              */
-/*  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }              */
-/*  | LPAREN expr RPAREN { $2 }              */
+/*    | BOOL_CONST { Ebool $1 }              */
+/*    | INT_CONST { Eint $1 }              */
+/*    | lvalue { Elval $1 }              */
+/*    | expr PLUS expr { Ebinop ($1, Op_add, $3) }              */
+/*    | expr MINUS expr { Ebinop ($1, Op_sub, $3) }              */
+/*    | expr MUL expr { Ebinop ($1, Op_mul, $3) }              */
+/*    | expr EQ expr { Ebinop ($1, Op_eq, $3) }              */
+/*    | expr LT expr { Ebinop ($1, Op_lt, $3) }              */
+/*    | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }              */
+/*    | LPAREN expr RPAREN { $2 }              */
 
 /*proc_body:   */
 /*    decls stmts { $1 ; $2 }   */
 
 /*decl:   */
-/*    | typespec IDENT SEMICOLON   */
-/*    | typespec IDENT ASSIGN lvalue SEMICOLON   */
-/*    | typespec IDENT dimension ASSIGN lvalue SEMICOLON   */
+/*      | typespec IDENT SEMICOLON   */
+/*      | typespec IDENT ASSIGN lvalue SEMICOLON   */
+/*      | typespec IDENT dimension ASSIGN lvalue SEMICOLON   */
 
 /*decls:   */
-/*    | decls decl { $2 :: $1 }   */
-/*    | { [] }   */
+/*      | decls decl { $2 :: $1 }   */
+/*      | { [] }   */
 
 /*stmts:   */
-/*    | LBRACK stmts stmt RBRACK { $2 :: $1 }   */
-/*    | { [] }   */
+/*      | LBRACK stmts stmt RBRACK { $2 :: $1 }   */
+/*      | { [] }   */
 
 /*stmt:   */
 /*    stmt_body SEMICOLON { $1 }   */
 
 /*stmt_body:   */
-/*    | IDENT ASSIGN expr   */
-/*    | IDENT dimension ASSIGN expr   */
-/*    | READ IDENT   */
-/*    | READ IDENT dimension   */
-/*    | WRITE expr   */
-/*    | IDENT LPAREN expr_list RPAREN   */
+/*      | IDENT ASSIGN expr   */
+/*      | IDENT dimension ASSIGN expr   */
+/*      | READ IDENT   */
+/*      | READ IDENT dimension   */
+/*      | WRITE expr   */
+/*      | IDENT LPAREN expr_list RPAREN   */
 
 /*expr_list:   */
-/*    | IF expr THEN stmts FI   */
-/*    | IF expr THEN stmts ELSE stmts FI   */
-/*    | WHILE expr DO stmts OD   */
+/*      | IF expr THEN stmts FI   */
+/*      | IF expr THEN stmts ELSE stmts FI   */
+/*      | WHILE expr DO stmts OD   */
