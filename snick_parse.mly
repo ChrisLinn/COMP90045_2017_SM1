@@ -13,8 +13,6 @@ open Snack_ast
 %token <int> INT_CONST
 %token <float> FLOAT_CONST
 %token VAL REF
-%token <string> INDEX
-%token <string> DIMENSION
 %token <string> IDENT
 %token BOOL INT FLOAT
 %token WRITE READ
@@ -41,60 +39,79 @@ open Snack_ast
 %%
 
 program:
-    procs   { { procs = List.rev $1 } }
+  procs   { { procs = List.rev $1 } }
 
 /* Builds procs in reverse order */
 procs:
-    | procs proc { $2::$1 }
-    | proc { [$1] }
+  | procs proc { $2 :: $1 }
+  | proc { [$1] }
 
 proc:
-    PROC procheader procbody END { ($2,$3 ) }
+  PROC proc_header proc_body END { ($2, $3) }
 
-procheader:
-    IDENT LPAREN pramas RPAREN { ($1, List.rev $3) }
+proc_header:
+  IDENT LPAREN pramas RPAREN { ($1, List.rev $3) }
 
+/* Builds pramas in reverse order */
 pramas:
-    | params COMMA param { $3 :: $1 }
-    | param { [$1] }
-    | { [] }
+  | params COMMA param { $3 :: $1 }
+  | param { [$1] }
+  | { [] }
 
 param:
-    paraindc typespec IDENT { ($1,$2,$3) }
+  para_indc typespec IDENT { ($1, $2, $3) }
 
-paraindc:
-    | VAL { Val }
-    | REF { Ref }
+para_indc:
+  | VAL { Val }
+  | REF { Ref }
 
 typespec:
-    | BOOL { Bool }
-    | FLOAT { Float }
-    | INT { Int }
+  | BOOL { Bool }
+  | FLOAT { Float }
+  | INT { Int }
 
+proc_body:
+  decls stmts { { decls = List.rev $1; stmts = List.rev $2 } }
 
-
-
-
-
-
-
+/* Builds decls in reverse order */
+decls :
+  | decls decl { $2 :: $1 }
+  | { [] }  
 
 decl:
-  | typespec IDENT SEMICOLON { ($1,$2) }
-  | typespec IDENT DIMENSION SEMICOLON { ($1,$2,$3) }
+  | typespec IDENT SEMICOLON { ($1, $2) }
+  | typespec IDENT DIMENSION SEMICOLON { ($1, $2, $3) }
+
+/* Builds stmts in reverse order */
+stmts:
+  | stmts stmt { $2 :: $1 }
+  | stmt { [$1] }
+
+stmt:
+  | atom_stmt SEMICOLON { $1 }
+  | comp_stmt { $1 }
+
+atom_stmt:
+  | lvalue ASSIGN rvalue { Assign ($1, $3) }
+  | READ lvalue { Read $2 }
+  | WRITE expr { Write $2 }
+  | IDENT LPAREN exprs RPAREN { Call ($1, List.rev $3) }
 
 lvalue:
   | IDENT { LId $1 }
-  | IDENT INDEX { LArrayItem ($1,$2) }
+  | IDENT index { LArrayItem ($1, $2) }
 
-expr:
-  | BOOL_CONST { Ebool $1 }
-  | INT_CONST { Eint $1 }
-  | FLOAT_CONST { Efloat $1 }
-  | lvalue { Elval $1 }
+
+
+
+/*expr:*/
+/*  | BOOL_CONST { Ebool $1 }*/
+/*  | INT_CONST { Eint $1 }*/
+/*  | FLOAT_CONST { Efloat $1 }*/
+/*  | lvalue { Elval $1 }*/
   /* Binary operators */
-  | expr PLUS expr { Ebinop ($1, Op_add, $3) }
-  | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
+/*  | expr PLUS expr { Ebinop ($1, Op_add, $3) }*/
+/*  | expr MINUS expr { Ebinop ($1, Op_sub, $3) }*/
 /*  | expr MULTI expr { $1 * $2 } */
 /*  | expr DIVID expr { $1 / $2 } */
 /*  | LPAREN expr RPAREN */
@@ -120,7 +137,7 @@ expr:
 /*  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }              */
 /*  | LPAREN expr RPAREN { $2 }              */
 
-/*procbody:   */
+/*proc_body:   */
 /*    decls stmts { $1 ; $2 }   */
 
 /*decl:   */
