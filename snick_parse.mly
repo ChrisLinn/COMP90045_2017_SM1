@@ -7,6 +7,7 @@ open Snack_ast
 %token PROC END
 %token SEMICOLON
 %token COMMA
+%token DOT
 %token WHILE DO OD
 %token IF THEN ELSE FI
 %token <bool> BOOL_CONST
@@ -24,6 +25,7 @@ open Snack_ast
 %token PLUS MINUS
 %token MULTI DIVID
 %token UMINUS
+%token LBRACK RBRACK
 %token LPAREN RPAREN
 
 %nonassoc EQ NE LT GT LE GE
@@ -80,7 +82,7 @@ decls :
 
 decl:
   | typespec IDENT SEMICOLON { ($1, $2) }
-  | typespec IDENT DIMENSION SEMICOLON { ($1, $2, $3) }
+  | typespec IDENT DIMENSION SEMICOLON { ($1, $2, $3) } /*!!!!!!!!!!!!*/
 
 /* Builds stmts in reverse order */
 stmts:
@@ -92,14 +94,14 @@ stmt:
   | comp_stmt { $1 }
 
 atom_stmt:
-  | lvalue ASSIGN rvalue { Assign ($1, $3) }
+  | variable ASSIGN rvalue { Assign ($1, $3) }
   | READ lvalue { Read $2 }
   | WRITE expr { Write $2 }
   | IDENT LPAREN exprs RPAREN { Call ($1, List.rev $3) }
 
-lvalue:
-  | IDENT { LId $1 }
-  | IDENT index { LArrayItem ($1, $2) }
+variable:
+  | IDENT { SingleItem $1 }
+  | IDENT LBRACK exprs LBRACK { ArrayItem ($1, List.rev $3) }
 
 
 
