@@ -11,7 +11,7 @@ open Snack_ast
 %token <bool> BOOL_CONST
 %token <int> INT_CONST
 %token <float> FLOAT_CONST
-%token REF VAL
+%token VAL REF
 %token <string> INDEX
 %token <string> DIMENSION
 %token <string> IDENT
@@ -52,7 +52,6 @@ lvalue:
   | IDENT { LId $1 }
   | IDENT INDEX { LArrayItem ($1,$2) }
 
-/*
 expr:
   | BOOL_CONST { Ebool $1 }
   | INT_CONST { Eint $1 }
@@ -61,75 +60,74 @@ expr:
   /* Binary operators */
   | expr PLUS expr { Ebinop ($1, Op_add, $3) }
   | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
-  | expr MULTI expr { $1 * $2 }
-  | expr DIVID expr { $1 / $2 }
-  | LPAREN expr RPAREN
-  | expr EQ expr
-  | expr NE expr
-  | expr LT expr
-  | expr GT expr
-  | expr LE expr
-  | expr GE expr
-  | expr AND expr
-  | expr OR expr
-  | NOT expr
+/*  | expr MULTI expr { $1 * $2 } */
+/*  | expr DIVID expr { $1 / $2 } */
+/*  | LPAREN expr RPAREN */
+/*  | expr EQ expr */
+/*  | expr NE expr */
+/*  | expr LT expr */
+/*  | expr GT expr */
+/*  | expr LE expr */
+/*  | expr GE expr */
+/*  | expr AND expr */
+/*  | expr OR expr */
+/*  | NOT expr */
 
-expr:
-  | BOOL_CONST { Ebool $1 }
-  | INT_CONST { Eint $1 }
-  | lvalue { Elval $1 }
-  | expr PLUS expr { Ebinop ($1, Op_add, $3) }
-  | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
-  | expr MUL expr { Ebinop ($1, Op_mul, $3) }
-  | expr EQ expr { Ebinop ($1, Op_eq, $3) }
-  | expr LT expr { Ebinop ($1, Op_lt, $3) }
-  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
-  | LPAREN expr RPAREN { $2 }
+/*expr:*/
+/*  | BOOL_CONST { Ebool $1 }              */
+/*  | INT_CONST { Eint $1 }              */
+/*  | lvalue { Elval $1 }              */
+/*  | expr PLUS expr { Ebinop ($1, Op_add, $3) }              */
+/*  | expr MINUS expr { Ebinop ($1, Op_sub, $3) }              */
+/*  | expr MUL expr { Ebinop ($1, Op_mul, $3) }              */
+/*  | expr EQ expr { Ebinop ($1, Op_eq, $3) }              */
+/*  | expr LT expr { Ebinop ($1, Op_lt, $3) }              */
+/*  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }              */
+/*  | LPAREN expr RPAREN { $2 }              */
 
+proc_def:
+    PROC
+/*    proc_header { } */
+/*    proc_body   { } */
+    END
+
+procs:
+    | proc procs { $1 :: $2}
+    | { [] }
 
 program:
     procs   { $1 }
 
-procs:
-    PROC
-    proc_header { }
-    proc_body   { }
-    END
-
-proc_header:
+/*proc_header:  */
     
-proc_body:
-    decls stmts { $1 ; $2 }
+/*proc_body:   */
+/*    decls stmts { $1 ; $2 }   */
 
-decl:
-    | typespec IDENT SEMICOLON
-    | typespec IDENT ASSIGN lvalue SEMICOLON
-    | typespec IDENT dimension ASSIGN lvalue SEMICOLON
+/*decl:   */
+/*    | typespec IDENT SEMICOLON   */
+/*    | typespec IDENT ASSIGN lvalue SEMICOLON   */
+/*    | typespec IDENT dimension ASSIGN lvalue SEMICOLON   */
 
-decls:
-    | decls decl { $2 :: $1 }
-    | { [] }
+/*decls:   */
+/*    | decls decl { $2 :: $1 }   */
+/*    | { [] }   */
 
-stmts:
-    | LBRACK stmts stmt RBRACK { $2 :: $1 }
-    | { [] }
+/*stmts:   */
+/*    | LBRACK stmts stmt RBRACK { $2 :: $1 }   */
+/*    | { [] }   */
 
-stmt:
-    stmt_body SEMICOLON { $1 }
+/*stmt:   */
+/*    stmt_body SEMICOLON { $1 }   */
 
-stmt_body:
-    | IDENT ASSIGN expr
-    | IDENT dimension ASSIGN expr
-    | READ IDENT
-    | READ IDENT dimension
-    | WRITE expr
-    | IDENT LPAREN expr_list RPAREN
+/*stmt_body:   */
+/*    | IDENT ASSIGN expr   */
+/*    | IDENT dimension ASSIGN expr   */
+/*    | READ IDENT   */
+/*    | READ IDENT dimension   */
+/*    | WRITE expr   */
+/*    | IDENT LPAREN expr_list RPAREN   */
 
-expr_list:
-    | IF expr THEN stmts FI
-    | IF expr THEN stmts ELSE stmts FI
-    | WHILE expr DO stmts OD
-
-*/
-
-
+/*expr_list:   */
+/*    | IF expr THEN stmts FI   */
+/*    | IF expr THEN stmts ELSE stmts FI   */
+/*    | WHILE expr DO stmts OD   */
