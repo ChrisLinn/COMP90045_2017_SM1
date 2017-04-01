@@ -1,4 +1,4 @@
-(*pretty-printer converts from snick source code to well-formed style *)
+(* pretty-printer converts from snick source code to well-formed style *)
 open Snick_ast
 open Format
 
