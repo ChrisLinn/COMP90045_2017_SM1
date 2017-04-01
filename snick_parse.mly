@@ -6,6 +6,7 @@ open Snack_ast
 %token EOF
 %token PROC END
 %token SEMICOLON
+%token COMMA
 %token WHILE DO OD
 %token IF THEN ELSE FI
 %token <bool> BOOL_CONST
@@ -48,9 +49,9 @@ procs:
     | proc { [$1] }
 
 proc:
-    PROC proc_header proc_body END { ($2,$3 ) }
+    PROC procheader procbody END { ($2,$3 ) }
 
-proc_header:
+procheader:
     IDENT LPAREN pramas RPAREN { ($1, List.rev $3) }
 
 pramas:
@@ -59,15 +60,24 @@ pramas:
     | { [] }
 
 param:
-    | 
+    paraindc typespec IDENT { ($1,$2,$3) }
 
-
-
+paraindc:
+    | VAL { Val }
+    | REF { Ref }
 
 typespec:
     | BOOL { Bool }
-    | INT { Int }
     | FLOAT { Float }
+    | INT { Int }
+
+
+
+
+
+
+
+
 
 decl:
   | typespec IDENT SEMICOLON { ($1,$2) }
@@ -110,7 +120,7 @@ expr:
 /*  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }              */
 /*  | LPAREN expr RPAREN { $2 }              */
 
-/*proc_body:   */
+/*procbody:   */
 /*    decls stmts { $1 ; $2 }   */
 
 /*decl:   */

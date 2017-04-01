@@ -53,4 +53,5 @@ rule token = parse
 	| '-'								{ MINUS }
 	| '*'								{ MULTI }
 	| '/'								{ DIVID }
+	| ','								{ COMMA }
 	| ';'								{ SEMICOLON }
