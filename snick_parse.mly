@@ -39,6 +39,31 @@ open Snack_ast
 %start program
 %%
 
+program:
+    procs   { { procs = List.rev $1 } }
+
+/* Builds procs in reverse order */
+procs:
+    | procs proc { $2::$1 }
+    | proc { [$1] }
+
+proc:
+    PROC proc_header proc_body END { ($2,$3 ) }
+
+proc_header:
+    IDENT LPAREN pramas RPAREN { ($1, List.rev $3) }
+
+pramas:
+    | params COMMA param { $3 :: $1 }
+    | param { [$1] }
+    | { [] }
+
+param:
+    | 
+
+
+
+
 typespec:
     | BOOL { Bool }
     | INT { Int }
@@ -85,21 +110,6 @@ expr:
 /*  | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }              */
 /*  | LPAREN expr RPAREN { $2 }              */
 
-proc_def:
-    PROC
-/*    proc_header { } */
-/*    proc_body   { } */
-    END
-
-procs:
-    | proc procs { $1 :: $2}
-    | { [] }
-
-program:
-    procs   { $1 }
-
-/*proc_header:  */
-    
 /*proc_body:   */
 /*    decls stmts { $1 ; $2 }   */
 
