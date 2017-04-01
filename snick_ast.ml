@@ -40,15 +40,13 @@ type expr =
     | Ebinop of (expr * binop * expr)
     | Eunop of (unop * expr)
 
-type stmt = 
-    | Atom_stmt of atom_stmt
-    | Comps_stmt of comps_stmt
-and atom_stmt = 
+type stmt =
+    (* Atomic statements *)
     | Assign of (elem * expr)
     | Read of elem
     | Write of expr
     | Call of (ident * expr list)
-and comps_stmt =
+    (* Composite statements *)
     | If_then of (expr * stmt list)
     | If_then_else of (expr * stmt list * stmt list)
     | While of (expr * stmt list)
@@ -62,10 +60,12 @@ type paratype =
     | Val
     | Ref
 
-type param = (paratype * snicktype * elem)
+type param = (paratype * snicktype * ident)
 
 type proc_header = (ident * param list)
 
 type proc = (proc_header * proc_body)
  
 type program = proc list
+
+type t = program

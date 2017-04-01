@@ -1,6 +1,6 @@
 /* ocamlyacc parser for snick */
 %{
-open Snack_ast
+open Snick_ast
 %}
 
 %token EOF
@@ -25,7 +25,7 @@ open Snack_ast
 %token PLUS MINUS
 %token MULTI DIVID
 %token LSQBRACK RSQBRACK
-%tokeSQn LPAREN RPAREN
+%token LPAREN RPAREN
 
 %nonassoc EQ NE LT GT LE GE
 %left PLUS MINUS
@@ -40,7 +40,7 @@ open Snack_ast
 %%
 
 program:
-    procs   { { procs = List.rev $1 } }
+    procs   { List.rev $1 }
 
 /* Builds procs in reverse order */
 procs:
@@ -51,18 +51,18 @@ proc:
     PROC proc_header proc_body END { ($2, $3) }
 
 proc_header:
-    IDENT LPAREN pramas RPAREN { ($1, List.rev $3) }
+    IDENT LPAREN params RPAREN { ($1, List.rev $3) }
 
-/* Builds pramas in reverse order */
-pramas:
+/* Builds params in reverse order */
+params:
     | params COMMA param { $3 :: $1 }
     | param { [$1] }
     | { [] }
 
 param:
-    para_indc typespec IDENT { ($1, $2, $3) }
+    param_indc typespec IDENT { ($1, $2, $3) }
 
-para_indc:
+param_indc:
     | VAL { Val }
     | REF { Ref }
 
@@ -83,8 +83,8 @@ decl:
     | typespec variable SEMICOLON { ($1, $2) }
 
 variable:
-    | ident { Single_variable $1 }
-    | ident dimension { Array_variable ($1, $2) }
+    | IDENT { Single_variable $1 }
+    | IDENT dimension { Array_variable ($1, $2) }
 
 dimension:
     LSQBRACK intervals RSQBRACK { List.rev $2 }
@@ -119,7 +119,12 @@ comps_stmt:
 
 elem:
     | IDENT { Single_elem $1 }
-    | IDENT LSQBRACK exprs RSQBRACK { Array_elem ($1, List.rev $3) }
+    | IDENT LSQBRACK index RSQBRACK { Array_elem ($1, List.rev $3) }
+
+
+index:
+    | index COMMA INT_CONST { $3 :: $1 }
+    | INT_CONST { [$1] }
 
 expr:
     /* Variable element */ 
@@ -146,3 +151,8 @@ expr:
     | UMINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
     /* Expression itself with parentheses */
     | LPAREN expr RPAREN { $2 }
+
+/* Builds exprs in reverse order */
+exprs:
+    | exprs COMMA expr { $3 :: $1 }
+    | expr { [$1] }
