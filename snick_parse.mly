@@ -121,7 +121,6 @@ elem:
     | IDENT { Single_elem $1 }
     | IDENT LSQBRACK index RSQBRACK { Array_elem ($1, List.rev $3) }
 
-
 index:
     | index COMMA INT_CONST { $3 :: $1 }
     | INT_CONST { [$1] }
