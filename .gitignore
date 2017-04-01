@@ -6,8 +6,7 @@
 !*.md
 !sinck.ml
 !sinck_ast.ml
-!snick_pprint.ml
-!*.mli
+!snick_pprint.m*
 !*.mll
 !*.mly
 !Makefile

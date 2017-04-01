@@ -2,7 +2,39 @@
 open Snick_ast
 open Format
 
-let rec print_program fmt prog =
-  print_procs fmt prog.procs
+let fmatr_fprint = fprintf 
 
-and print_procs fmt procs = ()
+let print_program =
+    print_procs
+    
+let print_procs fmatr = function
+    | [] -> ()
+    | x::xs -> print_proc fmatr x; print_procs fmatr xs
+
+let print_proc fmatr (proc_header, proc_body) =
+    print_proc_header fmatr proc_header; print_proc_body fmatr proc_body
+
+let print_proc_header fmatr (ident, params) =
+    print_proc_id fmatr ident; print_proc_params fmatr params
+
+let print_proc_id fmatr ident = "\n"
+
+let print_proc_params fmatr params = "\n"
+
+
+(*
+    print_decls fmt proc.decls;
+    print_stmts fmt proc.stmts;
+
+let print_decls fmt = function
+    | [] -> ()
+    | x::xs -> print_decl fmt x; print_decls fmt xs
+
+let print_stmts fmt = function
+    | [] -> ()
+    | x::xs -> print_stmt fmt x; print_stmts fmt xs
+
+let print_decl fmt decl = ()
+
+let print_stmt fmt stmt = ()
+*)   
