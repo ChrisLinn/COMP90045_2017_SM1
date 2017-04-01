@@ -2,4 +2,7 @@
 open Snick_ast
 open Format
 
-let rec print_program fmt prog = ()
+let rec print_program fmt prog =
+  print_procs fmt prog.procs
+
+and print_procs fmt procs = ()

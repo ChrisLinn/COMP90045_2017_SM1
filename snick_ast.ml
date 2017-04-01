@@ -66,6 +66,9 @@ type proc_header = (ident * param list)
 
 type proc = (proc_header * proc_body)
  
-type program = proc list
+type procs = proc list
 
+type program = procs
+
+(* root node of the ast *)
 type t = program
