@@ -126,25 +126,25 @@ index:
     | INT_CONST { [$1] }
 
 expr:
-    /* Variable element */ 
+    /* Variable element */
     | elem { Eelem $1 }
-    /* Constants */ 
+    /* Constants */
     | BOOL_CONST { Ebool $1 }
     | INT_CONST { Eint $1 }
     | FLOAT_CONST { Efloat $1 }
-    /* Binary operators */ 
+    /* Binary operators */
     | expr PLUS expr { Ebinop ($1, Op_add, $3) }
     | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
     | expr MULTI expr { Ebinop ($1, Op_mul, $3) }
     | expr DIVID expr { Ebinop ($1, Op_div, $3) }
-    | expr EQ expr { Ebinop ($1, Op_eq, $3) } 
-    | expr NE expr { Ebinop ($1, Op_ne, $3) } 
-    | expr LT expr { Ebinop ($1, Op_lt, $3) } 
-    | expr GT expr { Ebinop ($1, Op_gt, $3) } 
-    | expr LE expr { Ebinop ($1, Op_le, $3) } 
-    | expr GE expr { Ebinop ($1, Op_ge, $3) } 
-    | expr AND expr { Ebinop ($1, Op_and, $3) } 
-    | expr OR expr { Ebinop ($1, Op_or, $3) } 
+    | expr EQ expr { Ebinop ($1, Op_eq, $3) }
+    | expr NE expr { Ebinop ($1, Op_ne, $3) }
+    | expr LT expr { Ebinop ($1, Op_lt, $3) }
+    | expr GT expr { Ebinop ($1, Op_gt, $3) }
+    | expr LE expr { Ebinop ($1, Op_le, $3) }
+    | expr GE expr { Ebinop ($1, Op_ge, $3) }
+    | expr AND expr { Ebinop ($1, Op_and, $3) }
+    | expr OR expr { Ebinop ($1, Op_or, $3) }
     /* Unary operators */
     | NOT expr { Eunop (Op_not, $2) }
     | UMINUS expr %prec UMINUS { Eunop (Op_minus, $2) }

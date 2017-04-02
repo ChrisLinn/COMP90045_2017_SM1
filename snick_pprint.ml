@@ -78,10 +78,28 @@ let print_expr fmtr = function
     | Ebool bool_const -> fprintf fmtr "%B" bool_const
     | Eint int_const -> fprintf fmtr "%d" int_const
     | Efloat float_const -> fprintf fmtr "%f" float_const
-    | Ebinop (lexpr, binop, rexpr) -> 
-    | Eunop (unop, expr) -> 
+    | Ebinop (lexpr, binop, rexpr) -> fprintf fmtr "%a %a %a" (print_expr fmtr lexpr) (print_binop fmtr binop) (print_expr fmtr rexpr)
+    | Eunop (unop, expr) -> fprintf fmtr "%a %a" (print_unop fmtr unop) (print_expr fmtr expr)
 
 let print_exprs fmtr = function
     | [] -> ()
     | x::[] -> fprintf fmtr "%a" (print_expr fmtr x)
     | x::xs -> fprintf fmtr "%a,%a" (print_expr fmtr x) (print_exprs fmtr xs)
+
+let print_binop fmtr = function
+    | Op_add -> fprintf fmtr "+"
+    | Op_sub -> fprintf fmtr "-"
+    | Op_mul -> fprintf fmtr "*"
+    | Op_div -> fprintf fmtr "/"
+    | Op_eq -> fprintf fmtr "="
+    | Op_ne -> fprintf fmtr "!="
+    | Op_lt -> fprintf fmtr "<"
+    | Op_gt -> fprintf fmtr ">"
+    | Op_le -> fprintf fmtr "<="
+    | Op_ge -> fprintf fmtr ">="
+    | Op_and -> fprintf fmtr "and"
+    | Op_or -> fprintf fmtr "or"
+
+let print_unop fmtr = function
+    | Op_not -> fprintf fmtr "not"
+    | Op_minus -> fprintf fmtr "-"
