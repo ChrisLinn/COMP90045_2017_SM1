@@ -10,13 +10,11 @@ let alnum = alpha | '_' | '\'' | digit
 let ident = (alpha | '_') alnum*
 
 rule token = parse
-    | [' ' '\t']                        { token lexbuf } (* skip blanks*)
-    | ['\n'] (*line break*)
+    | [' ' '\t' '\n']                        { token lexbuf } (* skip blanks*)
     | '-'? digits as lxm                { INT_CONST (int_of_string lxm) }
     | '-'? floating as lxm              { FLOAT_CONST (float_of_string lxm) }
-    | ident as lxm                      { IDENT lxm }
     | eof                               { EOF }
-    (* keywords *)
+    (*  keywords *)
     | "not"                             { NOT }
     | "and"                             { AND }
     | "or"                              { OR }
@@ -56,3 +54,4 @@ rule token = parse
     | '/'                               { DIVID }
     | ','                               { COMMA }
     | ';'                               { SEMICOLON }
+    | ident as lxm                      { IDENT lxm }
