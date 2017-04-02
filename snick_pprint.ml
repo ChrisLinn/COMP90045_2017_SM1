@@ -2,11 +2,11 @@
 open Snick_ast
 open Format
 
-let rec print_program = print_procs
+let rec print_program fmtr prog = print_procs fmtr prog.procs
 
 and print_procs fmtr = function
     | [] -> ()
-    | x::[] -> print_proc fmtr "%a" x
+    (*| x::[] -> print_proc fmtr x*)
     | x::xs -> print_proc fmtr x; print_newline (); print_procs fmtr xs
     (* | x::xs -> fprintf fmtr "%a@.%a" print_proc x print_procs xs *)
 
@@ -18,8 +18,9 @@ and print_proc_header fmtr (ident, params) =
 
 and print_params fmtr = function
     | [] -> ()
-    | x::[] -> print_param fmtr x
-    | x::xs -> fprintf fmtr "%a, %a" print_param x print_params xs
+    (*| x::[] -> print_param fmtr x
+    | x::xs -> fprintf fmtr "%a, %a" print_param x print_params xs*)
+    | x :: xs -> print_param fmtr x; fprintf fmtr "%s" ", "; print_params fmtr xs
 
 and print_param fmtr (indicator, param_type, ident) =
     fprintf fmtr "%a %a %s" print_param_indc indicator print_type param_type ident
@@ -33,16 +34,23 @@ and print_type fmtr = function
     | Int -> fprintf fmtr "%s" "int"
     | Float -> fprintf fmtr "%s" "float"
 
-and print_proc_body fmtr (decls, stmts) =
-    fprintf fmtr "%a@.%a" print_decls decls print_stmts stmts
-
+and print_proc_body fmtr prog_body =
+    print_decls fmtr prog_body.decls;
+    fprintf fmtr "@.";
+    print_stmts fmtr prog_body.stmts;
+    (*fprintf fmtr "%a@.%a" print_decls decls print_stmts stmts
+    *)
 and print_decls fmtr = function
     | [] -> ()
-    | x::xs -> fprintf fmtr "%a@.%a" print_decl x print_decls xs
+    (*| x::xs -> fprintf fmtr "%a@.%a" print_decl x print_decls xs
+    *)
+    | x :: xs -> print_decl fmtr x; fprintf fmtr "@."; print_decls fmtr xs
 
 and print_stmts fmtr = function
     | [] -> ()
-    | x::xs -> fprintf fmtr "%a@.%a" print_stmt x print_stmts xs
+    (*| x::xs -> fprintf fmtr "%a@.%a" print_stmt x print_stmts xs
+    *)
+    | x :: xs -> print_stmt fmtr x; fprintf fmtr "@."; print_stmts fmtr xs
 
 and print_decl fmtr (var_type, variable) =
     fprintf fmtr "%a %a;@." print_type var_type print_var variable
@@ -75,7 +83,7 @@ and print_elem fmtr = function
 and print_idxs fmtr = function
     | [] -> ()
     | x::[] -> fprintf fmtr "%d" x
-    | x::xs -> fprintf fmtr "%d,%a" x print_idxs xs
+    | x::xs -> fprintf fmtr "%d," x; print_idxs fmtr xs
 
 and print_expr fmtr = function
     | Eelem elem -> print_elem fmtr elem
@@ -87,7 +95,7 @@ and print_expr fmtr = function
 
 and print_exprs fmtr = function
     | [] -> ()
-    | x::[] -> fprintf fmtr "%a" print_expr x
+    (*| x::[] -> fprintf fmtr "%a" print_expr x*)
     | x::xs -> fprintf fmtr "%a,%a" print_expr x print_exprs xs
 
 and print_binop fmtr = function
