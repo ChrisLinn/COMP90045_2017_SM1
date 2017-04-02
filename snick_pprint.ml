@@ -6,12 +6,12 @@ let rec print_program fmtr prog = print_procs fmtr prog.procs
 
 and print_procs fmtr = function
     | [] -> ()
-    | x::[] -> print_proc fmtr x
+    (* | x::[] -> fprintf fmtr "%a@." print_proc x *)
     | x::xs -> print_proc fmtr x; print_newline (); print_procs fmtr xs
     (* | x::xs -> fprintf fmtr "%a@.%a" print_proc x print_procs xs *)
 
 and print_proc fmtr (header, body) =
-    fprintf fmtr "@[<v>proc %a@;<0 4>@[<v>%a@]@,end@]@." print_proc_header header print_proc_body body
+    fprintf fmtr "@[<v>proc %a@;<0 4>@[<v>%a@]@,@;<0 4>@[<v>%a@]@,end@]@." print_proc_header header print_decls body.decls print_stmts body.stmts
 
 and print_proc_header fmtr (ident, params) =
     fprintf fmtr "%s (%a)" ident print_params params
@@ -33,14 +33,14 @@ and print_type fmtr = function
     | Int -> fprintf fmtr "%s" "int"
     | Float -> fprintf fmtr "%s" "float"
 
-and print_proc_body fmtr prog_body =
+(* and print_proc_body fmtr prog_body =
     print_decls fmtr prog_body.decls;
     fprintf fmtr "@;";
-    print_stmts fmtr prog_body.stmts;
+    print_stmts fmtr prog_body.stmts; *)
     
 and print_decls fmtr = function
     | [] -> ()
-    | x :: [] -> fprintf fmtr "%a@;" print_decl x
+    | x :: [] -> fprintf fmtr "%a" print_decl x
     | x :: xs -> fprintf fmtr "%a@;%a" print_decl x print_decls xs
     (*| x :: xs -> print_decl fmtr x; fprintf fmtr "@;<0 4>"; print_decls fmtr xs*)
 
@@ -88,13 +88,14 @@ and print_expr fmtr = function
     | Ebool bool_const -> fprintf fmtr "%B" bool_const
     | Eint int_const -> fprintf fmtr "%d" int_const
     | Efloat float_const -> fprintf fmtr "%f" float_const
+    | Estring string_const -> fprintf fmtr "%s" string_const
     | Ebinop (lexpr, binop, rexpr) -> fprintf fmtr "%a %a %a" print_expr lexpr print_binop binop print_expr rexpr
     | Eunop (unop, expr) -> fprintf fmtr "%a %a" print_unop unop print_expr expr
 
 and print_exprs fmtr = function
     | [] -> ()
     | x::[] -> fprintf fmtr "%a" print_expr x
-    | x::xs -> fprintf fmtr "%a,%a" print_expr x print_exprs xs
+    | x::xs -> fprintf fmtr "%a, %a" print_expr x print_exprs xs
 
 and print_binop fmtr = function
     | Op_add -> fprintf fmtr "%s" "+"

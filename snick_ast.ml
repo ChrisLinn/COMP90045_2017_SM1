@@ -36,6 +36,7 @@ type expr =
     | Ebool of bool
     | Eint of int
     | Efloat of float
+    | Estring of string
     (* opetarion expression *)
     | Ebinop of (expr * binop * expr)
     | Eunop of (unop * expr)

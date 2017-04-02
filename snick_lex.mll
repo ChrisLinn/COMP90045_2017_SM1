@@ -8,9 +8,13 @@ let floating = digits '.' digits
 let alpha = ['a' - 'z' 'A' - 'Z']
 let alnum = alpha | '_' | '\'' | digit
 let ident = (alpha | '_') alnum*
+let commment = '#' [^'\n']*
+let string = '"' [^'"']* '"'
 
 rule token = parse
-    | [' ' '\t' '\n']                        { token lexbuf } (* skip blanks*)
+    | commment                          { token lexbuf } (* skip comments *)
+    | [' ' '\t']                        { token lexbuf } (* skip blanks*)
+    | '\n'                              { Lexing.new_line lexbuf ; token lexbuf }
     | '-'? digits as lxm                { INT_CONST (int_of_string lxm) }
     | '-'? floating as lxm              { FLOAT_CONST (float_of_string lxm) }
     | eof                               { EOF }
@@ -55,3 +59,4 @@ rule token = parse
     | ','                               { COMMA }
     | ';'                               { SEMICOLON }
     | ident as lxm                      { IDENT lxm }
+    | string as lxm                     { STRING_CONST lxm}

@@ -13,6 +13,7 @@ open Snick_ast
 %token <bool> BOOL_CONST
 %token <int> INT_CONST
 %token <float> FLOAT_CONST
+%token <string> STRING_CONST
 %token VAL REF
 %token <string> IDENT
 %token BOOL INT FLOAT
@@ -132,6 +133,9 @@ expr:
     | BOOL_CONST { Ebool $1 }
     | INT_CONST { Eint $1 }
     | FLOAT_CONST { Efloat $1 }
+    | STRING_CONST { Estring $1 }
+    /* Expression itself with parentheses */
+    | LPAREN expr RPAREN { $2 }
     /* Binary operators */
     | expr PLUS expr { Ebinop ($1, Op_add, $3) }
     | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
@@ -148,8 +152,7 @@ expr:
     /* Unary operators */
     | NOT expr { Eunop (Op_not, $2) }
     | UMINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
-    /* Expression itself with parentheses */
-    | LPAREN expr RPAREN { $2 }
+
 
 /* Builds exprs in reverse order */
 exprs:
