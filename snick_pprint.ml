@@ -62,7 +62,7 @@ let print_stmt fmtr =
     | Write expr -> fprintf fmtr "write %a;@." (print_expr fmtr expr)
     | Call (ident, exprs) -> fprintf fmtr "%s(%a);@." ident (print_exprs fmtr exprs)
     | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[%a@]fi@." (print_expr fmtr expr) (print_stmts fmtr stmts)
-    | If_then_else (expr, stmts, stmts) -> fprintf fmtr "if %a then@;<0 4>@[%a@]else@;<0 4>@[%a@]fi@." (print_expr fmtr expr) (print_stmts fmtr stmts) (print_stmts fmtr stmts)
+    | If_then_else (expr, then_stmts, else_stmts) -> fprintf fmtr "if %a then@;<0 4>@[%a@]else@;<0 4>@[%a@]fi@." (print_expr fmtr expr) (print_stmts fmtr then_stmts) (print_stmts fmtr else_stmts)
     | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[%a@]od@." (print_expr fmtr expr) (print_stmts fmtr stmts)
 
 let print_elem fmtr = function
@@ -73,6 +73,15 @@ let print_idxs fmtr = function
     | x::[] -> fprintf fmtr "%d" x
     | x::xs -> fprintf fmtr "%d,%a" x (print_idxs fmtr xs)
 
-let print_expr fmtr = 
+let print_expr fmtr = function
+    | Elem elem -> print_elem fmtr elem
+    | Ebool bool_const -> fprintf fmtr "%B" bool_const
+    | Eint int_const -> fprintf fmtr "%d" int_const
+    | Efloat float_const -> fprintf fmtr "%f" float_const
+    | Ebinop (lexpr, binop, rexpr) -> 
+    | Eunop (unop, expr) -> 
 
-let print_exprs fmtr =
+let print_exprs fmtr = function
+    | [] -> ()
+    | x::[] -> fprintf fmtr "%a" (print_expr fmtr x)
+    | x::xs -> fprintf fmtr "%a,%a" (print_expr fmtr x) (print_exprs fmtr xs)
