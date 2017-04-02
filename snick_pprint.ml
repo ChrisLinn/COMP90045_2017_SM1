@@ -40,7 +40,7 @@ and print_proc_body fmtr prog_body =
     
 and print_decls fmtr = function
     | [] -> ()
-    | x :: [] -> print_decl fmtr x
+    | x :: [] -> fprintf fmtr "%a@;" print_decl x
     | x :: xs -> fprintf fmtr "%a@;%a" print_decl x print_decls xs
     (*| x :: xs -> print_decl fmtr x; fprintf fmtr "@;<0 4>"; print_decls fmtr xs*)
 
