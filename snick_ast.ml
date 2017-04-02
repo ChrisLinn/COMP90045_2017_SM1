@@ -12,13 +12,13 @@ type interval = (int * int)
 
 type variable =
     | Single_variable of ident
-    | Array_variable of (ident * interval list)
+    | Array_variable of (ident * (interval list))
 
 type decl = (snicktype * variable)
 
 type elem =
     | Single_elem of ident
-    | Array_elem of (ident * int list)
+    | Array_elem of (ident * (int list))
 
 type binop =
     | Op_add | Op_sub | Op_mul | Op_div
@@ -36,6 +36,7 @@ type expr =
     | Ebool of bool
     | Eint of int
     | Efloat of float
+    | Estring of string
     (* opetarion expression *)
     | Ebinop of (expr * binop * expr)
     | Eunop of (unop * expr)
@@ -45,11 +46,11 @@ type stmt =
     | Assign of (elem * expr)
     | Read of elem
     | Write of expr
-    | Call of (ident * expr list)
+    | Call of (ident * (expr list))
     (* Composite statements *)
-    | If_then of (expr * stmt list)
-    | If_then_else of (expr * stmt list * stmt list)
-    | While of (expr * stmt list)
+    | If_then of (expr * (stmt list))
+    | If_then_else of (expr * (stmt list) * (stmt list))
+    | While of (expr * (stmt list))
 
 type proc_body = {
   decls : decl list ;
@@ -62,13 +63,11 @@ type param_indc =
 
 type param = (param_indc * snicktype * ident)
 
-type proc_header = (ident * param list)
+type proc_header = (ident * (param list))
 
 type proc = (proc_header * proc_body)
- 
-type procs = proc list
 
-type program = procs
+type program = { procs: proc list }
 
 (* root node of the ast *)
 type t = program

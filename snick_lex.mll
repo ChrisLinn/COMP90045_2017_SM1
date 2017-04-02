@@ -8,15 +8,17 @@ let floating = digits '.' digits
 let alpha = ['a' - 'z' 'A' - 'Z']
 let alnum = alpha | '_' | '\'' | digit
 let ident = (alpha | '_') alnum*
+let commment = '#' [^'\n']*
+let string = '"' [^'"']* '"'
 
 rule token = parse
+    | commment                          { token lexbuf } (* skip comments *)
     | [' ' '\t']                        { token lexbuf } (* skip blanks*)
-    | ['\n'] (*line break*)
+    | '\n'                              { Lexing.new_line lexbuf ; token lexbuf }
     | '-'? digits as lxm                { INT_CONST (int_of_string lxm) }
     | '-'? floating as lxm              { FLOAT_CONST (float_of_string lxm) }
-    | ident as lxm                      { IDENT lxm }
     | eof                               { EOF }
-    (* keywords *)
+    (*  keywords *)
     | "not"                             { NOT }
     | "and"                             { AND }
     | "or"                              { OR }
@@ -56,3 +58,5 @@ rule token = parse
     | '/'                               { DIVID }
     | ','                               { COMMA }
     | ';'                               { SEMICOLON }
+    | ident as lxm                      { IDENT lxm }
+    | string as lxm                     { STRING_CONST lxm}

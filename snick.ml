@@ -6,6 +6,13 @@ let infile_name = ref None
 type compiler_mode = PrettyPrint | Compile
 let mode = ref Compile
 
+(* print current position of lexbuf *)
+let err_pos lexbuf =
+    let pos = Lexing.lexeme_start_p lexbuf in
+        Format.sprintf ": line %d, col %d."
+            (pos.Lexing.pos_lnum)
+            (pos.Lexing.pos_cnum - pos.Lexing.pos_bol) 
+
 (* --------------------------------------------- *)
 (*  Specification for command-line options       *)
 (* --------------------------------------------- *)
@@ -27,10 +34,15 @@ let main () =
     (* Initialize lexing buffer *)
     let lexbuf = Lexing.from_channel infile in
     (* Call the parser *)
-    let prog = Snick_parse.program Snick_lex.token lexbuf in
-    match !mode with
-    | PrettyPrint ->
-      Snick_pprint.print_program Format.std_formatter prog 
-    | Compile -> (Printf.printf "Compiling function is not yet enabled!!!\n")
+    try
+        let prog = Snick_parse.program Snick_lex.token lexbuf in
+        match !mode with
+        | PrettyPrint ->
+          Snick_pprint.print_program Format.std_formatter prog 
+        | Compile -> (Printf.printf "Compiling function is not yet enabled!!!\n")
+    with
+        | Failure x -> print_string ("Lexing Error" ^ (err_pos lexbuf) ^ "\n")
+    | Parsing.Parse_error -> print_string
+    ("Parsing Error" ^ (err_pos lexbuf) ^ "\n")
 
 let _ = main ()
