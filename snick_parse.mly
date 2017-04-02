@@ -41,7 +41,7 @@ open Snick_ast
 %%
 
 program:
-    procs   { { procs = List.rev $1 } }
+    procs   { List.rev $1 }
 
 /* Builds procs in reverse order */
 procs:
