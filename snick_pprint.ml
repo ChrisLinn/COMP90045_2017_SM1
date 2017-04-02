@@ -7,8 +7,7 @@ let rec print_program = print_procs
 and print_procs fmtr = function
     | [] -> ()
     | x::[] -> print_proc fmtr "%a" x
-    | x::xs -> print_proc fmtr x; print_newline (); print_procs fmtr xs
-    (* | x::xs -> fprintf fmtr "%a@.%a" print_proc x print_procs xs *)
+    | x::xs -> fprintf fmtr "%a@.%a" print_proc x print_procs xs
 
 and print_proc fmtr (header, body) =
     fprintf fmtr "@[<v>proc %a@;<0 4>@[<v>%a@]@,end@]@." print_proc_header header print_proc_body body
