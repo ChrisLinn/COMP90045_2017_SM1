@@ -6,8 +6,9 @@ let rec print_program = print_procs
 
 and print_procs fmtr = function
     | [] -> ()
-    | x::[] -> print_proc fmtr x
-    | x::xs -> fprintf fmtr "%a@.%a" print_proc x print_procs xs
+    | x::[] -> print_proc fmtr "%a" x
+    | x::xs -> print_proc fmtr x; print_newline (); print_procs fmtr xs
+    (* | x::xs -> fprintf fmtr "%a@.%a" print_proc x print_procs xs *)
 
 and print_proc fmtr (header, body) =
     fprintf fmtr "@[<v>proc %a@;<0 4>@[<v>%a@]@,end@]@." print_proc_header header print_proc_body body
@@ -24,13 +25,13 @@ and print_param fmtr (indicator, param_type, ident) =
     fprintf fmtr "%a %a %s" print_param_indc indicator print_type param_type ident
 
 and print_param_indc fmtr = function
-    | Val -> fprintf fmtr "val"
-    | Ref -> fprintf fmtr "ref"
+    | Val -> fprintf fmtr "%s" "val"
+    | Ref -> fprintf fmtr "%s" "ref"
 
 and print_type fmtr = function
-    | Bool -> fprintf fmtr "bool"
-    | Int -> fprintf fmtr "int"
-    | Float -> fprintf fmtr "float"
+    | Bool -> fprintf fmtr "%s" "bool"
+    | Int -> fprintf fmtr "%s" "int"
+    | Float -> fprintf fmtr "%s" "float"
 
 and print_proc_body fmtr (decls, stmts) =
     fprintf fmtr "%a@.%a" print_decls decls print_stmts stmts
@@ -90,19 +91,19 @@ and print_exprs fmtr = function
     | x::xs -> fprintf fmtr "%a,%a" print_expr x print_exprs xs
 
 and print_binop fmtr = function
-    | Op_add -> fprintf fmtr "+"
-    | Op_sub -> fprintf fmtr "-"
-    | Op_mul -> fprintf fmtr "*"
-    | Op_div -> fprintf fmtr "/"
-    | Op_eq -> fprintf fmtr "="
-    | Op_ne -> fprintf fmtr "!="
-    | Op_lt -> fprintf fmtr "<"
-    | Op_gt -> fprintf fmtr ">"
-    | Op_le -> fprintf fmtr "<="
-    | Op_ge -> fprintf fmtr ">="
-    | Op_and -> fprintf fmtr "and"
-    | Op_or -> fprintf fmtr "or"
+    | Op_add -> fprintf fmtr "%s" "+"
+    | Op_sub -> fprintf fmtr "%s" "-"
+    | Op_mul -> fprintf fmtr "%s" "*"
+    | Op_div -> fprintf fmtr "%s" "/"
+    | Op_eq -> fprintf fmtr "%s" "="
+    | Op_ne -> fprintf fmtr "%s" "!="
+    | Op_lt -> fprintf fmtr "%s" "<"
+    | Op_gt -> fprintf fmtr "%s" ">"
+    | Op_le -> fprintf fmtr "%s" "<="
+    | Op_ge -> fprintf fmtr "%s" ">="
+    | Op_and -> fprintf fmtr "%s" "and"
+    | Op_or -> fprintf fmtr "%s" "or"
 
 and print_unop fmtr = function
-    | Op_not -> fprintf fmtr "not"
-    | Op_minus -> fprintf fmtr "-"
+    | Op_not -> fprintf fmtr "%s" "not"
+    | Op_minus -> fprintf fmtr "%s" "-"
