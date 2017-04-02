@@ -6,7 +6,7 @@ let rec print_program fmtr prog = print_procs fmtr prog.procs
 
 and print_procs fmtr = function
     | [] -> ()
-    (*| x::[] -> print_proc fmtr x*)
+    | x::[] -> print_proc fmtr x
     | x::xs -> print_proc fmtr x; print_newline (); print_procs fmtr xs
     (* | x::xs -> fprintf fmtr "%a@.%a" print_proc x print_procs xs *)
 
@@ -18,8 +18,7 @@ and print_proc_header fmtr (ident, params) =
 
 and print_params fmtr = function
     | [] -> ()
-    (*| x::[] -> print_param fmtr x
-    | x::xs -> fprintf fmtr "%a, %a" print_param x print_params xs*)
+    | x :: [] -> print_param fmtr x
     | x :: xs -> print_param fmtr x; fprintf fmtr "%s" ", "; print_params fmtr xs
 
 and print_param fmtr (indicator, param_type, ident) =
@@ -36,24 +35,23 @@ and print_type fmtr = function
 
 and print_proc_body fmtr prog_body =
     print_decls fmtr prog_body.decls;
-    fprintf fmtr "@.";
+    fprintf fmtr "@;";
     print_stmts fmtr prog_body.stmts;
-    (*fprintf fmtr "%a@.%a" print_decls decls print_stmts stmts
-    *)
+    
 and print_decls fmtr = function
     | [] -> ()
-    (*| x::xs -> fprintf fmtr "%a@.%a" print_decl x print_decls xs
-    *)
-    | x :: xs -> print_decl fmtr x; fprintf fmtr "@."; print_decls fmtr xs
+    | x :: [] -> print_decl fmtr x
+    | x :: xs -> fprintf fmtr "%a@;%a" print_decl x print_decls xs
+    (*| x :: xs -> print_decl fmtr x; fprintf fmtr "@;<0 4>"; print_decls fmtr xs*)
 
 and print_stmts fmtr = function
     | [] -> ()
-    (*| x::xs -> fprintf fmtr "%a@.%a" print_stmt x print_stmts xs
-    *)
-    | x :: xs -> print_stmt fmtr x; fprintf fmtr "@."; print_stmts fmtr xs
+    | x :: [] -> print_stmt fmtr x
+    | x :: xs -> fprintf fmtr "%a@;%a" print_stmt x print_stmts xs
+    (*| x :: xs -> print_stmt fmtr x; fprintf fmtr "@;"; print_stmts fmtr xs*)
 
 and print_decl fmtr (var_type, variable) =
-    fprintf fmtr "%a %a;@." print_type var_type print_var variable
+    fprintf fmtr "%a %a;" print_type var_type print_var variable
 
 and print_var fmtr = function
     | Single_variable ident -> fprintf fmtr "%s" ident
@@ -68,13 +66,13 @@ and print_itvl fmtr (st_pnt, end_pnt) =
     fprintf fmtr "%d..%d" st_pnt end_pnt
 
 and print_stmt fmtr = function
-    | Assign (elem, expr) -> fprintf fmtr "%a := %a;@." print_elem elem print_expr expr
-    | Read elem -> fprintf fmtr "read %a;@." print_elem elem
-    | Write expr -> fprintf fmtr "write %a;@." print_expr expr
-    | Call (ident, exprs) -> fprintf fmtr "%s(%a);@." ident print_exprs exprs
-    | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[%a@]fi@." print_expr expr print_stmts stmts
-    | If_then_else (expr, then_stmts, else_stmts) -> fprintf fmtr "if %a then@;<0 4>@[%a@]else@;<0 4>@[%a@]fi@." print_expr expr print_stmts then_stmts print_stmts else_stmts
-    | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[%a@]od@." print_expr expr print_stmts stmts
+    | Assign (elem, expr) -> fprintf fmtr "%a := %a;" print_elem elem print_expr expr
+    | Read elem -> fprintf fmtr "read %a;" print_elem elem
+    | Write expr -> fprintf fmtr "write %a;" print_expr expr
+    | Call (ident, exprs) -> fprintf fmtr "%s(%a);" ident print_exprs exprs
+    | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@;fi" print_expr expr print_stmts stmts
+    | If_then_else (expr, then_stmts, else_stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@;else@;<0 4>@[<v>%a@]@;fi" print_expr expr print_stmts then_stmts print_stmts else_stmts
+    | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[<v>%a@]@;od" print_expr expr print_stmts stmts
 
 and print_elem fmtr = function
     | Single_elem ident -> fprintf fmtr "%s" ident
@@ -95,7 +93,7 @@ and print_expr fmtr = function
 
 and print_exprs fmtr = function
     | [] -> ()
-    (*| x::[] -> fprintf fmtr "%a" print_expr x*)
+    | x::[] -> fprintf fmtr "%a" print_expr x
     | x::xs -> fprintf fmtr "%a,%a" print_expr x print_exprs xs
 
 and print_binop fmtr = function
