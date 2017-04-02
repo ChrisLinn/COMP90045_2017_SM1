@@ -60,10 +60,10 @@ let print_stmt fmtr =
     | Assign (elem, expr) -> fprintf fmtr "%a := %a;@." (print_elem fmtr elem) (print_expr fmtr expr)
     | Read elem -> fprintf fmtr "read %a;@." (print_elem fmtr elem)
     | Write expr -> fprintf fmtr "write %a;@." (print_expr fmtr expr)
-    | Call (ident, exprs) -> fprintf fmtr
-    | If_then (expr, stmts) -> fprintf fmtr
-    | If_then_else (expr, stmts, stmts) -> fprintf fmtr
-    | While (expr, stmts) -> fprintf fmtr
+    | Call (ident, exprs) -> fprintf fmtr "%s(%a);@." ident (print_exprs fmtr exprs)
+    | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[%a@]fi@." (print_expr fmtr expr) (print_stmts fmtr stmts)
+    | If_then_else (expr, stmts, stmts) -> fprintf fmtr "if %a then@;<0 4>@[%a@]else@;<0 4>@[%a@]fi@." (print_expr fmtr expr) (print_stmts fmtr stmts) (print_stmts fmtr stmts)
+    | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[%a@]od@." (print_expr fmtr expr) (print_stmts fmtr stmts)
 
 let print_elem fmtr = function
     | Single_elem ident -> fprintf fmtr "%s" ident
@@ -72,3 +72,7 @@ let print_elem fmtr = function
 let print_idxs fmtr = function
     | x::[] -> fprintf fmtr "%d" x
     | x::xs -> fprintf fmtr "%d,%a" x (print_idxs fmtr xs)
+
+let print_expr fmtr = 
+
+let print_exprs fmtr =
