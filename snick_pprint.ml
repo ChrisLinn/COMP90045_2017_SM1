@@ -2,41 +2,73 @@
 open Snick_ast
 open Format
 
-let print_program fmatr = function
-    | [] -> () (* should raise error *)
-    | x::[] -> print_proc fmatr x
-    | x::xs -> print_proc fmatr x; print_newline (); print_procs fmatr xs
-
-let print_proc fmatr (proc_header, proc_body) =
-    print_proc_header fmatr proc_header; print_proc_body fmatr proc_body 
-
-let print_proc_id fmatr ident = fprintf fmatr " "
-
-let print_proc_params fmatr params =  fprintf fmatr " "
-
-(*
-let print_proc_header fmatr (ident, params) =
-
-
-
-    
-    print_proc_id fmatr ident; print_proc_params fmatr params
-
-
-
-
-    print_decls fmt proc.decls;
-    print_stmts fmt proc.stmts;
-
-let print_decls fmt = function
+let print_program fmtr = function
     | [] -> ()
-    | x::xs -> print_decl fmt x; print_decls fmt xs
+    | x::[] -> print_proc fmtr x
+    | x::xs -> print_proc fmtr x; fprintf fmtr "@."; print_procs fmtr xs
 
-let print_stmts fmt = function
+let print_proc fmtr (header, body) =
+    fprintf fmtr "@[<v>proc %a@;<0 4>@[<v>%a@]@,end@]@." (print_proc_header fmtr header) (print_proc_body fmtr body)
+
+let print_proc_header fmtr (ident, params) =
+    fprintf fmtr "%s (%a)" ident (print_params fmtr params)
+
+let print_params fmtr = function
     | [] -> ()
-    | x::xs -> print_stmt fmt x; print_stmts fmt xs
+    | x::[] -> print_param fmtr x
+    | x::xs -> fprintf fmtr "%a, " (print_param fmtr x); print_params fmtr xs
 
-let print_decl fmt decl = ()
+let print_param fmtr (indicator, param_type, ident) =
+    fprintf fmtr "%a %a %s" (print_param_indc fmtr indicator) (print_type fmtr param_type) ident
 
-let print_stmt fmt stmt = ()
-*)   
+let print_param_indc fmtr = function
+    | Val -> fprintf fmtr "val"
+    | Ref -> fprintf fmtr "ref"
+
+let print_type fmtr = function
+    | Bool -> fprintf fmtr "bool"
+    | Int -> fprintf fmtr "int"
+    | Float -> fprintf fmtr "float"
+
+let print_proc_body fmtr (decls, stmts) =
+    print_decls fmtr decls; fprintf fmtr "@."; print_stmts fmtr stmts
+
+let print_decls fmtr = function
+    | [] -> ()
+    | x::xs -> print_decl fmtr x; print_decls fmtr xs
+
+let print_stmts fmtr = function
+    | [] -> ()
+    | x::xs -> print_stmt fmtr x; print_stmts fmtr xs
+
+let print_decl fmtr (var_type, variable) =
+    fprintf fmtr "%a %a;@." (print_type fmtr var_type) (print_var fmtr variable)
+
+let print_var fmtr = function
+    | Single_variable ident -> fprintf fmtr "%s" ident
+    | Array_variable (ident, itvls) -> "%s[%a]" ident (print_itvls fmtr itvls)
+
+let print_itvls fmtr =
+    | [] -> ()
+    | x::[] -> fprintf "%a" (print_itvl fmtr x)
+    | x::xs -> fprintf "%a,%a" (print_itvl fmtr x) (print_itvls fmtr xs)
+
+let print_itvl fmtr (st_pnt, end_pnt) =
+    fprintf "%d..%d" st_pnt end_pnt
+
+let print_stmt fmtr =
+    | Assign (elem, expr) -> fprintf fmtr "%a := %a;@." (print_elem fmtr elem) (print_expr fmtr expr)
+    | Read elem -> fprintf fmtr "read %a;@." (print_elem fmtr elem)
+    | Write expr -> fprintf fmtr "write %a;@." (print_expr fmtr expr)
+    | Call (ident, exprs) -> fprintf fmtr
+    | If_then (expr, stmts) -> fprintf fmtr
+    | If_then_else (expr, stmts, stmts) -> fprintf fmtr
+    | While (expr, stmts) -> fprintf fmtr
+
+let print_elem fmtr = function
+    | Single_elem ident -> fprintf fmtr "%s" ident
+    | Array_elem (ident, idxs) -> fprintf fmtr "%s[%a]" ident (print_idxs fmtr idxs)
+
+let print_idxs fmtr = function
+    | x::[] -> fprintf fmtr "%d" x
+    | x::xs -> fprintf fmtr "%d,%a" x (print_idxs fmtr xs)

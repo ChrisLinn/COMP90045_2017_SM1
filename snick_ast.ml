@@ -56,11 +56,11 @@ type proc_body = {
   stmts : stmt list
 }
 
-type paratype =
+type param_indc =
     | Val
     | Ref
 
-type param = (paratype * snicktype * ident)
+type param = (param_indc * snicktype * ident)
 
 type proc_header = (ident * param list)
 

@@ -9,7 +9,7 @@
 + pprintf spec
     * The pretty-printer should output the formatted procedures in the order they appeared in the input
     * Two consecutive procedure definitions should be separated by a single blank line
-    * The keywords proc and end should begin at the start of a line—no indentation
+    * ~~The keywords proc and end should begin at the start of a line—no indentation~~
     * Within each procedure, declarations and top-level statements should be indented by four spaces
     * Each variable declaration should be on a separate line
     * Each statement should start on a new line
