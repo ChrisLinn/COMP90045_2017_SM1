@@ -135,8 +135,26 @@ const:
 | STRING_VAL {Eident($1)}
 
 
+procedure_def:
+| PROC procedure_header declarations statements END {($2,List.rev $3,List.rev $4)::[]}
 
+procedure_defs:
+| procedure_defs procedure_def {($2::$1}
 
+procedure_header:
+| IDENTIFIER LP params RP {($1,List.rev $3)}
+
+param:
+| param COMMA pass_type type_spec IDENTIFIER {($3,$4,$5)::$1}
+| pass_type type_spec IDENTIFIER {($1,$2,$3)::[]}
+
+params:
+| param {$1}
+| {[]}
+
+pass_type:
+| VAL {Val}
+| REF {Ref}
 
 
 
