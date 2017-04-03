@@ -1,0 +1,119 @@
+type ident = string
+ 
+type snicktype =
+  | Bool
+  | Float
+  | Int
+  | IdentType of string 
+
+type typedefStruct =
+  |SingleTypeTerm of snicktype
+  |SingleTypeTermWithIdent of (ident * typedefStruct)
+
+
+type typedef = typedefStruct list
+
+type lvalue =
+  | LId of ident
+
+  | LvalueNone
+
+type binop =
+  | Op_add | Op_sub | Op_mul | Op_div
+  | Op_eq | Op_lt | Op_gt | Op_neq | Op_lte | Op_gte
+  | Op_and | Op_or
+
+type unop =
+  | Op_minus | Op_not
+
+type expr =
+  | Ebool of bool
+  | Efloat of float
+  | Eint of int
+  | Elval of lvalue
+  | Ebinop of (expr * binop * expr)
+  | Eunop of (unop * expr)
+  | Eident of string
+  | Ebracket of expr
+
+type rvalue =
+  | Rexpr of expr
+
+  | Rassign of (string * rvalue)
+
+  | Rempty
+
+
+type paramList = expr list
+
+type stmt = 
+  | Assign of (lvalue * rvalue)
+  | AssignRvalueList of (lvalue * rvalue list)
+  | Read of lvalue
+  | Write of expr
+  | StmtNone
+  | Method of (string * paramList)
+  | VarDec of (snicktype * string)
+  | WhileDec of (expr * stmt list)
+  | IfDec of (expr * stmt list * stmt list)
+
+type decl = (ident * snicktype)
+
+type valRef = 
+|Val
+|Ref
+
+type funcDecParamList = (valRef*typedefStruct*string) list
+
+type functionDeclaration = (string*funcDecParamList)
+
+type program = {
+  typedefs : (typedefStruct*ident) list;
+  funcdefs : (functionDeclaration*typedefStruct list*stmt list) list
+}
+type t = program
+
+
+
+
+
+let printTypedefList fmt typedefDataList = (Format.fprintf fmt "@[";
+  List.iter (printSingleTypedef fmt) typedefDataList;
+  Format.fprintf fmt "@]@.")
+
+let printSingleTypedef fmt singleTypedefData = 
+
+(* if mode = 1,print space after type *)
+
+  let arrangeMode = 1 in
+  match singleTypedefData with
+| (typedefStruct,ident) -> Format.fprintf fmt "%a %s\n" printTypedefStruct (arrangeMode,typedefStruct) ident 
+
+
+
+let printSnickType fmt (btype,suffix) =  match btype with
+
+| Bool -> Format.fprintf fmt "bool%s" suffix 
+| Int ->  Format.fprintf fmt "int%s" suffix  
+| Float ->  Format.fprintf fmt "float%s" suffix 
+| IdentType(ident) -> Format.fprintf fmt "%s%s" ident suffix
+
+
+let rec printTypedefStruct fmt (arrangeMode,typedefStructData) = 
+  match typedefStructData with
+| SingleTypeTerm (btype) -> 
+
+  if arrangeMode = 1 
+  then printSnickType fmt (btype,"") 
+
+  else printSnickType fmt (btype," ")
+
+| SingleTypeTermWithIdent (ident,nestTypedefStructData) ->
+
+  if arrangeMode = 1 
+  then Format.fprintf fmt "%s : %a" ident printTypedefStruct (arrangeMode,nestTypedefStructData)
+
+  else Format.fprintf fmt "%a%s" printTypedefStruct (arrangeMode,nestTypedefStructData) ident
+
+
+
