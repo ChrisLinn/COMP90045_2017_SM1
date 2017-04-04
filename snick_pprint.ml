@@ -6,7 +6,7 @@ let rec print_program fmtr prog = print_procs fmtr prog
 
 and print_procs fmtr = function
     | [] -> ()
-    | x::[] -> fprintf fmtr "%a" print_proc x
+    | x::[] -> fprintf fmtr "%a@." print_proc x
     | x::xs -> fprintf fmtr "%a@.%a" print_proc x print_procs xs
 
 and print_proc fmtr (header, body) =
@@ -37,7 +37,7 @@ and print_proc_body fmtr prog_body =
     
 and print_decls fmtr = function
     | [] -> ()
-    | x :: [] -> fprintf fmtr "%a" print_decl x
+    | x :: [] -> fprintf fmtr "%a@," print_decl x
     | x :: xs -> fprintf fmtr "%a@;%a" print_decl x print_decls xs
 
 and print_stmts fmtr = function
