@@ -61,10 +61,16 @@ and print_itvl fmtr (st_pnt, end_pnt) =
     fprintf fmtr "%d..%d" st_pnt end_pnt
 
 and print_stmt fmtr = function
+    | Atom_stmt atom_stmt -> fprintf fmtr "%a" print_atom_stmt atom_stmt
+    | Comps_stmt comps_stmt -> fprintf fmtr "%a" print_comps_stmt comps_stmt
+
+and print_atom_stmt fmtr = function
     | Assign (elem, expr) -> fprintf fmtr "%a := %a;" print_elem elem print_expr expr
     | Read elem -> fprintf fmtr "read %a;" print_elem elem
     | Write expr -> fprintf fmtr "write %a;" print_expr expr
     | Call (ident, exprs) -> fprintf fmtr "%s(%a);" ident print_exprs exprs
+
+and print_comps_stmt fmtr = function
     | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@;fi" print_expr expr print_stmts stmts
     | If_then_else (expr, then_stmts, else_stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@;else@;<0 4>@[<v>%a@]@;fi" print_expr expr print_stmts then_stmts print_stmts else_stmts
     | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[<v>%a@]@;od" print_expr expr print_stmts stmts

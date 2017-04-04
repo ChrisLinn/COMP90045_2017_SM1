@@ -42,12 +42,14 @@ type expr =
     | Eunop of (unop * expr)
 
 type stmt =
-    (* Atomic statements *)
+    | Atom_stmt of atom_stmt
+    | Comps_stmt of comps_stmt
+and atom_stmt =
     | Assign of (elem * expr)
     | Read of elem
     | Write of expr
     | Call of (ident * expr list)
-    (* Composite statements *)
+and comps_stmt =
     | If_then of (expr * stmt list)
     | If_then_else of (expr * stmt list * stmt list)
     | While of (expr * stmt list)

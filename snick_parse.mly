@@ -104,8 +104,8 @@ stmts:
     | stmt { [$1] }
 
 stmt:
-    | atom_stmt { $1 }
-    | comps_stmt { $1 }
+    | atom_stmt { Atom_stmt $1 }
+    | comps_stmt { Comps_stmt $1 }
 
 atom_stmt:
     | elem ASSIGN expr SEMICOLON { Assign ($1, $3) }
