@@ -6,8 +6,8 @@ let rec print_program fmtr prog = print_procs fmtr prog
 
 and print_procs fmtr = function
     | [] -> ()
-    | x::[] -> fprintf fmtr "%a@." print_proc x
-    | x::xs -> fprintf fmtr "%a@.%a" print_proc x print_procs xs
+    | x::[] -> fprintf fmtr "%a@," print_proc x
+    | x::xs -> fprintf fmtr "%a@,%a" print_proc x print_procs xs
 
 and print_proc fmtr (header, body) =
     fprintf fmtr "@[<v>proc %a@;<0 4>@[<v>%a@]@,end@]@." print_proc_header header print_proc_body body
@@ -33,17 +33,17 @@ and print_type fmtr = function
     | Float -> fprintf fmtr "%s" "float"
 
 and print_proc_body fmtr prog_body =
-    fprintf fmtr "%a@;%a" print_decls prog_body.decls print_stmts prog_body.stmts
+    fprintf fmtr "%a@,%a" print_decls prog_body.decls print_stmts prog_body.stmts
     
 and print_decls fmtr = function
     | [] -> ()
     | x :: [] -> fprintf fmtr "%a@," print_decl x
-    | x :: xs -> fprintf fmtr "%a@;%a" print_decl x print_decls xs
+    | x :: xs -> fprintf fmtr "%a@,%a" print_decl x print_decls xs
 
 and print_stmts fmtr = function
     | [] -> ()
     | x :: [] -> fprintf fmtr "%a" print_stmt x
-    | x :: xs -> fprintf fmtr "%a@;%a" print_stmt x print_stmts xs
+    | x :: xs -> fprintf fmtr "%a@,%a" print_stmt x print_stmts xs
 
 and print_decl fmtr (var_type, variable) =
     fprintf fmtr "%a %a;" print_type var_type print_var variable
@@ -71,9 +71,9 @@ and print_atom_stmt fmtr = function
     | Call (ident, exprs) -> fprintf fmtr "%s(%a);" ident print_exprs exprs
 
 and print_comps_stmt fmtr = function
-    | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@;fi" print_expr expr print_stmts stmts
-    | If_then_else (expr, then_stmts, else_stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@;else@;<0 4>@[<v>%a@]@;fi" print_expr expr print_stmts then_stmts print_stmts else_stmts
-    | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[<v>%a@]@;od" print_expr expr print_stmts stmts
+    | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,fi" print_expr expr print_stmts stmts
+    | If_then_else (expr, then_stmts, else_stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,else@;<0 4>@[<v>%a@]@,fi" print_expr expr print_stmts then_stmts print_stmts else_stmts
+    | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[<v>%a@]@,od" print_expr expr print_stmts stmts
 
 and print_elem fmtr = function
     | Single_elem ident -> fprintf fmtr "%s" ident
