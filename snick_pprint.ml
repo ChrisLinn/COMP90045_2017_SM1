@@ -94,6 +94,7 @@ and print_expr fmtr = function
     | Estring string_const -> fprintf fmtr "%s" string_const
     | Ebinop (lexpr, binop, rexpr) -> fprintf fmtr "%a %a %a" print_expr lexpr print_binop binop print_expr rexpr
     | Eunop (unop, expr) -> fprintf fmtr "%a %a" print_unop unop print_expr expr
+    | Eparenexp expr -> fprintf fmtr "%a" print_expr expr
 
 and print_exprs fmtr = function
     | [] -> ()

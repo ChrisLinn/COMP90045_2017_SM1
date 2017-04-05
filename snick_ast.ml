@@ -37,6 +37,8 @@ type expr =
     | Eint of int
     | Efloat of float
     | Estring of string
+    (* expression inside a pair of parentheses *)
+    | Eparenexp of expr
     (* operation expression *)
     | Ebinop of (expr * binop * expr)
     | Eunop of (unop * expr)

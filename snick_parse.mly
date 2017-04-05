@@ -134,8 +134,8 @@ expr:
     | INT_CONST { Eint $1 }
     | FLOAT_CONST { Efloat $1 }
     | STRING_CONST { Estring $1 }
-    /* Expression itself with parentheses */
-    | LPAREN expr RPAREN { $2 }
+    /* Expression inside a pair of  parentheses */
+    | LPAREN expr RPAREN { Eparenexp $2 }
     /* Binary operators */
     | expr PLUS expr { Ebinop ($1, Op_add, $3) }
     | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
