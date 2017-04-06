@@ -92,9 +92,10 @@ and print_expr fmtr = function
     | Eint int_const -> fprintf fmtr "%d" int_const
     | Efloat float_const -> fprintf fmtr "%f" float_const
     | Estring string_const -> fprintf fmtr "%s" string_const
+(*     | Eparen expr -> fprintf fmtr "%a" strip_paren expr *)
+    | Eparen expr -> fprintf fmtr "%a" print_expr expr
     | Ebinop (lexpr, binop, rexpr) -> fprintf fmtr "%a %a %a" print_expr lexpr print_binop binop print_expr rexpr
     | Eunop (unop, expr) -> fprintf fmtr "%a %a" print_unop unop print_expr expr
-    | Eparenexp expr -> fprintf fmtr "%a" print_expr expr
 
 and print_exprs fmtr = function
     | [] -> ()
@@ -118,3 +119,7 @@ and print_binop fmtr = function
 and print_unop fmtr = function
     | Op_not -> fprintf fmtr "%s" "not"
     | Op_minus -> fprintf fmtr "%s" "-"
+(* 
+and strip_paren fmtr = function
+    | Eparen paren_expr -> fprintf fmtr "%a" print_expr paren_expr
+    | expr -> fprintf fmtr "%a" print_expr expr
