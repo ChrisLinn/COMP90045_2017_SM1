@@ -122,101 +122,77 @@ and print_unop fmtr (unop, expr) = match unop with
     | Op_not -> fprintf fmtr "%a" print_not_expr expr
     | Op_minus -> fprintf fmtr "%a" print_minus_expr expr
 
-and print_add_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_add_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a + %a" print_expr lexpr print_expr rexpr
 
-and print_sub_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_sub_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a - %a" print_expr lexpr print_expr rexpr
 
-and print_mul_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_mul_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a * %a" print_expr lexpr print_expr rexpr
 
-and print_eq_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_div_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a / %a" print_expr lexpr print_expr rexpr
 
-and print_ne_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_eq_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr
 
-and print_lt_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_ne_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a != %a" print_expr lexpr print_expr rexpr
 
-and print_gt_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_lt_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a < %a" print_expr lexpr print_expr rexpr
 
-and print_le_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_gt_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a <= %a" print_expr lexpr print_expr rexpr
 
-and print_ge_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_le_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a > %a" print_expr lexpr print_expr rexpr
 
-and print_add_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_ge_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a >= %a" print_expr lexpr print_expr rexpr
 
-and print_and_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_and_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a and %a" print_expr lexpr print_expr rexpr
 
-and print_or_expr fmtr (lepxr, rexpr) = match lexpr
-    | Eparen expr_inside -> 
-        begin
-            match expr_inside with
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-        end
-    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+and print_or_expr fmtr = function
+    | (Eparen lexpr_inside, Eparen rexpr_inside) -> 
+    | (Eparen lexpr_inside, rexpr) -> 
+    | (lexpr, Eparen rexpr_inside) -> 
+    | (lexpr, rexpr) -> fprintf fmtr "%a or %a" print_expr lexpr print_expr rexpr
 
 and print_not_expr fmtr = function
     | Eparen expr_inside -> 
