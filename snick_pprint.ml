@@ -119,30 +119,27 @@ and print_binop fmtr (lexpr, binop, rexpr) = match binop with
     | Op_or -> fprintf fmtr "%s" "+" (*further implementation needed*)
 
 and print_unop fmtr (unop, expr) = match unop with
-    | Op_not ->
-        begin
-            match expr with
-            | Eparen expr_inside -> 
-                begin
-                    match expr_inside with
-                    | Ebinop (lexpr, Op_and, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside
-                    | Ebinop (lexpr, Op_or, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside
-                    | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
-                end
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr
-        end
-    | Op_minus ->
-        begin
-            match expr with
-            | Eparen expr_inside -> 
-                begin
-                    match expr_inside with
-                    | Eunop (Op_minus, minus_expr) -> fprintf fmtr "%s %a" "-" print_expr expr_inside
-                    | _ -> fprintf fmtr "%s (%a)" "-" print_expr expr_inside
-                end
-            | _ -> fprintf fmtr "%s %a" "-" print_expr expr
-        end
+    | Op_not -> fprintf fmtr "%a" print_not_expr expr
+    | Op_minus -> fprintf fmtr "%a" print_minus_expr expr
 
+and print_not_expr fmtr = function
+    | Eparen expr_inside -> 
+        begin
+            match expr_inside with
+            | Ebinop (lexpr, Op_and, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside
+            | Ebinop (lexpr, Op_or, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside
+            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
+        end
+    | expr -> fprintf fmtr "%s %a" "not" print_expr expr
+
+and print_minus_expr fmtr = function
+    | Eparen expr_inside -> 
+        begin
+            match expr_inside with
+            | Eunop (Op_minus, minus_expr) -> fprintf fmtr "%s %a" "-" print_expr expr_inside
+            | _ -> fprintf fmtr "%s (%a)" "-" print_expr expr_inside
+        end
+    | expr -> fprintf fmtr "%s %a" "-" print_expr expr
 
 (* 
 and print_binop fmtr = function
