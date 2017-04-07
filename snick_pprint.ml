@@ -105,18 +105,18 @@ and print_exprs fmtr = function
     | x::xs -> fprintf fmtr "%a, %a" print_expr x print_exprs xs
 
 and print_binop fmtr (lexpr, binop, rexpr) = match binop with
-    | Op_add -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_sub -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_mul -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_div -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_eq -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_ne -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_lt -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_gt -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_le -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_ge -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_and -> fprintf fmtr "%s" "+" (*further implementation needed*)
-    | Op_or -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_add -> fprintf fmtr "%a" print_add_expr expr
+    | Op_sub -> fprintf fmtr "%a" print_sub_expr expr
+    | Op_mul -> fprintf fmtr "%a" print_mul_expr expr
+    | Op_div -> fprintf fmtr "%a" print_div_expr expr
+    | Op_eq -> fprintf fmtr "%a" print_eq_expr expr
+    | Op_ne -> fprintf fmtr "%a" print_ne_expr expr
+    | Op_lt -> fprintf fmtr "%a" print_lt_expr expr
+    | Op_gt -> fprintf fmtr "%a" print_gt_expr expr
+    | Op_le -> fprintf fmtr "%a" print_le_expr expr
+    | Op_ge -> fprintf fmtr "%a" print_ge_expr expr
+    | Op_and -> fprintf fmtr "%a" print_and_expr expr
+    | Op_or -> fprintf fmtr "%a" print_or_expr expr
 
 and print_unop fmtr (unop, expr) = match unop with
     | Op_not -> fprintf fmtr "%a" print_not_expr expr
