@@ -92,16 +92,37 @@ and print_expr fmtr = function
     | Eint int_const -> fprintf fmtr "%d" int_const
     | Efloat float_const -> fprintf fmtr "%f" float_const
     | Estring string_const -> fprintf fmtr "%s" string_const
-(*     | Eparen expr -> fprintf fmtr "%a" strip_paren expr *)
     | Eparen expr -> fprintf fmtr "%a" print_expr expr
-    | Ebinop (lexpr, binop, rexpr) -> fprintf fmtr "%a %a %a" print_expr lexpr print_binop binop print_expr rexpr
-    | Eunop (unop, expr) -> fprintf fmtr "%a %a" print_unop unop print_expr expr
+(*     | Eparen expr -> fprintf fmtr "%a" strip_paren expr *)
+    | Ebinop bin_expr -> fprintf fmtr "%a" print_binop bin_expr
+    | Eunop un_expr -> fprintf fmtr "%a" print_unop un_expr
+(*     | Ebinop (lexpr, binop, rexpr) -> fprintf fmtr "%a %a %a" print_expr lexpr print_binop binop print_expr rexpr *)
+(*     | Eunop (unop, expr) -> fprintf fmtr "%a %a" print_unop unop print_expr expr *)
 
 and print_exprs fmtr = function
     | [] -> ()
     | x::[] -> fprintf fmtr "%a" print_expr x
     | x::xs -> fprintf fmtr "%a, %a" print_expr x print_exprs xs
 
+and print_binop fmtr (lexpr, binop, rexpr) = match binop with
+    | Op_add -> 
+    | Op_sub -> 
+    | Op_mul -> 
+    | Op_div -> 
+    | Op_eq -> 
+    | Op_ne -> 
+    | Op_lt -> 
+    | Op_gt -> 
+    | Op_le -> 
+    | Op_ge -> 
+    | Op_and -> 
+    | Op_or -> 
+
+and print_unnop fmtr (unop, expr) = match unop with
+    | Op_not -> 
+    | Op_minus -> 
+
+(* 
 and print_binop fmtr = function
     | Op_add -> fprintf fmtr "%s" "+"
     | Op_sub -> fprintf fmtr "%s" "-"
@@ -119,7 +140,10 @@ and print_binop fmtr = function
 and print_unop fmtr = function
     | Op_not -> fprintf fmtr "%s" "not"
     | Op_minus -> fprintf fmtr "%s" "-"
+*)
+
 (* 
 and strip_paren fmtr = function
     | Eparen paren_expr -> fprintf fmtr "%a" print_expr paren_expr
     | expr -> fprintf fmtr "%a" print_expr expr
+*)
