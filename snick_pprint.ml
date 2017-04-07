@@ -393,42 +393,28 @@ and print_or_expr fmtr = function
 and print_not_expr fmtr = function
     | Eparen expr_inside ->
         begin
-            match expr_inside with
-            | Ebinop (lexpr, Op_and, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside
-            | Ebinop (lexpr, Op_or, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside
-            | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
+            let
+                expr_inside_strip = strip_paren expr_inside
+            in
+                match expr_inside_strip with
+                | Ebinop (lexpr, Op_and, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside_strip
+                | Ebinop (lexpr, Op_or, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside_strip
+                | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside_strip
         end
     | expr -> fprintf fmtr "%s %a" "not" print_expr expr
 
 and print_minus_expr fmtr = function
     | Eparen expr_inside ->
         begin
-            match expr_inside with
-            | Eunop (Op_minus, minus_expr) -> fprintf fmtr "%s %a" "-" print_expr expr_inside
-            | _ -> fprintf fmtr "%s (%a)" "-" print_expr expr_inside
+            let
+                expr_inside_strip = strip_paren expr_inside
+            in
+                match expr_inside_strip with
+                | Eunop (Op_minus, minus_expr) -> fprintf fmtr "%s %a" "-" print_expr expr_inside_strip
+                | _ -> fprintf fmtr "%s (%a)" "-" print_expr expr_inside_strip
         end
     | expr -> fprintf fmtr "%s %a" "-" print_expr expr
 
 and strip_paren expr = match expr with
     | Eparen paren_expr -> strip_paren paren_expr
     | _ -> expr
-(* 
-and print_binop fmtr = function
-    | Op_add -> fprintf fmtr "%s" "+"
-    | Op_sub -> fprintf fmtr "%s" "-"
-    | Op_mul -> fprintf fmtr "%s" "*"
-    | Op_div -> fprintf fmtr "%s" "/"
-    | Op_eq -> fprintf fmtr "%s" "="
-    | Op_ne -> fprintf fmtr "%s" "!="
-    | Op_lt -> fprintf fmtr "%s" "<"
-    | Op_gt -> fprintf fmtr "%s" ">"
-    | Op_le -> fprintf fmtr "%s" "<="
-    | Op_ge -> fprintf fmtr "%s" ">="
-    | Op_and -> fprintf fmtr "%s" "and"
-    | Op_or -> fprintf fmtr "%s" "or"
-
-and print_unop fmtr = function
-    | Op_not -> fprintf fmtr "%s" "not"
-    | Op_minus -> fprintf fmtr "%s" "-"
-*)
-
