@@ -105,22 +105,36 @@ and print_exprs fmtr = function
     | x::xs -> fprintf fmtr "%a, %a" print_expr x print_exprs xs
 
 and print_binop fmtr (lexpr, binop, rexpr) = match binop with
-    | Op_add -> 
-    | Op_sub -> 
-    | Op_mul -> 
-    | Op_div -> 
-    | Op_eq -> 
-    | Op_ne -> 
-    | Op_lt -> 
-    | Op_gt -> 
-    | Op_le -> 
-    | Op_ge -> 
-    | Op_and -> 
-    | Op_or -> 
+    | Op_add -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_sub -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_mul -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_div -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_eq -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_ne -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_lt -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_gt -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_le -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_ge -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_and -> fprintf fmtr "%s" "+" (*further implementation needed*)
+    | Op_or -> fprintf fmtr "%s" "+" (*further implementation needed*)
 
-and print_unnop fmtr (unop, expr) = match unop with
-    | Op_not -> 
-    | Op_minus -> 
+and print_unop fmtr (unop, expr) = match unop with
+    | Op_not ->
+        begin
+            match expr with
+            | Eparen expr_inside -> 
+                begin
+                    match expr_inside with
+                    | patt -> expr
+                    | _ -> expr2
+                end
+            | _ -> fprintf fmtr "%s %a" "not" print_expr expr
+        end
+    | Op_minus ->
+        begin
+            fprintf fmtr "%s" "+" (*further implementation needed*)
+        end
+
 
 (* 
 and print_binop fmtr = function
