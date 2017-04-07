@@ -102,18 +102,18 @@ and print_exprs fmtr = function
     | x::xs -> fprintf fmtr "%a, %a" print_expr x print_exprs xs
 
 and print_binop fmtr (lexpr, binop, rexpr) = match binop with
-    | Op_add -> fprintf fmtr "%a" print_add_expr (lepxr, rexpr)
-    | Op_sub -> fprintf fmtr "%a" print_sub_expr (lepxr, rexpr)
-    | Op_mul -> fprintf fmtr "%a" print_mul_expr (lepxr, rexpr)
-    | Op_div -> fprintf fmtr "%a" print_div_expr (lepxr, rexpr)
-    | Op_eq -> fprintf fmtr "%a" print_eq_expr (lepxr, rexpr)
-    | Op_ne -> fprintf fmtr "%a" print_ne_expr (lepxr, rexpr)
-    | Op_lt -> fprintf fmtr "%a" print_lt_expr (lepxr, rexpr)
-    | Op_gt -> fprintf fmtr "%a" print_gt_expr (lepxr, rexpr)
-    | Op_le -> fprintf fmtr "%a" print_le_expr (lepxr, rexpr)
-    | Op_ge -> fprintf fmtr "%a" print_ge_expr (lepxr, rexpr)
-    | Op_and -> fprintf fmtr "%a" print_and_expr (lepxr, rexpr)
-    | Op_or -> fprintf fmtr "%a" print_or_expr (lepxr, rexpr)
+    | Op_add -> fprintf fmtr "%a" print_add_expr (lexpr, rexpr)
+    | Op_sub -> fprintf fmtr "%a" print_sub_expr (lexpr, rexpr)
+    | Op_mul -> fprintf fmtr "%a" print_mul_expr (lexpr, rexpr)
+    | Op_div -> fprintf fmtr "%a" print_div_expr (lexpr, rexpr)
+    | Op_eq -> fprintf fmtr "%a" print_eq_expr (lexpr, rexpr)
+    | Op_ne -> fprintf fmtr "%a" print_ne_expr (lexpr, rexpr)
+    | Op_lt -> fprintf fmtr "%a" print_lt_expr (lexpr, rexpr)
+    | Op_gt -> fprintf fmtr "%a" print_gt_expr (lexpr, rexpr)
+    | Op_le -> fprintf fmtr "%a" print_le_expr (lexpr, rexpr)
+    | Op_ge -> fprintf fmtr "%a" print_ge_expr (lexpr, rexpr)
+    | Op_and -> fprintf fmtr "%a" print_and_expr (lexpr, rexpr)
+    | Op_or -> fprintf fmtr "%a" print_or_expr (lexpr, rexpr)
 
 and print_unop fmtr (unop, expr) = match unop with
     | Op_not -> fprintf fmtr "%a" print_not_expr expr
@@ -345,7 +345,7 @@ and print_eq_expr fmtr = function
                 | Eunop (Op_minus, _) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr_inside_strip            
                 | _ -> fprintf fmtr "%a = (%a)" print_expr lexpr print_expr rexpr_inside_strip
         end
-    | (lexpr, rexpr) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr_inside_strip
+    | (lexpr, rexpr) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr
 
 and print_ne_expr fmtr = function
     | (Eparen lexpr_inside, Eparen rexpr_inside) ->
