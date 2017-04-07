@@ -133,7 +133,14 @@ and print_unop fmtr (unop, expr) = match unop with
         end
     | Op_minus ->
         begin
-            fprintf fmtr "%s" "+" (*further implementation needed*)
+            match expr with
+            | Eparen expr_inside -> 
+                begin
+                    match expr_inside with
+                    | Eunop (Op_minus, minus_expr) -> fprintf fmtr "%s %a" "-" print_expr expr_inside
+                    | _ -> fprintf fmtr "%s (%a)" "-" print_expr expr_inside
+                end
+            | _ -> fprintf fmtr "%s %a" "-" print_expr expr
         end
 
 
