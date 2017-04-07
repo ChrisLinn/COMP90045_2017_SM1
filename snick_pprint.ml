@@ -125,8 +125,9 @@ and print_unop fmtr (unop, expr) = match unop with
             | Eparen expr_inside -> 
                 begin
                     match expr_inside with
-                    | patt -> expr
-                    | _ -> expr2
+                    | Ebinop (lexpr, Op_and, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside
+                    | Ebinop (lexpr, Op_or, rexpr) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside
+                    | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside
                 end
             | _ -> fprintf fmtr "%s %a" "not" print_expr expr
         end
