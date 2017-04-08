@@ -37,9 +37,8 @@ let main () =
     try
         let prog = Snick_parse.program Snick_lex.token lexbuf in
         match !mode with
-        | PrettyPrint ->
-          Snick_pprint.print_program Format.std_formatter prog 
-        | Compile -> (Printf.printf "Compiling function is not yet enabled!!!\n")
+        | PrettyPrint -> Snick_pprint.print_program Format.std_formatter prog 
+        | Compile -> print_string "Compiling function is not yet enabled!!!\n"
     with
         | Failure x -> print_string ("Lexing Error" ^ (err_pos lexbuf) ^ "\n")
         | Parsing.Parse_error -> print_string ("Parsing Error" ^ (err_pos lexbuf) ^ "\n")
