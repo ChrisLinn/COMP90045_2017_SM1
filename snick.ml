@@ -42,7 +42,6 @@ let main () =
         | Compile -> (Printf.printf "Compiling function is not yet enabled!!!\n")
     with
         | Failure x -> print_string ("Lexing Error" ^ (err_pos lexbuf) ^ "\n")
-    | Parsing.Parse_error -> print_string
-    ("Parsing Error" ^ (err_pos lexbuf) ^ "\n")
+        | Parsing.Parse_error -> print_string ("Parsing Error" ^ (err_pos lexbuf) ^ "\n")
 
 let _ = main ()
