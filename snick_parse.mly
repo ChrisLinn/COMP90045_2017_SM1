@@ -1,8 +1,22 @@
+/*
+** File:          snick_ast.ml
+** Description:   Specification of a parser for Snick
+** Last Modified: 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*/
+
 /* ocamlyacc parser for snick */
 %{
 open Snick_ast
 %}
 
+/* tokens */
 %token EOF
 %token PROC END
 %token SEMICOLON
@@ -28,6 +42,7 @@ open Snick_ast
 %token LSQBRACK RSQBRACK
 %token LPAREN RPAREN
 
+/* associativity */
 %nonassoc EQ NE LT GT LE GE
 %left PLUS MINUS
 %left MULTI DIVID

@@ -1,15 +1,29 @@
+(*
+** File:          snick_ast.ml
+** Description:   Specification of a lexer for Snick
+** Last Modified: 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
 {
 open Snick_parse
 }
 
+(* some regex patterns *)
 let digit = ['0' - '9']
 let digits = digit+
 let floating = digits '.' digits
 let alpha = ['a' - 'z' 'A' - 'Z']
 let alnum = alpha | '_' | '\'' | digit
 let ident = (alpha | '_') alnum*
-let commment = '#' [^'\n']*
-let string = '"' [^'"']* '"'
+let commment = '#' [^'\n']*     (* comments *)
+let string = '"' [^'"']* '"'    (* string constant for write statement *)
 
 rule token = parse
     | commment                          { token lexbuf } (* skip comments *)
