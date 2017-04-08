@@ -1,3 +1,17 @@
+(*
+** File:          snick.ml
+** Description:   Main file for Snick compiler,
+**                modified based on given sample.
+** Last Modified: 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
 module P = Snick_parse
 
 (* Argument parsing code *)
@@ -40,7 +54,9 @@ let main () =
         | PrettyPrint -> Snick_pprint.print_program Format.std_formatter prog 
         | Compile -> print_string "Compiling function is not yet enabled!!!\n"
     with
+        (* Handle failure from lexer, print error position. *)
         | Failure x -> print_string ("Lexing Error" ^ (err_pos lexbuf) ^ "\n")
+        (* Handle error from parser, print error position. *)
         | Parsing.Parse_error -> print_string ("Parsing Error" ^ (err_pos lexbuf) ^ "\n")
 
 let _ = main ()

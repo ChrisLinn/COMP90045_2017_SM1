@@ -1,50 +1,74 @@
-(* pretty-printer converts from snick source code to well-formed style *)
+(*
+** File:          snick_pprint.ml
+** Description:   Pretty-printer converts from snick source code to well-formed style.
+** Last Modified: 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
 open Snick_ast
 open Format
 
+(* Print program as list of procedures. *)
 let rec print_program fmtr prog = print_procs fmtr prog
 
+(* Print list of procedures. *)
 and print_procs fmtr = function
     | [] -> ()
     | x::[] -> fprintf fmtr "%a@," print_proc x
     | x::xs -> fprintf fmtr "%a@,%a" print_proc x print_procs xs
 
+(* Print a single procedure. *)
 and print_proc fmtr (header, body) =
     fprintf fmtr "@[<v>proc %a@;<0 4>@[<v>%a@]@,end@]@." print_proc_header header print_proc_body body
 
+(* Print procedure header. *)
 and print_proc_header fmtr (ident, params) =
     fprintf fmtr "%s (%a)" ident print_params params
 
+(* Print the list of parameters in header. *)
 and print_params fmtr = function
     | [] -> ()
     | x :: [] -> fprintf fmtr "%a" print_param x
     | x :: xs -> fprintf fmtr "%a, %a" print_param x print_params  xs
 
+(* Print a single procedure parameter. *)
 and print_param fmtr (indicator, param_type, ident) =
     fprintf fmtr "%a %a %s" print_param_indc indicator print_type param_type ident
 
+(* Print the indicator of a procedure parameter. *)
 and print_param_indc fmtr = function
     | Val -> fprintf fmtr "%s" "val"
     | Ref -> fprintf fmtr "%s" "ref"
 
+(* Print the type of a procedure parameter. *)
 and print_type fmtr = function
     | Bool -> fprintf fmtr "%s" "bool"
     | Int -> fprintf fmtr "%s" "int"
     | Float -> fprintf fmtr "%s" "float"
 
+(* Print procedure body as a list of declarations followed by a list of statements. *)
 and print_proc_body fmtr prog_body =
     fprintf fmtr "%a@,%a" print_decls prog_body.decls print_stmts prog_body.stmts
-    
+
+(* Print the list of declarations. *)
 and print_decls fmtr = function
     | [] -> ()
     | x :: [] -> fprintf fmtr "%a@," print_decl x
     | x :: xs -> fprintf fmtr "%a@,%a" print_decl x print_decls xs
 
+(* Print the list of statements. *)
 and print_stmts fmtr = function
     | [] -> ()
     | x :: [] -> fprintf fmtr "%a" print_stmt x
     | x :: xs -> fprintf fmtr "%a@,%a" print_stmt x print_stmts xs
 
+(* Print a single declaration. *)
 and print_decl fmtr (var_type, variable) =
     fprintf fmtr "%a %a;" print_type var_type print_var variable
 
