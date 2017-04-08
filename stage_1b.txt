@@ -1,0 +1,886 @@
+============================================
+vis/zequnm.out
+00:57:17_Sunday_09_April_2017
+============================================
+COMP90045 project - Test of parser and pretty-printer
+User:  zequnm
+
+--- Makefile found ---
+--- Running Makefile ---
+ocamlopt  -g -c snick_ast.ml
+ocamlyacc snick_parse.mly
+ocamlc  -c snick_parse.mli
+ocamlopt  -g -c snick_parse.ml
+ocamllex snick_lex.mll
+94 states, 5679 transitions, table size 23280 bytes
+ocamlopt  -g -c snick_lex.ml
+ocamlopt  -g -c snick_pprint.ml
+ocamlopt  -g -c snick.ml
+ocamlopt -g -o snick snick_ast.cmx snick_lex.cmx snick_parse.cmx snick_pprint.cmx snick.cmx
+
+--- Succeeded ---
+
+**********************************************   Parsing bell.snick:
+Okay
+**********************************************   Parsing fib.snick:
+Okay
+**********************************************   Parsing gcd.snick:
+Okay
+**********************************************   Parsing hail.snick:
+Okay
+**********************************************   Parsing power.snick:
+Okay
+**********************************************   Parsing sort.snick:
+Mismatch:
+1,38c1
+< proc main ()
+<     int h;
+<     int j;
+<     int k;
+<     int tmp;
+<     int x[1..8];
+< 
+<     write "Provide 8 integers: ";
+<     read a[1];
+<     read a[2];
+<     read a[3];
+<     read a[4];
+<     read a[5];
+<     read a[6];
+<     read a[7];
+<     read a[8];
+<     h := 1;
+<     while h < 8 do
+<         j := h;
+<         k := h + 1;
+<         while k <= n do
+<             if x[k] > x[j] then
+<                 j := k;
+<             fi
+<         od
+<         tmp := x[h];
+<         x[h] := x[j];
+<         x[j] := tmp;
+<     od
+<     write "\nThe integers, sorted:\n\n";
+<     h := 1;
+<     while h <= 8 do
+<         write a[h];
+<         write "  ";
+<     od
+<     write "\n";
+< end
+< 
+---
+> Parsing Error: line 23, col 17.
+**********************************************   Parsing stddev.snick:
+Okay
+**********************************************   Parsing weird.snick:
+Okay
+**********************************************   Parsing paramsw.snick:
+ERROR: Parser accepted invalid program, with output:
+Parsing Error: line 3, col 0.
+7 of 9 tests passed.
+
+--- End of testing for zequnm ---\n
+
+============================================
+src/snick_pprint.ml
+00:57:16_Sunday_09_April_2017
+============================================
+(*
+** File:          snick_pprint.ml
+** Description:   Pretty-printer converts from snick source code to well-formed style.
+** Last Modified: Sun. 9th April 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+open Snick_ast
+open Format
+
+(* Print program as list of procedures. *)
+let rec print_program fmtr prog = print_procs fmtr prog
+
+(* Print list of procedures. *)
+and print_procs fmtr = function
+    | [] -> ()
+    | x::[] -> fprintf fmtr "%a@," print_proc x
+    | x::xs -> fprintf fmtr "%a@,%a" print_proc x print_procs xs
+
+(* Print a single procedure. *)
+and print_proc fmtr (header, body) =
+    fprintf fmtr "@[<v>proc %a@;<0 4>@[<v>%a@]@,end@]@." print_proc_header header print_proc_body body
+
+(* Print procedure header. *)
+and print_proc_header fmtr (ident, params) =
+    fprintf fmtr "%s (%a)" ident print_params params
+
+(* Print the list of parameters in header. *)
+and print_params fmtr = function
+    | [] -> ()
+    | x :: [] -> fprintf fmtr "%a" print_param x
+    | x :: xs -> fprintf fmtr "%a, %a" print_param x print_params  xs
+
+(* Print a single procedure parameter. *)
+and print_param fmtr (indicator, param_type, ident) =
+    fprintf fmtr "%a %a %s" print_param_indc indicator print_type param_type ident
+
+(* Print the indicator of a procedure parameter. *)
+and print_param_indc fmtr = function
+    | Val -> fprintf fmtr "%s" "val"
+    | Ref -> fprintf fmtr "%s" "ref"
+
+(* Print the type of a procedure parameter. *)
+and print_type fmtr = function
+    | Bool -> fprintf fmtr "%s" "bool"
+    | Int -> fprintf fmtr "%s" "int"
+    | Float -> fprintf fmtr "%s" "float"
+
+(* Print procedure body as a list of declarations followed by a list of statements. *)
+and print_proc_body fmtr prog_body =
+    fprintf fmtr "%a@,%a" print_decls prog_body.decls print_stmts prog_body.stmts
+
+(* Print the list of declarations. *)
+and print_decls fmtr = function
+    | [] -> ()
+    | x :: [] -> fprintf fmtr "%a@," print_decl x
+    | x :: xs -> fprintf fmtr "%a@,%a" print_decl x print_decls xs
+
+(* Print the list of statements. *)
+and print_stmts fmtr = function
+    | [] -> ()
+    | x :: [] -> fprintf fmtr "%a" print_stmt x
+    | x :: xs -> fprintf fmtr "%a@,%a" print_stmt x print_stmts xs
+
+(* Print a single declaration. *)
+and print_decl fmtr (var_type, variable) =
+    fprintf fmtr "%a %a;" print_type var_type print_var variable
+
+(* Print a variable. *)
+and print_var fmtr = function
+    | Single_variable ident -> fprintf fmtr "%s" ident
+    | Array_variable (ident, itvls) -> fprintf fmtr "%s[%a]" ident print_itvls itvls
+
+(* Print list of intervals. *)
+and print_itvls fmtr = function
+    | [] -> ()
+    | x::[] -> fprintf fmtr "%a" print_itvl x
+    | x::xs -> fprintf fmtr "%a,%a" print_itvl x print_itvls xs
+
+(* Print a single interval *)
+and print_itvl fmtr (st_pnt, end_pnt) =
+    fprintf fmtr "%d..%d" st_pnt end_pnt
+
+(* Print statement. *)
+and print_stmt fmtr = function
+    | Atom_stmt atom_stmt -> fprintf fmtr "%a" print_atom_stmt atom_stmt
+    | Comps_stmt comps_stmt -> fprintf fmtr "%a" print_comps_stmt comps_stmt
+
+(* Print atomic statement. *)
+and print_atom_stmt fmtr = function
+    | Assign (elem, expr) -> fprintf fmtr "%a := %a;" print_elem elem print_expr expr
+    | Read elem -> fprintf fmtr "read %a;" print_elem elem
+    | Write expr -> fprintf fmtr "write %a;" print_expr expr
+    | Call (ident, exprs) -> fprintf fmtr "%s(%a);" ident print_exprs exprs
+
+(* Print composite statement. *)
+and print_comps_stmt fmtr = function
+    | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,fi" 
+        print_expr expr print_stmts stmts
+    | If_then_else (expr, then_stmts, else_stmts) -> 
+        fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,else@;<0 4>@[<v>%a@]@,fi" 
+        print_expr expr print_stmts then_stmts print_stmts else_stmts
+    | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[<v>%a@]@,od" 
+        print_expr expr print_stmts stmts
+
+(* Print element to be assigned to or be read. *)
+and print_elem fmtr = function
+    | Single_elem ident -> fprintf fmtr "%s" ident
+    | Array_elem (ident, idxs) -> fprintf fmtr "%s[%a]" ident print_idxs idxs
+
+(* Print indexing. *)
+and print_idxs fmtr = function
+    | [] -> ()
+    | x::[] -> fprintf fmtr "%a" print_idx x
+    | x::xs -> fprintf fmtr "%a,%a" print_idx x print_idxs xs
+
+(* Print a index number. *)
+and print_idx fmtr = fprintf fmtr "%d"
+
+(* Print an expression. *)
+and print_expr fmtr = function
+    | Eelem elem -> fprintf fmtr "%a" print_elem elem
+    | Ebool bool_const -> fprintf fmtr "%B" bool_const
+    | Eint int_const -> fprintf fmtr "%d" int_const
+    | Efloat float_const -> fprintf fmtr "%f" float_const
+    | Estring string_const -> fprintf fmtr "%s" string_const
+    (* Parenthsis to be printed (or removed) in other functions. 
+       Any parenthsis on the right of an operator will be preserved.
+    *)
+    | Eparen expr -> fprintf fmtr "%a" print_expr expr
+    | Ebinop bin_expr -> fprintf fmtr "%a" print_binop bin_expr
+    | Eunop un_expr -> fprintf fmtr "%a" print_unop un_expr
+
+(* Print expressions. *)
+and print_exprs fmtr = function
+    | [] -> ()
+    | x::[] -> fprintf fmtr "%a" print_expr x
+    | x::xs -> fprintf fmtr "%a, %a" print_expr x print_exprs xs
+
+(* Print binary operations. 
+** Each operation will be printed differently according to their precedence.
+*)
+and print_binop fmtr (lexpr, binop, rexpr) = match binop with
+    | Op_add -> fprintf fmtr "%a" print_low_expr (lexpr, "+", rexpr)
+    | Op_sub -> fprintf fmtr "%a" print_low_expr (lexpr, "-", rexpr)
+    | Op_mul -> fprintf fmtr "%a" print_hgh_expr (lexpr, "*", rexpr)
+    | Op_div -> fprintf fmtr "%a" print_hgh_expr (lexpr, "/", rexpr)
+    | Op_eq -> fprintf fmtr "%a" print_comp_expr (lexpr, "=", rexpr)
+    | Op_ne -> fprintf fmtr "%a" print_comp_expr (lexpr, "!=", rexpr)
+    | Op_lt -> fprintf fmtr "%a" print_comp_expr (lexpr, "<", rexpr)
+    | Op_gt -> fprintf fmtr "%a" print_comp_expr (lexpr, ">", rexpr)
+    | Op_le -> fprintf fmtr "%a" print_comp_expr (lexpr, "<=", rexpr)
+    | Op_ge -> fprintf fmtr "%a" print_comp_expr (lexpr, ">=", rexpr)
+    | Op_and -> fprintf fmtr "%a" print_and_expr (lexpr, rexpr)
+    | Op_or -> fprintf fmtr "%a" print_or_expr (lexpr, rexpr)
+
+(* Print unary operators (not and unary minus). 
+** Since an expression is always on the right side of and unary operator,
+** any parenthisis will be preserved.
+*)
+and print_unop fmtr = function
+    | (Op_not, Eparen expr) -> fprintf fmtr "not (%a)" print_expr expr
+    | (Op_minus, Eparen expr) -> fprintf fmtr "-(%a)" print_expr expr
+    | (Op_not, expr) -> fprintf fmtr "not %a" print_expr expr
+    | (Op_minus, expr) -> fprintf fmtr "-%a" print_expr expr
+
+(* Print high precedence binary operators (multiply and divide). 
+** Any parenthsis on left side will be removed if the left side
+** operation has the same of higher precedence (/, *, unary minus).
+** Any parenthsis on the right is preserved.
+*)
+and print_hgh_expr fmtr = function
+    | (Eparen lexpr, optr, Eparen rexpr) -> begin
+        match lexpr with
+        | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_div, _) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+        | Eunop (Op_minus, _) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+        | _ -> fprintf fmtr "(%a) %s (%a)" print_expr lexpr optr print_expr rexpr
+    end
+    | (Eparen lexpr, optr, rexpr) -> begin
+        match lexpr with
+        | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_div, _) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+        | Eunop (Op_minus, _) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+        | _ -> fprintf fmtr "(%a) %s %a" print_expr lexpr optr print_expr rexpr
+    end
+    | (lexpr, optr, Eparen rexpr) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+    | (lexpr, optr, rexpr) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+
+(* Print low precedence binary operators (plus and minus). 
+** Any parenthsis on left side will be removed if the left side
+** operation has the same of higher precedence (+, -, *, /, unary minus).
+** Any parenthsis on the right is preserved.
+*)
+and print_low_expr fmtr = function
+    | (Eparen lexpr, optr, Eparen rexpr) -> begin
+        match lexpr with
+        | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_div, _) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_add, _) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_sub, _) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+        | Eunop (Op_minus, _) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+        | _ -> fprintf fmtr "(%a) %s (%a)" print_expr lexpr optr print_expr rexpr
+    end
+    | (Eparen lexpr, optr, rexpr) -> begin
+        match lexpr with
+        | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_div, _) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_add, _) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_sub, _) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+        | Eunop (Op_minus, _) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+        | _ -> fprintf fmtr "(%a) %s %a" print_expr lexpr optr print_expr rexpr
+    end
+    | (lexpr, optr, Eparen rexpr) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+    | (lexpr, optr, rexpr) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+
+(* Print all the comparison binary operators (=, !=, <, >, <=, >=). 
+** Any parenthsis on left side will be preserved if the left side
+** operation has the lower precedence (not, and, or).
+** Any parenthsis on the right is preserved.
+*)
+and print_comp_expr fmtr = function
+    | (Eparen lexpr, optr, Eparen rexpr) -> begin
+        match lexpr with
+        | Ebinop (_, Op_and, _) -> fprintf fmtr "(%a) %s (%a)" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_or, _) -> fprintf fmtr "(%a) %s (%a)" print_expr lexpr optr print_expr rexpr
+        | Eunop (Op_not, _) -> fprintf fmtr "(%a) %s (%a)" print_expr lexpr optr print_expr rexpr
+        | _ -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+    end
+    | (Eparen lexpr, optr, rexpr) -> begin
+        match lexpr with
+        | Ebinop (_, Op_and, _) -> fprintf fmtr "(%a) %s %a" print_expr lexpr optr print_expr rexpr
+        | Ebinop (_, Op_or, _) -> fprintf fmtr "(%a) %s %a" print_expr lexpr optr print_expr rexpr
+        | Eunop (Op_not, _) -> fprintf fmtr "(%a) %s %a" print_expr lexpr optr print_expr rexpr
+        | _ -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+    end
+    | (lexpr, optr, Eparen rexpr) -> fprintf fmtr "%a %s (%a)" print_expr lexpr optr print_expr rexpr
+    | (lexpr, optr, rexpr) -> fprintf fmtr "%a %s %a" print_expr lexpr optr print_expr rexpr
+
+(* Print expression involving and binary operator. 
+** Since the 'and' operator's precedence is only higher than 'or',
+** unless the expression on left is 'or', any parenthsis on left is 
+** unnecessary and will be removed.
+** Any parenthsis on the right is preserved.
+*)
+and print_and_expr fmtr = function
+    | (Eparen lexpr, Eparen rexpr) -> begin
+        match lexpr with
+        | Ebinop (_, Op_or, _) -> fprintf fmtr "(%a) and (%a)" print_expr lexpr print_expr rexpr
+        | _ -> fprintf fmtr "%a and (%a)" print_expr lexpr print_expr rexpr
+    end
+    | (Eparen lexpr, rexpr) -> begin
+        match lexpr with
+        | Ebinop (_, Op_or, _) -> fprintf fmtr "(%a) and %a" print_expr lexpr print_expr rexpr
+        | _ -> fprintf fmtr "%a and %a" print_expr lexpr print_expr rexpr
+    end
+    | (lexpr, Eparen rexpr) -> fprintf fmtr "%a and (%a)" print_expr lexpr print_expr rexpr
+    | (lexpr, rexpr) -> fprintf fmtr "%a and %a" print_expr lexpr print_expr rexpr
+
+(* Print expression involving or binary operator. 
+** Since the 'or' operator has the lowest precedence,
+** any parenthsis is unnecessary and will be removed.
+*)
+and print_or_expr fmtr (lexpr, rexpr) = 
+    fprintf fmtr "%a or %a" print_expr lexpr print_expr rexpr
+============================================
+src/Makefile.depend
+00:57:16_Sunday_09_April_2017
+============================================
+#
+# Makefile.depend
+#
+# Group Name: Mainframe
+#
+
+snick.cmo : snick_pprint.cmi snick_parse.cmi snick_lex.cmo
+snick.cmx : snick_pprint.cmx snick_parse.cmx snick_lex.cmx
+snick_ast.cmi :
+snick_parse.cmi : snick_ast.cmi
+snick_pprint.cmi : snick_ast.cmi
+snick_ast.cmo : snick_ast.cmi
+snick_ast.cmx : snick_ast.cmi
+snick_lex.cmo : snick_parse.cmi
+snick_lex.cmx : snick_parse.cmx
+snick_parse.cmo : snick_ast.cmi snick_parse.cmi
+snick_parse.cmx : snick_ast.cmx snick_parse.cmi
+snick_pprint.cmo : snick_ast.cmi snick_pprint.cmi
+snick_pprint.cmx : snick_ast.cmx snick_pprint.cmi
+snick.cmo : snick_pprint.cmi snick_parse.cmi snick_lex.cmo
+snick.cmx : snick_pprint.cmx snick_parse.cmx snick_lex.cmx
+============================================
+src/snick_lex.mll
+00:57:16_Sunday_09_April_2017
+============================================
+(*
+** File:          snick_ast.ml
+** Description:   Specification of a lexer for Snick
+** Last Modified: Tue. 4th April 2017
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+{
+open Snick_parse
+}
+
+(* some regex patterns *)
+let digit = ['0' - '9']
+let digits = digit+
+let floating = digits '.' digits
+let alpha = ['a' - 'z' 'A' - 'Z']
+let alnum = alpha | '_' | '\'' | digit
+let ident = (alpha | '_') alnum*
+let commment = '#' [^'\n']*     (* comments *)
+let string = '"' [^'"']* '"'    (* string constant for write statement *)
+
+rule token = parse
+    | commment                          { token lexbuf } (* skip comments *)
+    | [' ' '\t']                        { token lexbuf } (* skip blanks*)
+    | '\n'                              { Lexing.new_line lexbuf ; token lexbuf }
+    | '-'? digits as lxm                { INT_CONST (int_of_string lxm) }
+    | '-'? floating as lxm              { FLOAT_CONST (float_of_string lxm) }
+    | eof                               { EOF }
+    (*  keywords *)
+    | "not"                             { NOT }
+    | "and"                             { AND }
+    | "or"                              { OR }
+    | "float"                           { FLOAT }
+    | "int"                             { INT }
+    | "bool"                            { BOOL }
+    | "false"                           { BOOL_CONST false }
+    | "true"                            { BOOL_CONST true }
+    | "while"                           { WHILE }
+    | "do"                              { DO }
+    | "od"                              { OD }
+    | "if"                              { IF }
+    | "then"                            { THEN }
+    | "else"                            { ELSE }
+    | "fi"                              { FI }
+    | "proc"                            { PROC }
+    | "end"                             { END }
+    | "read"                            { READ }
+    | "write"                           { WRITE }
+    | "ref"                             { REF }
+    | "val"                             { VAL }
+    | ":="                              { ASSIGN }
+    | '('                               { LPAREN }
+    | ')'                               { RPAREN }
+    | '['                               { LSQBRACK }
+    | ']'                               { RSQBRACK }
+    | '='                               { EQ }
+    | '.'                               { DOT }
+    | "!="                              { NE }
+    | ">="                              { GE }
+    | "<="                              { LE }
+    | '>'                               { GT }
+    | '<'                               { LT }
+    | '+'                               { PLUS }
+    | '-'                               { MINUS }
+    | '*'                               { MULTI }
+    | '/'                               { DIVID }
+    | ','                               { COMMA }
+    | ';'                               { SEMICOLON }
+    | ident as lxm                      { IDENT lxm }
+    | string as lxm                     { STRING_CONST lxm}
+============================================
+src/Makefile
+00:57:16_Sunday_09_April_2017
+============================================
+#
+# Makefile
+#
+# Group Name: Mainframe
+#
+
+TARGETS = snick
+TARGETS_BYTE=$(TARGETS:%=%.byte)
+
+MODULES = snick_ast snick_lex snick_parse snick_pprint
+MLFILES = $(addsuffix .ml, $(MODULES))
+CMOFILES = $(addsuffix .cmo, $(MODULES))
+CMXFILES = $(addsuffix .cmx, $(MODULES))
+
+ALLMODULES = $(MODULES) snick
+
+OCAMLLEX = ocamllex
+OCAMLYACC = ocamlyacc
+OCAMLDEP = ocamldep
+
+OCAMLFLAGS =
+
+all : opt byte
+byte: $(TARGETS_BYTE)
+opt: $(TARGETS)
+
+%.cmi: %.mli
+	ocamlc $(OCAMLFLAGS) -c $<
+
+%.cmo: %.ml
+	ocamlc $(OCAMLFLAGS) -g -c $<
+
+%.cmx: %.ml
+	ocamlopt $(OCAMLOPTFLAGS) -g -c $<
+
+%.ml: %.mll
+	$(OCAMLLEX) $^
+
+%.ml %.mli: %.mly
+	$(OCAMLYACC) $^
+
+snick.byte : $(CMOFILES) snick.cmo
+	ocamlc -g -o $@ $^
+
+snick : $(CMXFILES) snick.cmx
+	ocamlopt -g -o $@ $^
+
+clean :
+	rm -f *.cmo *.cmi *.cmx *.o
+	rm -f snick_lex.ml snick_parse.ml snick_parse.mli
+
+clobber : clean
+	rm -f $(TARGETS) $(TARGETS_BYTE)
+
+.PHONY : clean clobber depend
+
+# include depend
+depend: snick_lex.ml snick_parse.ml
+	$(OCAMLDEP) snick.ml snick.mli $(ALLMODULES:%=%.mli) $(ALLMODULES:%=%.ml) >Makefile.depend
+
+-include Makefile.depend
+============================================
+src/snick_parse.mly
+00:57:16_Sunday_09_April_2017
+============================================
+/*
+** File:          snick_ast.ml
+** Description:   Specification of a parser for Snick
+** Last Modified: Tue. 4th April 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*/
+
+/* ocamlyacc parser for snick */
+%{
+open Snick_ast
+%}
+
+/* tokens */
+%token EOF
+%token PROC END
+%token SEMICOLON
+%token COMMA
+%token DOT
+%token WHILE DO OD
+%token IF THEN ELSE FI
+%token <bool> BOOL_CONST
+%token <int> INT_CONST
+%token <float> FLOAT_CONST
+%token <string> STRING_CONST
+%token VAL REF
+%token <string> IDENT
+%token BOOL INT FLOAT
+%token WRITE READ
+%token ASSIGN
+%token OR
+%token AND
+%token NOT
+%token EQ NE LT LE GT GE
+%token PLUS MINUS
+%token MULTI DIVID
+%token LSQBRACK RSQBRACK
+%token LPAREN RPAREN
+
+/* associativity */
+%nonassoc EQ NE LT GT LE GE
+%left PLUS MINUS
+%left MULTI DIVID
+%left AND OR
+%nonassoc NOT
+%nonassoc UMINUS
+
+%type <Snick_ast.program> program
+
+%start program
+%%
+
+program:
+    procs   { List.rev $1 }
+
+/* Builds procs in reverse order */
+procs:
+    | procs proc { $2 :: $1 }
+    | proc { [$1] }
+
+proc:
+    PROC proc_header proc_body END { ($2, $3) }
+
+proc_header:
+    IDENT LPAREN params RPAREN { ($1, List.rev $3) }
+
+/* Builds params in reverse order */
+params:
+    | params COMMA param { $3 :: $1 }
+    | param { [$1] }
+    | { [] }
+
+param:
+    param_indc typespec IDENT { ($1, $2, $3) }
+
+param_indc:
+    | VAL { Val }
+    | REF { Ref }
+
+typespec:
+    | BOOL { Bool }
+    | FLOAT { Float }
+    | INT { Int }
+
+proc_body:
+    decls stmts { { decls = List.rev $1; stmts = List.rev $2 } }
+
+/* Builds decls in reverse order */
+decls :
+    | decls decl { $2 :: $1 }
+    | { [] }  
+
+decl:
+    | typespec variable SEMICOLON { ($1, $2) }
+
+variable:
+    | IDENT { Single_variable $1 }
+    | IDENT dimension { Array_variable ($1, $2) }
+
+dimension:
+    LSQBRACK intervals RSQBRACK { List.rev $2 }
+  
+/* Builds intervals in reverse order */
+intervals:
+    | intervals COMMA interval { $3 :: $1 }
+    | interval { [$1] }
+
+interval:
+    INT_CONST DOT DOT INT_CONST { ($1, $4) }
+
+/* Builds stmts in reverse order */
+stmts:
+    | stmts stmt { $2 :: $1 }
+    | stmt { [$1] }
+
+stmt:
+    | atom_stmt { Atom_stmt $1 }
+    | comps_stmt { Comps_stmt $1 }
+
+atom_stmt:
+    | elem ASSIGN expr SEMICOLON { Assign ($1, $3) }
+    | READ elem SEMICOLON { Read $2 }
+    | WRITE expr SEMICOLON { Write $2 }
+    | IDENT LPAREN exprs RPAREN SEMICOLON { Call ($1, List.rev $3) }
+
+comps_stmt:
+    | IF expr THEN stmts FI { If_then ($2, List.rev $4) }
+    | IF expr THEN stmts ELSE stmts FI { If_then_else ($2, List.rev $4, List.rev $6) }
+    | WHILE expr DO stmts OD { While ($2, List.rev $4) }
+
+elem:
+    | IDENT { Single_elem $1 }
+    | IDENT LSQBRACK index RSQBRACK { Array_elem ($1, List.rev $3) }
+
+index:
+    | index COMMA INT_CONST { $3 :: $1 }
+    | INT_CONST { [$1] }
+
+expr:
+    /* Variable element */
+    | elem { Eelem $1 }
+    /* Constants */
+    | BOOL_CONST { Ebool $1 }
+    | INT_CONST { Eint $1 }
+    | FLOAT_CONST { Efloat $1 }
+    | STRING_CONST { Estring $1 }
+    /* Expression inside a pair of  parentheses */
+    | LPAREN expr RPAREN { Eparen $2 }
+    /* Binary operators */
+    | expr PLUS expr { Ebinop ($1, Op_add, $3) }
+    | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
+    | expr MULTI expr { Ebinop ($1, Op_mul, $3) }
+    | expr DIVID expr { Ebinop ($1, Op_div, $3) }
+    | expr EQ expr { Ebinop ($1, Op_eq, $3) }
+    | expr NE expr { Ebinop ($1, Op_ne, $3) }
+    | expr LT expr { Ebinop ($1, Op_lt, $3) }
+    | expr GT expr { Ebinop ($1, Op_gt, $3) }
+    | expr LE expr { Ebinop ($1, Op_le, $3) }
+    | expr GE expr { Ebinop ($1, Op_ge, $3) }
+    | expr AND expr { Ebinop ($1, Op_and, $3) }
+    | expr OR expr { Ebinop ($1, Op_or, $3) }
+    /* Unary operators */
+    | NOT expr { Eunop (Op_not, $2) }
+    | UMINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
+
+
+/* Builds exprs in reverse order */
+exprs:
+    | exprs COMMA expr { $3 :: $1 }
+    | expr { [$1] }
+============================================
+src/snick.ml
+00:57:16_Sunday_09_April_2017
+============================================
+(*
+** File:          snick.ml
+** Description:   Main file for Snick compiler,
+**                modified based on given sample.
+** Last Modified: Wed. 5th April 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+module P = Snick_parse
+
+(* Argument parsing code *)
+let infile_name = ref None
+
+type compiler_mode = PrettyPrint | Compile
+let mode = ref Compile
+
+(* print current position of lexbuf *)
+let err_pos lexbuf =
+    let pos = Lexing.lexeme_start_p lexbuf in
+        Format.sprintf ": line %d, col %d."
+            (pos.Lexing.pos_lnum)
+            (pos.Lexing.pos_cnum - pos.Lexing.pos_bol) 
+
+(* --------------------------------------------- *)
+(*  Specification for command-line options       *)
+(* --------------------------------------------- *)
+let (speclist:(Arg.key * Arg.spec * Arg.doc) list) =
+    ["-p",
+       Arg.Unit(fun () -> mode := PrettyPrint),
+       " Run the compiler in pretty-printer mode"
+    ]
+
+let main () =
+    (* Parse the command-line arguments *)
+    Arg.parse speclist
+        (begin fun fname -> infile_name := Some fname end)
+        "snick [-p] [bean source]" ;
+    (* Open the input file *)
+    let infile = match !infile_name with
+    | None -> stdin
+    | Some fname -> open_in fname in
+    (* Initialize lexing buffer *)
+    let lexbuf = Lexing.from_channel infile in
+    (* Call the parser *)
+    try
+        let prog = Snick_parse.program Snick_lex.token lexbuf in
+        match !mode with
+        | PrettyPrint -> Snick_pprint.print_program Format.std_formatter prog 
+        | Compile -> print_string "Compiling function is not yet enabled!!!\n"
+    with
+        (* Handle failure from lexer, print error position. *)
+        | Failure x -> print_string ("Lexing Error" ^ (err_pos lexbuf) ^ "\n")
+        (* Handle error from parser, print error position. *)
+        | Parsing.Parse_error -> print_string ("Parsing Error" ^ (err_pos lexbuf) ^ "\n")
+
+let _ = main ()
+============================================
+src/snick_ast.ml
+00:57:16_Sunday_09_April_2017
+============================================
+(*
+** File:          snick_ast.ml
+** Description:   Specification of the abstract syntax tree for Snick
+** Last Modified: Fri. 7th April 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+(* identifier *)
+type ident = string
+
+(* primitive types *)
+type snicktype =
+    | Bool
+    | Int
+    | Float 
+
+(* array dimensions *)
+type interval = (int * int)
+
+(* variable representations *)
+type variable =
+    | Single_variable of ident
+    | Array_variable of (ident * interval list)
+
+(* single declation *)
+type decl = (snicktype * variable)
+
+(* element on the left side of an assignment*)
+type elem =
+    | Single_elem of ident
+    | Array_elem of (ident * int list)
+
+(* binary operators *)
+type binop =
+    | Op_add | Op_sub | Op_mul | Op_div
+    | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge
+    | Op_and | Op_or
+
+(* unary operators *)
+type unop =
+    | Op_not
+    | Op_minus
+
+(* expression *)
+type expr =
+    (* variable element expression*)
+    | Eelem of elem
+    (* constant expression *)
+    | Ebool of bool
+    | Eint of int
+    | Efloat of float
+    | Estring of string
+    (* expression inside a pair of parentheses *)
+    | Eparen of expr
+    (* operation expression *)
+    | Ebinop of (expr * binop * expr)
+    | Eunop of (unop * expr)
+
+(* statement *)
+type stmt =
+    | Atom_stmt of atom_stmt
+    | Comps_stmt of comps_stmt
+and atom_stmt = (* atomic statement *)
+    | Assign of (elem * expr)
+    | Read of elem
+    | Write of expr
+    | Call of (ident * expr list)
+and comps_stmt = (* composite statement *)
+    | If_then of (expr * stmt list)
+    | If_then_else of (expr * stmt list * stmt list)
+    | While of (expr * stmt list)
+
+(* procedure body *)
+type proc_body = {
+  decls : decl list ;
+  stmts : stmt list
+}
+
+(* parameter indicator *)
+type param_indc =
+    | Val
+    | Ref
+
+(* procedure parameter *)
+type param = (param_indc * snicktype * ident)
+
+(* procedure header *)
+type proc_header = (ident * param list)
+
+(* procedure *)
+type proc = (proc_header * proc_body)
+
+(* list of procedures *)
+type procs = proc list
+
+(* program is a list of procedures *)
+type program = procs
+
+(* root node of the ast *)
+type t = program
