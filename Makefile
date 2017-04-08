@@ -1,3 +1,9 @@
+#
+# Makefile
+#
+# Group Name: Mainframe
+#
+
 TARGETS = snick
 TARGETS_BYTE=$(TARGETS:%=%.byte)
 

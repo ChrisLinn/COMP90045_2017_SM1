@@ -1,3 +1,9 @@
+#
+# Makefile.depend
+#
+# Group Name: Mainframe
+#
+
 snick.cmo : snick_pprint.cmi snick_parse.cmi snick_lex.cmo
 snick.cmx : snick_pprint.cmx snick_parse.cmx snick_lex.cmx
 snick_ast.cmi :
