@@ -56,7 +56,7 @@ type expr =
     (* operation expression *)
     | Ebinop of (expr * binop * expr)
     | Eunop of (unop * expr)
-(* element on the left side of an assignment*)
+(* element to read, write or assign *)
 and elem =
     | Single_elem of ident
     | Array_elem of (ident * expr list)
