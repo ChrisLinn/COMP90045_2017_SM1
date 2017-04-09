@@ -59,8 +59,8 @@ let main () =
         | Compile -> print_string "Compiling function is not yet enabled!!!\n"
     with
         (* Handle failure from lexer, print error position. *)
-        | Failure x -> raise (LexingErr ("Lexing Error" ^ (err_pos lexbuf) ^ "\n"))
+        | Failure x -> raise (LexingErr ("Lexing Error" ^ (err_pos lexbuf)))
         (* Handle error from parser, print error position. *)
-        | Parsing.Parse_error -> raise (ParsingErr ("Parsing Error" ^ (err_pos lexbuf) ^ "\n"))
+        | Parsing.Parse_error -> raise (ParsingErr ("Parsing Error" ^ (err_pos lexbuf)))
 
 let _ = main ()

@@ -163,7 +163,7 @@ expr:
     | expr OR expr { Ebinop ($1, Op_or, $3) }
     /* Unary operators */
     | NOT expr { Eunop (Op_not, $2) }
-    | UMINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
+    | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
 
 
 /* Builds exprs in reverse order */
