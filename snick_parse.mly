@@ -43,11 +43,11 @@ open Snick_ast
 %token LPAREN RPAREN
 
 /* associativity */
+%left AND OR
+%nonassoc NOT
 %nonassoc EQ NE LT GT LE GE
 %left PLUS MINUS
 %left MULTI DIVID
-%left AND OR
-%nonassoc NOT
 %nonassoc UMINUS
 
 %type <Snick_ast.program> program
