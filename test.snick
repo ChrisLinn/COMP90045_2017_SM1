@@ -18,6 +18,7 @@ proc main ()
     while h < 8 do
         j := h;
         k := h + 1;
+        k := h + (1);
         while k <= n do
             if x[k] > x[j] then
                 j := k;
