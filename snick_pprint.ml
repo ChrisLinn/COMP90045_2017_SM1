@@ -146,21 +146,30 @@ and print_binop fmtr (lexpr, binop, rexpr) = match binop with
     | Op_div -> fprintf fmtr "%a" print_div_expr (lexpr, rexpr)
     | Op_eq -> fprintf fmtr "%a" print_eq_expr (lexpr, rexpr)
     | Op_ne -> fprintf fmtr "%a" print_ne_expr (lexpr, rexpr)
-    | Op_lt -> fprintf fmtr "%a" print_lt_expr (lexpr, rexpr)
-    | Op_gt -> fprintf fmtr "%a" print_gt_expr (lexpr, rexpr)
-    | Op_le -> fprintf fmtr "%a" print_le_expr (lexpr, rexpr)
-    | Op_ge -> fprintf fmtr "%a" print_ge_expr (lexpr, rexpr)
+    | Op_lt -> fprintf fmtr "%a" print_comp_expr (lexpr, ">", rexpr)
+    | Op_gt -> fprintf fmtr "%a" print_comp_expr (lexpr, "<", rexpr)
+    | Op_le -> fprintf fmtr "%a" print_comp_expr (lexpr, ">=", rexpr)
+    | Op_ge -> fprintf fmtr "%a" print_comp_expr (lexpr, "<=", rexpr)
     | Op_and -> fprintf fmtr "%a" print_and_expr (lexpr, rexpr)
     | Op_or -> fprintf fmtr "%a" print_or_expr (lexpr, rexpr)
 
 (* Print unary operators (not and unary minus). 
-** Since an expression is always on the right side of and unary operator,
-** any parenthisis will be preserved.
+** Each operation will be printed differently.
 *)
 and print_unop fmtr (unop, expr) = match unop with
     | Op_not -> fprintf fmtr "%a" print_not_expr expr
     | Op_minus -> fprintf fmtr "%a" print_minus_expr expr
 
+(* Following functions prints out expressions involving various operators.
+** Expressions are evaluated (according to precedence rules) 
+** case by case to decide whether or not to print out parentheses.
+** Constants are considered higher precedence than any operators.
+*)
+
+(* Add operation, removes any parentheses around expressions of 
+** higher precedence on the RHS, and remove all parentheses on the left,
+** since add has lowest precedence among arithmetic operators.
+*)
 and print_add_expr fmtr = function
     | (lexpr, Eparen rexpr_inside) ->
         begin
@@ -183,6 +192,10 @@ and print_add_expr fmtr = function
         in
             fprintf fmtr "%a + %a" print_expr lexpr_strip print_expr rexpr
 
+(* Subtract operation, removes any parentheses around expressions of 
+** higher precedence on the RHS, and remove all parentheses on the left,
+** since subtract has lowest precedence among arithmetic operators.
+*)
 and print_sub_expr fmtr = function
     | (lexpr, Eparen rexpr_inside) ->
         begin
@@ -205,6 +218,9 @@ and print_sub_expr fmtr = function
         in
             fprintf fmtr "%a - %a" print_expr lexpr_strip print_expr rexpr
 
+(* Multiply operation, removes any parentheses around expressions of 
+** higher precedence on the RHS, and higher or equal precedence on LHS.
+*)
 and print_mul_expr fmtr = function
     | (Eparen lexpr_inside, Eparen rexpr_inside) ->
         begin
@@ -263,6 +279,9 @@ and print_mul_expr fmtr = function
         end
     | (lexpr, rexpr) -> fprintf fmtr "%a * %a" print_expr lexpr print_expr rexpr
 
+(* Divide operation, removes any parentheses around expressions of 
+** higher precedence on the RHS, and higher or equal precedence on LHS.
+*)
 and print_div_expr fmtr = function
     | (Eparen lexpr_inside, Eparen rexpr_inside) ->
         begin
@@ -323,6 +342,9 @@ and print_div_expr fmtr = function
         end
     | (lexpr, rexpr) -> fprintf fmtr "%a / %a" print_expr lexpr print_expr rexpr
 
+(* Equal operation, removes any parentheses around expressions of 
+** higher precedence on the RHS, and higher or equal precedence on LHS.
+*)
 and print_eq_expr fmtr = function
     | (Eparen lexpr_inside, Eparen rexpr_inside) ->
         begin
@@ -387,6 +409,9 @@ and print_eq_expr fmtr = function
         end
     | (lexpr, rexpr) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr
 
+(* Not Equal operation, removes any parentheses around expressions of 
+** higher precedence on the RHS, and higher or equal precedence on LHS.
+*)
 and print_ne_expr fmtr = function
     | (Eparen lexpr_inside, Eparen rexpr_inside) ->
         begin
@@ -450,39 +475,21 @@ and print_ne_expr fmtr = function
         end
     | (lexpr, rexpr) -> fprintf fmtr "%a != %a" print_expr lexpr print_expr rexpr
 
-and print_lt_expr fmtr (lexpr, rexpr) = 
+(* Comparision operations (>, <, >=, <=), assuming these only compares numeric values,
+** remove all parentheses since these operators are of lower precedence than any
+** arithmetic operations.
+*)
+and print_comp_expr fmtr (lexpr, optr, rexpr) = 
         let
             lexpr_strip = strip_paren lexpr
         and
             rexpr_strip = strip_paren rexpr
         in
-            fprintf fmtr "%a < %a" print_expr lexpr_strip print_expr rexpr_strip
+            fprintf fmtr "%a %s %a" print_expr lexpr_strip optr print_expr rexpr_strip
 
-
-and print_gt_expr fmtr (lexpr, rexpr) = 
-        let
-            lexpr_strip = strip_paren lexpr
-        and
-            rexpr_strip = strip_paren rexpr
-        in
-            fprintf fmtr "%a > %a" print_expr lexpr_strip print_expr rexpr_strip
-
-and print_le_expr fmtr (lexpr, rexpr) = 
-        let
-            lexpr_strip = strip_paren lexpr
-        and
-            rexpr_strip = strip_paren rexpr
-        in
-            fprintf fmtr "%a <= %a" print_expr lexpr_strip print_expr rexpr_strip
-
-and print_ge_expr fmtr (lexpr, rexpr) = 
-        let
-            lexpr_strip = strip_paren lexpr
-        and
-            rexpr_strip = strip_paren rexpr
-        in
-            fprintf fmtr "%a >= %a" print_expr lexpr_strip print_expr rexpr_strip
-
+(* And operation, removes any parentheses around expressions of 
+** higher precedence on the RHS, and higher or equal precedence on LHS.
+*)
 and print_and_expr fmtr = function
     | (Eparen lexpr_inside, Eparen rexpr_inside) ->
         begin
@@ -534,6 +541,9 @@ and print_and_expr fmtr = function
         end
     | (lexpr, rexpr) -> fprintf fmtr "%a and %a" print_expr lexpr print_expr rexpr
 
+(* Or operation, removes any parentheses around expressions of 
+** higher precedence on the RHS, and higher or equal precedence on LHS.
+*)
 and print_or_expr fmtr = function
     | (lexpr, Eparen rexpr_inside) ->
         begin
@@ -554,6 +564,9 @@ and print_or_expr fmtr = function
         in
             fprintf fmtr "%a or %a" print_expr lexpr_strip print_expr rexpr
 
+(* Not operation, removes any parentheses around expressions of 
+** higher precedence.
+*)
 and print_not_expr fmtr = function
     | Eparen expr_inside ->
         begin
@@ -569,6 +582,9 @@ and print_not_expr fmtr = function
         end
     | expr -> fprintf fmtr "%s %a" "not" print_expr expr
 
+(* Not operation, removes any parentheses around expressions of 
+** higher precedence.
+*)
 and print_minus_expr fmtr = function
     | Eparen expr_inside ->
         begin
@@ -585,6 +601,9 @@ and print_minus_expr fmtr = function
         end
     | expr -> fprintf fmtr "%s %a" "-" print_expr expr
 
+(* Strips parentheses in case there are multiple pairs of parentheses
+** around an expression.
+*)
 and strip_paren expr = match expr with
     | Eparen paren_expr -> strip_paren paren_expr
     | _ -> expr
