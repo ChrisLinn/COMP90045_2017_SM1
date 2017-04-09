@@ -43,7 +43,8 @@ open Snick_ast
 %token LPAREN RPAREN
 
 /* associativity */
-%left AND OR
+%left OR
+%left AND
 %nonassoc NOT
 %nonassoc EQ NE LT GT LE GE
 %left PLUS MINUS
