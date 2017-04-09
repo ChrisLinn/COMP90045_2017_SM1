@@ -20,6 +20,10 @@ let infile_name = ref None
 type compiler_mode = PrettyPrint | Compile
 let mode = ref Compile
 
+(* define exception type *)
+exception ParsingErr of string
+exception LexingErr of string
+
 (* print current position of lexbuf *)
 let err_pos lexbuf =
     let pos = Lexing.lexeme_start_p lexbuf in
@@ -55,8 +59,8 @@ let main () =
         | Compile -> print_string "Compiling function is not yet enabled!!!\n"
     with
         (* Handle failure from lexer, print error position. *)
-        | Failure x -> print_string ("Lexing Error" ^ (err_pos lexbuf) ^ "\n")
+        | Failure x -> raise (LexingErr ("Lexing Error" ^ (err_pos lexbuf) ^ "\n"))
         (* Handle error from parser, print error position. *)
-        | Parsing.Parse_error -> print_string ("Parsing Error" ^ (err_pos lexbuf) ^ "\n")
+        | Parsing.Parse_error -> raise (LexingErr ("Lexing Error" ^ (err_pos lexbuf) ^ "\n"))
 
 let _ = main ()
