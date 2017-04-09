@@ -121,8 +121,8 @@ and print_add_expr fmtr = function
                 rexpr_inside_strip = strip_paren rexpr_inside
             in
                 match rexpr_inside_strip with
-                | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a + %a" print_expr lexpr_strip print_expr rexpr_inside_strip
-                | Ebinop (_, Op_div, _) -> fprintf fmtr "%a + %a" print_expr lexpr_strip print_expr rexpr_inside_strip
+                | Ebinop (_, Op_mul, _)
+                | Ebinop (_, Op_div, _)
                 | Eunop (Op_minus, _) -> fprintf fmtr "%a + %a" print_expr lexpr_strip print_expr rexpr_inside_strip
                 | _ -> fprintf fmtr "%a + (%a)" print_expr lexpr_strip print_expr rexpr_inside_strip
         end
@@ -141,8 +141,8 @@ and print_sub_expr fmtr = function
                 rexpr_inside_strip = strip_paren rexpr_inside
             in
                 match rexpr_inside_strip with
-                | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a - %a" print_expr lexpr_strip print_expr rexpr_inside_strip
-                | Ebinop (_, Op_div, _) -> fprintf fmtr "%a - %a" print_expr lexpr_strip print_expr rexpr_inside_strip
+                | Ebinop (_, Op_mul, _)
+                | Ebinop (_, Op_div, _)
                 | Eunop (Op_minus, _) -> fprintf fmtr "%a - %a" print_expr lexpr_strip print_expr rexpr_inside_strip
                 | _ -> fprintf fmtr "%a - (%a)" print_expr lexpr_strip print_expr rexpr_inside_strip
         end
@@ -161,18 +161,8 @@ and print_mul_expr fmtr = function
                 rexpr_inside_strip = strip_paren rexpr_inside
             in
                 match lexpr_inside_strip with
-                | Ebinop (_, Op_mul, _) ->
-                    begin
-                        match rexpr_inside_strip with
-                        | Eunop (Op_minus, _) -> fprintf fmtr "%a * %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
-                        | _ -> fprintf fmtr "%a * (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                    end
-                | Ebinop (_, Op_div, _) ->
-                    begin
-                        match rexpr_inside_strip with
-                        | Eunop (Op_minus, _) -> fprintf fmtr "%a * %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
-                        | _ -> fprintf fmtr "%a * (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                    end
+                | Ebinop (_, Op_mul, _)
+                | Ebinop (_, Op_div, _)
                 | Eunop (Op_minus, _) ->
                     begin
                         match rexpr_inside_strip with
@@ -192,8 +182,8 @@ and print_mul_expr fmtr = function
                 lexpr_inside_strip = strip_paren lexpr_inside
             in
                 match lexpr_inside_strip with
-                | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a * %a" print_expr lexpr_inside_strip print_expr rexpr
-                | Ebinop (_, Op_div, _) -> fprintf fmtr "%a * %a" print_expr lexpr_inside_strip print_expr rexpr
+                | Ebinop (_, Op_mul, _)
+                | Ebinop (_, Op_div, _)
                 | Eunop (Op_minus, _) -> fprintf fmtr "%a * %a" print_expr lexpr_inside_strip print_expr rexpr
                 | _ -> fprintf fmtr "(%a) * %a" print_expr lexpr_inside_strip print_expr rexpr
         end
@@ -217,18 +207,8 @@ and print_div_expr fmtr = function
                 rexpr_inside_strip = strip_paren rexpr_inside
             in
                 match lexpr_inside_strip with
-                | Ebinop (_, Op_mul, _) ->
-                    begin
-                        match rexpr_inside_strip with
-                        | Eunop (Op_minus, _) -> fprintf fmtr "%a / %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
-                        | _ -> fprintf fmtr "%a / (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                    end
-                | Ebinop (_, Op_div, _) ->
-                    begin
-                        match rexpr_inside_strip with
-                        | Eunop (Op_minus, _) -> fprintf fmtr "%a / %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
-                        | _ -> fprintf fmtr "%a / (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                    end
+                | Ebinop (_, Op_mul, _)
+                | Ebinop (_, Op_div, _)
                 | Eunop (Op_minus, _) ->
                     begin
                         match rexpr_inside_strip with
@@ -248,8 +228,8 @@ and print_div_expr fmtr = function
                 lexpr_inside_strip = strip_paren lexpr_inside
             in
                 match lexpr_inside_strip with
-                | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a / %a" print_expr lexpr_inside_strip print_expr rexpr
-                | Ebinop (_, Op_div, _) -> fprintf fmtr "%a / %a" print_expr lexpr_inside_strip print_expr rexpr
+                | Ebinop (_, Op_mul, _)
+                | Ebinop (_, Op_div, _)
                 | Eunop (Op_minus, _) -> fprintf fmtr "%a / %a" print_expr lexpr_inside_strip print_expr rexpr
                 | _ -> fprintf fmtr "(%a) / %a" print_expr lexpr_inside_strip print_expr rexpr
         end
@@ -273,43 +253,25 @@ and print_eq_expr fmtr = function
                 rexpr_inside_strip = strip_paren rexpr_inside
             in
                 match lexpr_inside_strip with
-                | Ebinop (_, Op_and, _) ->
-                    begin
-                        match rexpr_inside_strip with
-                        | Ebinop (_, Op_add, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_sub, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_mul, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_div, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Eunop (Op_minus, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
-                        | _ -> fprintf fmtr "(%a) = (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                    end
-                | Ebinop (_, Op_or, _) ->
-                    begin
-                        match rexpr_inside_strip with
-                        | Ebinop (_, Op_add, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_sub, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_mul, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_div, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Eunop (Op_minus, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
-                        | _ -> fprintf fmtr "(%a) = (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                    end
+                | Ebinop (_, Op_and, _)
+                | Ebinop (_, Op_or, _)
                 | Eunop (Op_not, _) ->
                     begin
                         match rexpr_inside_strip with
-                        | Ebinop (_, Op_add, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_sub, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_mul, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_div, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
+                        | Ebinop (_, Op_add, _)
+                        | Ebinop (_, Op_sub, _)
+                        | Ebinop (_, Op_mul, _)
+                        | Ebinop (_, Op_div, _)
                         | Eunop (Op_minus, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
                         | _ -> fprintf fmtr "(%a) = (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
                     end
                 | _ ->
                     begin
                         match rexpr_inside_strip with
-                        | Ebinop (_, Op_add, _) -> fprintf fmtr "%a = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_sub, _) -> fprintf fmtr "%a = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_div, _) -> fprintf fmtr "%a = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
+                        | Ebinop (_, Op_add, _)
+                        | Ebinop (_, Op_sub, _)
+                        | Ebinop (_, Op_mul, _)
+                        | Ebinop (_, Op_div, _)
                         | Eunop (Op_minus, _) -> fprintf fmtr "%a = %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
                         | _ -> fprintf fmtr "%a = (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
                     end
@@ -320,8 +282,8 @@ and print_eq_expr fmtr = function
                 lexpr_inside_strip = strip_paren lexpr_inside
             in
                 match lexpr_inside_strip with
-                | Ebinop (_, Op_or, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr
-                | Ebinop (_, Op_and, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr
+                | Ebinop (_, Op_or, _)
+                | Ebinop (_, Op_and, _)
                 | Eunop (Op_not, _) -> fprintf fmtr "(%a) = %a" print_expr lexpr_inside_strip print_expr rexpr
                 | _ -> fprintf fmtr "%a = %a" print_expr lexpr_inside_strip print_expr rexpr
         end
@@ -331,10 +293,10 @@ and print_eq_expr fmtr = function
                 rexpr_inside_strip = strip_paren rexpr_inside
             in
                 match rexpr_inside_strip with
-                | Ebinop (_, Op_add, _) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr_inside_strip
-                | Ebinop (_, Op_sub, _) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr_inside_strip
-                | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr_inside_strip
-                | Ebinop (_, Op_div, _) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr_inside_strip
+                | Ebinop (_, Op_add, _)
+                | Ebinop (_, Op_sub, _)
+                | Ebinop (_, Op_mul, _)
+                | Ebinop (_, Op_div, _)
                 | Eunop (Op_minus, _) -> fprintf fmtr "%a = %a" print_expr lexpr print_expr rexpr_inside_strip            
                 | _ -> fprintf fmtr "%a = (%a)" print_expr lexpr print_expr rexpr_inside_strip
         end
@@ -349,43 +311,25 @@ and print_ne_expr fmtr = function
                 rexpr_inside_strip = strip_paren rexpr_inside
             in
                 match lexpr_inside_strip with
-                | Ebinop (_, Op_and, _) ->
-                    begin
-                        match rexpr_inside_strip with
-                        | Ebinop (_, Op_add, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_sub, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_mul, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_div, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Eunop (Op_minus, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
-                        | _ -> fprintf fmtr "(%a) != (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                    end
-                | Ebinop (_, Op_or, _) ->
-                    begin
-                        match rexpr_inside_strip with
-                        | Ebinop (_, Op_add, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_sub, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_mul, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_div, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Eunop (Op_minus, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
-                        | _ -> fprintf fmtr "(%a) != (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                    end
+                | Ebinop (_, Op_and, _)
+                | Ebinop (_, Op_or, _)
                 | Eunop (Op_not, _) ->
                     begin
                         match rexpr_inside_strip with
-                        | Ebinop (_, Op_add, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_sub, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_mul, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_div, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
+                        | Ebinop (_, Op_add, _)
+                        | Ebinop (_, Op_sub, _)
+                        | Ebinop (_, Op_mul, _)
+                        | Ebinop (_, Op_div, _)
                         | Eunop (Op_minus, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
                         | _ -> fprintf fmtr "(%a) != (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
                     end
                 | _ ->
                     begin
                         match rexpr_inside_strip with
-                        | Ebinop (_, Op_add, _) -> fprintf fmtr "%a != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_sub, _) -> fprintf fmtr "%a != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
-                        | Ebinop (_, Op_div, _) -> fprintf fmtr "%a != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
+                        | Ebinop (_, Op_add, _)
+                        | Ebinop (_, Op_sub, _)
+                        | Ebinop (_, Op_mul, _)
+                        | Ebinop (_, Op_div, _)
                         | Eunop (Op_minus, _) -> fprintf fmtr "%a != %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip            
                         | _ -> fprintf fmtr "%a != (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
                     end
@@ -396,8 +340,8 @@ and print_ne_expr fmtr = function
                 lexpr_inside_strip = strip_paren lexpr_inside
             in
                 match lexpr_inside_strip with
-                | Ebinop (_, Op_or, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr
-                | Ebinop (_, Op_and, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr
+                | Ebinop (_, Op_or, _)
+                | Ebinop (_, Op_and, _)
                 | Eunop (Op_not, _) -> fprintf fmtr "(%a) != %a" print_expr lexpr_inside_strip print_expr rexpr
                 | _ -> fprintf fmtr "%a != %a" print_expr lexpr_inside_strip print_expr rexpr
         end
@@ -407,10 +351,10 @@ and print_ne_expr fmtr = function
                 rexpr_inside_strip = strip_paren rexpr_inside
             in
                 match rexpr_inside_strip with
-                | Ebinop (_, Op_add, _) -> fprintf fmtr "%a != %a" print_expr lexpr print_expr rexpr_inside_strip
-                | Ebinop (_, Op_sub, _) -> fprintf fmtr "%a != %a" print_expr lexpr print_expr rexpr_inside_strip
-                | Ebinop (_, Op_mul, _) -> fprintf fmtr "%a != %a" print_expr lexpr print_expr rexpr_inside_strip
-                | Ebinop (_, Op_div, _) -> fprintf fmtr "%a != %a" print_expr lexpr print_expr rexpr_inside_strip
+                | Ebinop (_, Op_add, _)
+                | Ebinop (_, Op_sub, _)
+                | Ebinop (_, Op_mul, _)
+                | Ebinop (_, Op_div, _)
                 | Eunop (Op_minus, _) -> fprintf fmtr "%a != %a" print_expr lexpr print_expr rexpr_inside_strip            
                 | _ -> fprintf fmtr "%a != (%a)" print_expr lexpr print_expr rexpr_inside_strip
         end
@@ -461,14 +405,14 @@ and print_and_expr fmtr = function
                 | Ebinop (_, Op_or, _) ->
                     begin
                         match rexpr_inside_strip with
-                        | Ebinop (_, Op_and, _) -> fprintf fmtr "(%a) and (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
+                        | Ebinop (_, Op_and, _)
                         | Ebinop (_, Op_or, _) -> fprintf fmtr "(%a) and (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
                         | _ -> fprintf fmtr "(%a) and %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
                     end
                 | _ ->
                     begin
                         match rexpr_inside_strip with
-                        | Ebinop (_, Op_and, _) -> fprintf fmtr "%a and (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
+                        | Ebinop (_, Op_and, _)
                         | Ebinop (_, Op_or, _) -> fprintf fmtr "%a and (%a)" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
                         | _ -> fprintf fmtr "%a and %a" print_expr lexpr_inside_strip print_expr rexpr_inside_strip
                     end
@@ -488,7 +432,7 @@ and print_and_expr fmtr = function
                 rexpr_inside_strip = strip_paren rexpr_inside
             in
                 match rexpr_inside_strip with
-                | Ebinop (_, Op_and, _) -> fprintf fmtr "%a and (%a)" print_expr lexpr print_expr rexpr_inside_strip
+                | Ebinop (_, Op_and, _)
                 | Ebinop (_, Op_or, _) -> fprintf fmtr "%a and (%a)" print_expr lexpr print_expr rexpr_inside_strip
                 | _ -> fprintf fmtr "%a and %a" print_expr lexpr print_expr rexpr_inside_strip
         end
@@ -519,7 +463,7 @@ and print_not_expr fmtr = function
                 expr_inside_strip = strip_paren expr_inside
             in
                 match expr_inside_strip with
-                | Ebinop (_, Op_and, _) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside_strip
+                | Ebinop (_, Op_and, _)
                 | Ebinop (_, Op_or, _) -> fprintf fmtr "%s (%a)" "not" print_expr expr_inside_strip
                 | _ -> fprintf fmtr "%s %a" "not" print_expr expr_inside_strip
         end
