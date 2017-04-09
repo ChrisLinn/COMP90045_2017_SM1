@@ -1,7 +1,7 @@
 (*
 ** File:          snick_ast.ml
 ** Description:   Specification of the abstract syntax tree for Snick
-** Last Modified: 
+** Last Modified: Sun. 9th April 2017
 ** 
 ** Group name: Mainframe
 ** 
@@ -31,11 +31,6 @@ type variable =
 (* single declation *)
 type decl = (snicktype * variable)
 
-(* element on the left side of an assignment*)
-type elem =
-    | Single_elem of ident
-    | Array_elem of (ident * int list)
-
 (* binary operators *)
 type binop =
     | Op_add | Op_sub | Op_mul | Op_div
@@ -61,6 +56,10 @@ type expr =
     (* operation expression *)
     | Ebinop of (expr * binop * expr)
     | Eunop of (unop * expr)
+(* element on the left side of an assignment*)
+and elem =
+    | Single_elem of ident
+    | Array_elem of (ident * expr list)
 
 (* statement *)
 type stmt =

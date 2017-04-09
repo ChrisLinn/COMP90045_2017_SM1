@@ -1,7 +1,7 @@
 (*
 ** File:          snick_ast.ml
 ** Description:   Specification of a lexer for Snick
-** Last Modified: 
+** Last Modified: Tue. 4th April 2017
 ** 
 ** Group name: Mainframe
 ** 

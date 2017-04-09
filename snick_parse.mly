@@ -1,7 +1,7 @@
 /*
 ** File:          snick_ast.ml
 ** Description:   Specification of a parser for Snick
-** Last Modified: 
+** Last Modified: Sun. 9th April 2017
 ** 
 ** Group name: Mainframe
 ** 
@@ -135,11 +135,7 @@ comps_stmt:
 
 elem:
     | IDENT { Single_elem $1 }
-    | IDENT LSQBRACK index RSQBRACK { Array_elem ($1, List.rev $3) }
-
-index:
-    | index COMMA INT_CONST { $3 :: $1 }
-    | INT_CONST { [$1] }
+    | IDENT LSQBRACK exprs RSQBRACK { Array_elem ($1, List.rev $3) }
 
 expr:
     /* Variable element */
