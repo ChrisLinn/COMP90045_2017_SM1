@@ -1,4 +1,17 @@
-(* pretty-printer converts from snick source code to well-formed style *)
+(*
+** File:          snick_pprint.ml
+** Description:   Pretty-printer converts from snick source 
+**                code to well-formed style.
+** Last Modified: Sun. 9th April 2017
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
 open Snick_ast
 open Format
 
