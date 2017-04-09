@@ -98,7 +98,12 @@ and print_stmt fmtr = function
 and print_atom_stmt fmtr = function
     | Assign (elem, expr) -> fprintf fmtr "%a := %a;" print_elem elem print_expr expr
     | Read elem -> fprintf fmtr "read %a;" print_elem elem
-    | Write expr -> fprintf fmtr "write %a;" print_expr expr
+    | Write expr -> 
+        begin
+            match expr with
+            | Expr wexpr -> fprintf fmtr "write %a;" print_expr wexpr
+            | String str -> fprintf fmtr "write %s;" str
+        end
     | Call (ident, exprs) -> fprintf fmtr "%s(%a);" ident print_exprs exprs
 
 (* Print composite statement. *)
@@ -122,7 +127,7 @@ and print_expr fmtr = function
     | Ebool bool_const -> fprintf fmtr "%B" bool_const
     | Eint int_const -> fprintf fmtr "%d" int_const
     | Efloat float_const -> fprintf fmtr "%f" float_const
-    | Estring string_const -> fprintf fmtr "%s" string_const
+    (* | Estring string_const -> fprintf fmtr "%s" string_const *)
     (* Parentheses to be printed (or removed) in other functions,
        so only print the expression within the parenthesis.
     *)

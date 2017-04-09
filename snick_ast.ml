@@ -50,7 +50,7 @@ type expr =
     | Ebool of bool
     | Eint of int
     | Efloat of float
-    | Estring of string
+    (* | Estring of string *)
     (* expression inside a pair of parentheses *)
     | Eparen of expr
     (* operation expression *)
@@ -61,6 +61,11 @@ and elem =
     | Single_elem of ident
     | Array_elem of (ident * expr list)
 
+(* Expression that can be written (either an expression or string). *)
+type write_expr =
+    | Expr of expr
+    | String of string
+
 (* statement *)
 type stmt =
     | Atom_stmt of atom_stmt
@@ -68,7 +73,7 @@ type stmt =
 and atom_stmt = (* atomic statement *)
     | Assign of (elem * expr)
     | Read of elem
-    | Write of expr
+    | Write of write_expr
     | Call of (ident * expr list)
 and comps_stmt = (* composite statement *)
     | If_then of (expr * stmt list)

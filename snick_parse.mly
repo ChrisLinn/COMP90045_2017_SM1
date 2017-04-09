@@ -126,7 +126,8 @@ stmt:
 atom_stmt:
     | elem ASSIGN expr SEMICOLON { Assign ($1, $3) }
     | READ elem SEMICOLON { Read $2 }
-    | WRITE expr SEMICOLON { Write $2 }
+    | WRITE STRING_CONST SEMICOLON { Write (String $2) }
+    | WRITE expr SEMICOLON { Write (Expr $2) }
     | IDENT LPAREN exprs_emptiable RPAREN SEMICOLON { Call ($1, List.rev $3) }
 
 comps_stmt:
@@ -145,7 +146,7 @@ expr:
     | BOOL_CONST { Ebool $1 }
     | INT_CONST { Eint $1 }
     | FLOAT_CONST { Efloat $1 }
-    | STRING_CONST { Estring $1 }
+    /*| STRING_CONST { Estring $1 }*/
     /* Expression inside a pair of  parentheses */
     | LPAREN expr RPAREN { Eparen $2 }
     /* Binary operators */
