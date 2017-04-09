@@ -14,6 +14,7 @@ proc main ()
     read a[6];
     read a[7];
     read a[8];
+    main(1);
     h := 1;
     while h < 8 do
         j := h;

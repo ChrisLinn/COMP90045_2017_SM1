@@ -126,7 +126,7 @@ atom_stmt:
     | elem ASSIGN expr SEMICOLON { Assign ($1, $3) }
     | READ elem SEMICOLON { Read $2 }
     | WRITE expr SEMICOLON { Write $2 }
-    | IDENT LPAREN exprs RPAREN SEMICOLON { Call ($1, List.rev $3) }
+    | IDENT LPAREN exprs_emptiable RPAREN SEMICOLON { Call ($1, List.rev $3) }
 
 comps_stmt:
     | IF expr THEN stmts FI { If_then ($2, List.rev $4) }
@@ -169,3 +169,8 @@ expr:
 exprs:
     | exprs COMMA expr { $3 :: $1 }
     | expr { [$1] }
+
+exprs_emptiable:
+    | exprs COMMA expr { $3 :: $1 }
+    | expr { [$1] }
+    | { [] }
