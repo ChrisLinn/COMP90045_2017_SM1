@@ -61,6 +61,6 @@ let main () =
         (* Handle failure from lexer, print error position. *)
         | Failure x -> raise (LexingErr ("Lexing Error" ^ (err_pos lexbuf) ^ "\n"))
         (* Handle error from parser, print error position. *)
-        | Parsing.Parse_error -> raise (LexingErr ("Lexing Error" ^ (err_pos lexbuf) ^ "\n"))
+        | Parsing.Parse_error -> raise (ParsingErr ("Parsing Error" ^ (err_pos lexbuf) ^ "\n"))
 
 let _ = main ()
