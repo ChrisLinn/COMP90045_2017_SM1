@@ -143,19 +143,53 @@ and print_exprs fmtr = function
 (* Print binary operations. 
 ** Each operation will be printed differently.
 *)
-and print_binop fmtr (lexpr, binop, rexpr) = match binop with
-    | Op_add -> fprintf fmtr "%a" print_add_expr (lexpr, rexpr)
-    | Op_sub -> fprintf fmtr "%a" print_sub_expr (lexpr, rexpr)
-    | Op_mul -> fprintf fmtr "%a" print_mul_expr (lexpr, rexpr)
-    | Op_div -> fprintf fmtr "%a" print_div_expr (lexpr, rexpr)
-    | Op_eq -> fprintf fmtr "%a" print_eq_expr (lexpr, rexpr)
-    | Op_ne -> fprintf fmtr "%a" print_ne_expr (lexpr, rexpr)
-    | Op_lt -> fprintf fmtr "%a" print_comp_expr (lexpr, "<", rexpr)
-    | Op_gt -> fprintf fmtr "%a" print_comp_expr (lexpr, ">", rexpr)
-    | Op_le -> fprintf fmtr "%a" print_comp_expr (lexpr, "<=", rexpr)
-    | Op_ge -> fprintf fmtr "%a" print_comp_expr (lexpr, ">=", rexpr)
-    | Op_and -> fprintf fmtr "%a" print_and_expr (lexpr, rexpr)
-    | Op_or -> fprintf fmtr "%a" print_or_expr (lexpr, rexpr)
+and print_binop fmtr = function
+    | (Eparen lexpr_inside, binoptr, Eparen rexpr_inside) ->
+    begin
+        let
+            lexpr_inside_strip = strip_paren lexpr_inside
+        and
+            rexpr_inside_strip = strip_paren rexpr_inside
+        and 
+            lcmpr_result = cmpr_prec lexpr_inside_strip binoptr
+        and 
+            rcmpr_result = cmpr_prec lexpr_inside_strip binoptr
+        in
+            if l
+    end
+    | (Eparen lexpr_inside, binoptr, rexpr) ->
+    begin
+        let
+            lexpr_inside_strip = strip_paren lexpr_inside
+        in
+            
+    end
+    | (lexpr, binoptr, Eparen rexpr_inside) ->
+    begin
+        let
+            rexpr_inside_strip = strip_paren rexpr_inside
+        in
+
+    end
+    | (lexpr, binoptr, rexpr)->
+    begin
+        fprintf fmtr "%a %a %a"
+            print_expr lexpr print_binoptr binoptr print_expr rexpr 
+    end
+
+and print_binoptr () = 
+    | Op_add -> fprintf fmtr "%s" "+"
+    | Op_sub -> fprintf fmtr "%s" "-"
+    | Op_mul -> fprintf fmtr "%s" "*"
+    | Op_div -> fprintf fmtr "%s" "/"
+    | Op_eq -> fprintf fmtr "%s" "="
+    | Op_ne -> fprintf fmtr "%s" "!="
+    | Op_lt -> fprintf fmtr "%s" "<"
+    | Op_gt -> fprintf fmtr "%s" ">"
+    | Op_le -> fprintf fmtr "%s" "<="
+    | Op_ge -> fprintf fmtr "%s" ">="
+    | Op_and -> fprintf fmtr "%s" "and"
+    | Op_or -> fprintf fmtr "%s" "or"
 
 (* Print unary operators (not and unary minus). 
 ** Each operation will be printed differently.
