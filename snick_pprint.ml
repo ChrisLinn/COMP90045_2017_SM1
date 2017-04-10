@@ -144,40 +144,103 @@ and print_exprs fmtr = function
 ** Each operation will be printed differently.
 *)
 and print_binop fmtr = function
-    | (Eparen lexpr_inside, binoptr, Eparen rexpr_inside) ->
-    begin
-        let
-            lexpr_inside_strip = strip_paren lexpr_inside
-        and
-            rexpr_inside_strip = strip_paren rexpr_inside
-        and 
-            lcmpr_result = cmpr_prec lexpr_inside_strip binoptr
-        and 
-            rcmpr_result = cmpr_prec lexpr_inside_strip binoptr
-        in
-            if l
-    end
-    | (Eparen lexpr_inside, binoptr, rexpr) ->
-    begin
-        let
-            lexpr_inside_strip = strip_paren lexpr_inside
-        in
-            
-    end
-    | (lexpr, binoptr, Eparen rexpr_inside) ->
-    begin
-        let
-            rexpr_inside_strip = strip_paren rexpr_inside
-        in
+    | (Eparen lexpr_inside, optr, Eparen rexpr_inside) ->
+        begin
+            let
+                lexpr_inside_strip = strip_paren lexpr_inside
+            and
+                rexpr_inside_strip = strip_paren rexpr_inside
+            in
+                let
+                    lcmpr_result = cmpr_prec lexpr_inside_strip optr
+                and 
+                    rcmpr_result = cmpr_prec rexpr_inside_strip optr
+                in
+                    if lcmpr_result>=0 && rcmpr_result>0 then
+                        fprintf fmtr "%a %a %a"
+                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr_inside_strip
+                    else if lcmpr_result>=0 && rcmpr_result<=0 then 
+                        fprintf fmtr "%a %a (%a)"
+                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr_inside_strip
+                    else if lcmpr_result<0 && rcmpr_result>0 then
+                        fprintf fmtr "(%a) %a %a"
+                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr_inside_strip
+                    else
+                        fprintf fmtr "(%a) %a (%a)"
+                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr_inside_strip
+        end
+    | (Eparen lexpr_inside, optr, rexpr) ->
+        begin
+            let
+                lexpr_inside_strip = strip_paren lexpr_inside
+            in
+                let 
+                    lcmpr_result = cmpr_prec lexpr_inside_strip optr
+                in
+                    if lcmpr_result>=0 then
+                        fprintf fmtr "%a %a %a"
+                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr
+                    else
+                        fprintf fmtr "(%a) %a %a"
+                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr
+        end
+    | (lexpr, optr, Eparen rexpr_inside) ->
+        begin
+            let
+                rexpr_inside_strip = strip_paren rexpr_inside
+            in
+                let 
+                    rcmpr_result = cmpr_prec rexpr_inside_strip optr
+                in
+                    if rcmpr_result>0 then
+                        fprintf fmtr "%a %a %a"
+                            print_expr lexpr print_binoptr optr print_expr rexpr_inside_strip
+                    else
+                        fprintf fmtr "%a %a (%a)"
+                            print_expr lexpr print_binoptr optr print_expr rexpr_inside_strip
+        end
+    | (lexpr, optr, rexpr) ->
+        begin
+            fprintf fmtr "%a %a %a"
+                print_expr lexpr print_binoptr optr print_expr rexpr 
+        end
 
-    end
-    | (lexpr, binoptr, rexpr)->
-    begin
-        fprintf fmtr "%a %a %a"
-            print_expr lexpr print_binoptr binoptr print_expr rexpr 
-    end
+and print_unop fmtr = function
+    | (optr, Eparen expr_inside) ->
+        begin
+            let
+                expr_inside_strip = strip_paren expr_inside
+            in
+                let 
+                    cmpr_result = cmpr_prec expr_inside_strip optr
+                in
+                    if cmpr_result<0 then
+                        fprintf fmtr "%a (%a)"
+                            print_unoptr optr print_expr expr_inside_strip 
+                    else
+                        fprintf fmtr "%a %a"
+                            print_unoptr optr print_expr expr_inside_strip 
+        end
+    | (optr, expr) ->
+        begin
+            fprintf fmtr "%a %a %a"
+                print_optr optr print_expr expr 
+        end
 
-and print_binoptr () = 
+and cmpr_prec exp optr = match exp with
+    | (_, exp_binoptr, _) -> (get_prec exp_binoptr) - (get_prec optr)
+    | (exp_unoptr, _) -> (get_prec exp_unoptr) - (get_prec optr)
+
+and get_prec optr = match optr with
+    | Op_minus -> 7
+    | Op_mul | Op_div -> 6
+    | Op_add | Op_sub -> 5
+    | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge -> 4
+    | Op_not -> 3
+    | Op_and -> 2
+    | Op_or -> 1
+
+and print_binoptr optr = match optr with
     | Op_add -> fprintf fmtr "%s" "+"
     | Op_sub -> fprintf fmtr "%s" "-"
     | Op_mul -> fprintf fmtr "%s" "*"
@@ -191,13 +254,17 @@ and print_binoptr () =
     | Op_and -> fprintf fmtr "%s" "and"
     | Op_or -> fprintf fmtr "%s" "or"
 
+and print_unoptr optr = match optr with
+    | Op_not -> fprintf fmtr "%s" "not"
+    | Op_minus -> fprintf fmtr "%s" "-"
+
 (* Print unary operators (not and unary minus). 
 ** Each operation will be printed differently.
 *)
-and print_unop fmtr (unop, expr) = match unop with
+(* and print_unop fmtr (unop, expr) = match unop with
     | Op_not -> fprintf fmtr "%a" print_not_expr expr
     | Op_minus -> fprintf fmtr "%a" print_minus_expr expr
-
+ *)
 (* Following functions prints out expressions involving various operators.
 ** Expressions are evaluated (according to precedence rules) 
 ** case by case to decide whether or not to print out parentheses.
