@@ -158,16 +158,16 @@ and print_binop fmtr = function
                 in
                     if lcmpr_result>=0 && rcmpr_result>0 then
                         fprintf fmtr "%a %a %a"
-                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr_inside_strip
+                            print_expr lexpr_inside_strip print_optr optr print_expr rexpr_inside_strip
                     else if lcmpr_result>=0 && rcmpr_result<=0 then 
                         fprintf fmtr "%a %a (%a)"
-                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr_inside_strip
+                            print_expr lexpr_inside_strip print_optr optr print_expr rexpr_inside_strip
                     else if lcmpr_result<0 && rcmpr_result>0 then
                         fprintf fmtr "(%a) %a %a"
-                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr_inside_strip
+                            print_expr lexpr_inside_strip print_optr optr print_expr rexpr_inside_strip
                     else
                         fprintf fmtr "(%a) %a (%a)"
-                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr_inside_strip
+                            print_expr lexpr_inside_strip print_optr optr print_expr rexpr_inside_strip
         end
     | (Eparen lexpr_inside, optr, rexpr) ->
         begin
@@ -179,10 +179,10 @@ and print_binop fmtr = function
                 in
                     if lcmpr_result>=0 then
                         fprintf fmtr "%a %a %a"
-                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr
+                            print_expr lexpr_inside_strip print_optr optr print_expr rexpr
                     else
                         fprintf fmtr "(%a) %a %a"
-                            print_expr lexpr_inside_strip print_binoptr optr print_expr rexpr
+                            print_expr lexpr_inside_strip print_optr optr print_expr rexpr
         end
     | (lexpr, optr, Eparen rexpr_inside) ->
         begin
@@ -194,15 +194,15 @@ and print_binop fmtr = function
                 in
                     if rcmpr_result>0 then
                         fprintf fmtr "%a %a %a"
-                            print_expr lexpr print_binoptr optr print_expr rexpr_inside_strip
+                            print_expr lexpr print_optr optr print_expr rexpr_inside_strip
                     else
                         fprintf fmtr "%a %a (%a)"
-                            print_expr lexpr print_binoptr optr print_expr rexpr_inside_strip
+                            print_expr lexpr print_optr optr print_expr rexpr_inside_strip
         end
     | (lexpr, optr, rexpr) ->
         begin
             fprintf fmtr "%a %a %a"
-                print_expr lexpr print_binoptr optr print_expr rexpr 
+                print_expr lexpr print_optr optr print_expr rexpr 
         end
 
 and print_unop fmtr = function
@@ -216,20 +216,21 @@ and print_unop fmtr = function
                 in
                     if cmpr_result<0 then
                         fprintf fmtr "%a (%a)"
-                            print_unoptr optr print_expr expr_inside_strip 
+                            print_optr optr print_expr expr_inside_strip 
                     else
                         fprintf fmtr "%a %a"
-                            print_unoptr optr print_expr expr_inside_strip 
+                            print_optr optr print_expr expr_inside_strip 
         end
     | (optr, expr) ->
         begin
-            fprintf fmtr "%a %a %a"
+            fprintf fmtr "%a %a"
                 print_optr optr print_expr expr 
         end
 
 and cmpr_prec exp optr = match exp with
-    | (_, exp_binoptr, _) -> (get_prec exp_binoptr) - (get_prec optr)
-    | (exp_unoptr, _) -> (get_prec exp_unoptr) - (get_prec optr)
+    | Ebinop (_, exp_binoptr, _) -> (get_prec exp_binoptr) - (get_prec optr)
+    | Eunop (exp_unoptr, _) -> (get_prec exp_unoptr) - (get_prec optr)
+    | _ -> 0
 
 and get_prec optr = match optr with
     | Op_minus -> 7
@@ -240,7 +241,7 @@ and get_prec optr = match optr with
     | Op_and -> 2
     | Op_or -> 1
 
-and print_binoptr optr = match optr with
+and print_optr fmtr optr = match optr with
     | Op_add -> fprintf fmtr "%s" "+"
     | Op_sub -> fprintf fmtr "%s" "-"
     | Op_mul -> fprintf fmtr "%s" "*"
@@ -253,8 +254,6 @@ and print_binoptr optr = match optr with
     | Op_ge -> fprintf fmtr "%s" ">="
     | Op_and -> fprintf fmtr "%s" "and"
     | Op_or -> fprintf fmtr "%s" "or"
-
-and print_unoptr optr = match optr with
     | Op_not -> fprintf fmtr "%s" "not"
     | Op_minus -> fprintf fmtr "%s" "-"
 

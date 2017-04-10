@@ -32,10 +32,12 @@ type variable =
 type decl = (snicktype * variable)
 
 (* binary operators *)
-type binop =
+type optr =
     | Op_add | Op_sub | Op_mul | Op_div
     | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge
     | Op_and | Op_or
+    | Op_not
+    | Op_minus
 
 (* unary operators *)
 type unop =
@@ -53,8 +55,8 @@ type expr =
     (* expression inside a pair of parentheses *)
     | Eparen of expr
     (* operation expression *)
-    | Ebinop of (expr * binop * expr)
-    | Eunop of (unop * expr)
+    | Ebinop of (expr * optr * expr)
+    | Eunop of (optr * expr)
 (* element to read, write or assign *)
 and elem =
     | Single_elem of ident
