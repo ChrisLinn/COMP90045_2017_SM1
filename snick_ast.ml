@@ -50,7 +50,6 @@ type expr =
     | Ebool of bool
     | Eint of int
     | Efloat of float
-    (* | Estring of string *)
     (* expression inside a pair of parentheses *)
     | Eparen of expr
     (* operation expression *)

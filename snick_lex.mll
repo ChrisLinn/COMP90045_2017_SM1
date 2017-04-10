@@ -32,6 +32,8 @@ rule token = parse
     | '-'? digits as lxm                { INT_CONST (int_of_string lxm) }
     | '-'? floating as lxm              { FLOAT_CONST (float_of_string lxm) }
     | eof                               { EOF }
+    | ident as lxm                      { IDENT lxm }
+    | string as lxm                     { STRING_CONST lxm}
     (*  keywords *)
     | "not"                             { NOT }
     | "and"                             { AND }
@@ -72,5 +74,3 @@ rule token = parse
     | '/'                               { DIVID }
     | ','                               { COMMA }
     | ';'                               { SEMICOLON }
-    | ident as lxm                      { IDENT lxm }
-    | string as lxm                     { STRING_CONST lxm}

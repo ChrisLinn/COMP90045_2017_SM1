@@ -127,7 +127,6 @@ and print_expr fmtr = function
     | Ebool bool_const -> fprintf fmtr "%B" bool_const
     | Eint int_const -> fprintf fmtr "%d" int_const
     | Efloat float_const -> fprintf fmtr "%f" float_const
-    (* | Estring string_const -> fprintf fmtr "%s" string_const *)
     (* Parentheses to be printed (or removed) in other functions,
        so only print the expression within the parenthesis.
     *)
@@ -587,7 +586,7 @@ and print_not_expr fmtr = function
         end
     | expr -> fprintf fmtr "%s %a" "not" print_expr expr
 
-(* Not operation, removes any parentheses around expressions of 
+(* Unary-minus operation, removes any parentheses around expressions of 
 ** higher precedence.
 *)
 and print_minus_expr fmtr = function
