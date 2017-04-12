@@ -16,10 +16,10 @@ proc main ()
     read a[8];
     main(1);
     h := 1;
-    while h < 8 do
+    while h < 0.0000010 do
         j := h;
         k := h + 1;
-        k := h + (1);
+        k := ((3*7)) + (- 5);
         while k <= n do
             if x[k] > x[j] then
                 j := k;
