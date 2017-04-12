@@ -143,8 +143,10 @@ and print_exprs fmtr = function
     | x::xs -> fprintf fmtr "%a, %a" print_expr x print_exprs xs
 
 (* Print binary operations. 
-Parenthese around expression on LHS with higher or equal precedence will be removed.
-Parenthese around expression on RHS with higher precedence will be removed.
+** Parenthese around an operation expression on LHS with higher
+** or equal precedence will be removed.
+** Parenthese around an operation expression on RHS with higher
+** precedence will be removed.
 *)
 and print_binop fmtr = function
     | (Eparen lexpr_inside, optr, Eparen rexpr_inside) ->
@@ -271,7 +273,7 @@ and print_binop fmtr = function
         end
 
 (* Print unary operations. 
-** Parenthese around expression with higher precedence will be removed.
+** Parenthese around an operation expression with higher precedence will be removed.
 *)
 and print_unop fmtr = function
     | (optr, Eparen expr_inside) ->
