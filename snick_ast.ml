@@ -31,17 +31,14 @@ type variable =
 (* single declation *)
 type decl = (snicktype * variable)
 
-(* binary operators *)
+(* operators *)
 type optr =
-    | Op_add | Op_sub | Op_mul | Op_div
+    | Op_or
+    | Op_and 
+    | Op_not
     | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge
-    | Op_and | Op_or
-    | Op_not
-    | Op_minus
-
-(* unary operators *)
-type unop =
-    | Op_not
+    | Op_add | Op_sub 
+    | Op_mul | Op_div
     | Op_minus
 
 (* expression *)
