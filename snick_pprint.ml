@@ -15,6 +15,8 @@
 open Snick_ast
 open Format
 
+exception Impossible of string
+
 (* Print program as list of procedures. *)
 let rec print_program fmtr prog = print_procs fmtr prog
 
@@ -297,7 +299,7 @@ and print_unop fmtr = function
 and cmpr_prec exp optr = match exp with
     | Ebinop (_, exp_binoptr, _) -> (get_prec exp_binoptr) - (get_prec optr)
     | Eunop (exp_unoptr, _) -> (get_prec exp_unoptr) - (get_prec optr)
-    | _ -> 0
+    | _ -> raise (Impossible "Impossible!")
 
 (* get the precedence of an operator *)
 and get_prec optr = match optr with
