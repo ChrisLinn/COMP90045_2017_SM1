@@ -10,13 +10,13 @@ end
 proc towers (val int num, val int frompeg, val int topeg, val int auxpeg)
 
     if num != 1 then
+        towers(num - 1, frompeg, auxpeg, topeg);
         write "\n Move disk ";
         write num;
         write " from peg ";
         write frompeg;
         write " to peg ";
         write topeg;
-        towers(num - 1, frompeg, auxpeg, topeg);
         towers(num - 1, auxpeg, topeg, frompeg);
     else
         write "\n Move disk 1 from peg ";
