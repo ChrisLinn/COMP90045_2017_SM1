@@ -1,21 +1,20 @@
-#
-# Makefile.depend
-#
-# Group Name: Mainframe
-#
-
 snick.cmo : snick_pprint.cmi snick_parse.cmi snick_lex.cmo
 snick.cmx : snick_pprint.cmx snick_parse.cmx snick_lex.cmx
-snick_ast.cmi :
-snick_parse.cmi : snick_ast.cmi
-snick_pprint.cmi : snick_ast.cmi
-snick_ast.cmo : snick_ast.cmi
-snick_ast.cmx : snick_ast.cmi
+snick_parse.cmi : snick_ast.cmo
+snick_pprint.cmi : snick_ast.cmo
+snick_ast.cmo :
+snick_ast.cmx :
 snick_lex.cmo : snick_parse.cmi
 snick_lex.cmx : snick_parse.cmx
-snick_parse.cmo : snick_ast.cmi snick_parse.cmi
+snick_parse.cmo : snick_ast.cmo snick_parse.cmi
 snick_parse.cmx : snick_ast.cmx snick_parse.cmi
-snick_pprint.cmo : snick_ast.cmi snick_pprint.cmi
+snick_pprint.cmo : snick_ast.cmo snick_pprint.cmi
 snick_pprint.cmx : snick_ast.cmx snick_pprint.cmi
+snick_symbol.cmo :
+snick_symbol.cmx :
+snick_analyze.cmo :
+snick_analyze.cmx :
+snick_codegen.cmo :
+snick_codegen.cmx :
 snick.cmo : snick_pprint.cmi snick_parse.cmi snick_lex.cmo
 snick.cmx : snick_pprint.cmx snick_parse.cmx snick_lex.cmx
