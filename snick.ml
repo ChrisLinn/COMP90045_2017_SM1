@@ -20,16 +20,12 @@ let infile_name = ref None
 type compiler_mode = PrettyPrint | Compile
 let mode = ref Compile
 
-(* define exception type *)
-exception ParsingErr of string
-exception LexingErr of string
-
 (* print current position of lexbuf *)
 let err_pos lexbuf =
     let pos = Lexing.lexeme_start_p lexbuf in
         Format.sprintf ": line %d, col %d."
             (pos.Lexing.pos_lnum)
-            (pos.Lexing.pos_cnum - pos.Lexing.pos_bol) 
+            (pos.Lexing.pos_cnum - pos.Lexing.pos_bol + 1) 
 
 (* --------------------------------------------- *)
 (*  Specification for command-line options       *)
@@ -44,7 +40,7 @@ let main () =
     (* Parse the command-line arguments *)
     Arg.parse speclist
         (begin fun fname -> infile_name := Some fname end)
-        "snick [-p] [bean source]" ;
+        "snick [-p] [snick source]" ;
     (* Open the input file *)
     let infile = match !infile_name with
     | None -> stdin
@@ -55,12 +51,18 @@ let main () =
     try
         let prog = Snick_parse.program Snick_lex.token lexbuf in
         match !mode with
-        | PrettyPrint -> Snick_pprint.print_program Format.std_formatter prog 
-        | Compile -> print_string "Compiling function is not yet enabled!!!\n"
+        | PrettyPrint ->
+            Snick_pprint.print_program Format.std_formatter prog 
+        | Compile ->
+            print_string "Compiling function is not yet enabled!!!\n"
     with
         (* Handle failure from lexer, print error position. *)
-        | Failure x -> raise (LexingErr ("Lexing Error" ^ (err_pos lexbuf)))
+        | Snick_lex.LexErr ->
+            raise (Failure ("Lexing Error" ^ (err_pos lexbuf)))
         (* Handle error from parser, print error position. *)
-        | Parsing.Parse_error -> raise (ParsingErr ("Parsing Error" ^ (err_pos lexbuf)))
+        | Parsing.Parse_error ->
+            raise (Failure ("Parsing Error" ^ (err_pos lexbuf)))
+        | Failure x ->
+            raise (Failure x)
 
 let _ = main ()

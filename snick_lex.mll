@@ -13,7 +13,10 @@
 
 {
 open Snick_parse
+
+exception LexErr
 }
+
 
 (* some regex patterns *)
 let digit = ['0' - '9']
@@ -74,3 +77,4 @@ rule token = parse
     | ';'                               { SEMICOLON }
     | ident as lxm                      { IDENT lxm }
     | string as lxm                     { STRING_CONST lxm}
+    | _                                 { raise LexErr}
