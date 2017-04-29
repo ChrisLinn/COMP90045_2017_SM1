@@ -4,8 +4,12 @@
 # But not these files...
 !.gitignore
 !*.md
-!sinck.ml
-!sinck_ast.ml
+!snick.ml
+!snick_symbol.ml
+!snick_analyze.ml
+!snick_codegen.ml
+!snick.ml
+!snick_ast.ml
 !snick_pprint.m*
 !*.mll
 !*.mly
