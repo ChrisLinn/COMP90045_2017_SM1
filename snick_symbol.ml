@@ -26,7 +26,6 @@ let cur_label_cnt = ref 0
 (* 
 let top_expr_type = ref None
 let cur_expr_type = ref None
-let cur_scope_st = ref None
  *)
 
 
@@ -61,7 +60,7 @@ and bldht_proc (((proc_id:string), params), proc_body) =
     Hashtbl.add func_stack_num_hash proc_id (!stack_cnt+1);  (* WTF *)
 
     Hashtbl.add func_param_order_hash_table proc_id ((proc_id, params), proc_body)  (* WTF *)
-
+(* 
 and addParams scope_st params =
     List.iter
         (fun (pindc, ptype , pid) -> ( 
@@ -69,13 +68,19 @@ and addParams scope_st params =
             Hashtbl.add scope_st pid (SybParam(pindc,ptype,!stack_cnt))
         ))
         params
+ *)
+and addParams scope_st params =
+    List.iter (addParam scope_st) params
+
+and addParam scope_st (pindc, ptype , pid) = 
+    incr stack_cnt;
+    Hashtbl.add scope_st pid (SybParam(pindc,ptype,!stack_cnt))
 
 and addVars scope_st vars =
-    List.iter
-        (fun x -> ( 
-            incr stack_cnt
-        ))
-        vars
+    List.iter (addVar scope_st) vars
+
+and addVar scope_st var =
+    incr stack_cnt
 
 and get_scope_st scope = match scope with
     | Scope(ht) -> ht
