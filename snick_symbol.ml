@@ -1,29 +1,23 @@
 open Snick_ast
 
-
-type stackNum = int
-
-
-(* WTF *)
+type stackNum = int (* WTF *)
+type symbolType =
+    | SybParam of (param_indc * snicktype * stackNum)
+    | SybVar of (variable * stackNum)
+type scope =
+    Scope of (string , symbolType) Hashtbl.t
 (* 
 type htValueType =
-    | HtVfunc of (string , htValueType) Hashtbl.t
-    | HtVref_Hash of (snicktype * (string , htValueType) Hashtbl.t)(* stored nest type of typedef*)
-    | HtVhash of (snicktype * (string, htValueType) Hashtbl.t)(*self def type*)
-    | HtVbool of (snicktype * stackNum) (*Int => stack num*)
-    | HtVint of (snicktype * stackNum)
-    | HtVref_Int of (snicktype * stackNum)
-    | HtVref_Bool of (snicktype * stackNum)(*if snicktype is a ident, need to search through typedef hash table*)
-    | HtVintext_Hash of (string , htValueType) Hashtbl.t
-    | HtVref_Intext_Hash of (string , htValueType) Hashtbl.t
- *)
-
+    | Scope of (string , htValueType) Hashtbl.t
+    | SybParam of (param_indc * snicktype * stackNum)
+    | SybVar of (variable * stackNum) 
+*)
 
 let ht_init_size = 10
-let symbol_table = Hashtbl.create ht_init_size
-let func_table = Hashtbl.create ht_init_size
+let ht_scope_st = Hashtbl.create ht_init_size
 let func_stack_num_hash = Hashtbl.create ht_init_size
 let func_param_order_hash_table = Hashtbl.create ht_init_size (* WTF *)
+
 
 let stack_cnt = ref (-1)
 let cur_reg_cnt = ref (-1)
@@ -32,7 +26,7 @@ let cur_label_cnt = ref 0
 (* 
 let top_expr_type = ref None
 let cur_expr_type = ref None
-let cur_scope_ht = ref None
+let cur_scope_st = ref None
  *)
 
 
@@ -42,19 +36,46 @@ let rec build_tables prog =
 and bldht_procs procs =
     List.iter bldht_proc procs
 
-and bldht_proc ((proc_id, params), proc_body) =
+and bldht_proc (((proc_id:string), params), proc_body) =
     stack_cnt := -1;
     
-    Hashtbl.add symbol_table proc_id func_table;  (* WTF *)
+    (* 
+    Hashtbl.add ht_scope_st proc_id (Hashtbl.create ht_init_size);  (* WTF *)
+     *)
+    Hashtbl.add ht_scope_st proc_id (Scope(Hashtbl.create ht_init_size));  (* WTF *)
 
-    build_symbol_table_hash_funcDecParamList
-        func_table
+    addParams
+        (get_scope_st(Hashtbl.find ht_scope_st proc_id))
+        (* 
+        Hashtbl.find ht_scope_st proc_id
+         *)
         params;
     
-    build_symbol_table_typedefStruct_list
-        func_table
+    addVars
+        (get_scope_st(Hashtbl.find ht_scope_st proc_id))
+        (* 
+        Hashtbl.find ht_scope_st proc_id
+         *)
         proc_body.decls;
                 
-    Hashtbl.add func_stack_num_hash func_name (!stack_count+1);  (* WTF *)
+    Hashtbl.add func_stack_num_hash proc_id (!stack_cnt+1);  (* WTF *)
 
     Hashtbl.add func_param_order_hash_table proc_id ((proc_id, params), proc_body)  (* WTF *)
+
+and addParams scope_st params =
+    List.iter
+        (fun (pindc, ptype , pid) -> ( 
+            incr stack_cnt;
+            Hashtbl.add scope_st pid (SybParam(pindc,ptype,!stack_cnt))
+        ))
+        params
+
+and addVars scope_st vars =
+    List.iter
+        (fun x -> ( 
+            incr stack_cnt
+        ))
+        vars
+
+and get_scope_st scope = match scope with
+    | Scope(ht) -> ht
