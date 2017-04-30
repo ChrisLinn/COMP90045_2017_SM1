@@ -14,7 +14,7 @@ let rec analyze prog =
  *)
 
 and analyze_proc ((proc_id, params), proc_body) =
-    cur_scope_st := Some (get_scope_st(Hashtbl.find ht_scope_st proc_id));
+    cur_scope_st := Some (get_proc_st(Hashtbl.find ht_proc_st proc_id));
     
 (* 
     start_translate_by_function_declaration proc_id (proc_id,func_param_list);

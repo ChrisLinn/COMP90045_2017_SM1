@@ -1,20 +1,22 @@
 open Snick_ast
 
 type stackNum = int (* WTF *)
-type symbolType =
-    | SybParam of (param_indc * snicktype * stackNum)
-    | SybVar of (variable * stackNum)
-type scope =
-    Scope of (string , symbolType) Hashtbl.t
+
+type attr =
+    | AttrParam of (param_indc * snicktype * stackNum)
+    | AttrVar of (variable * stackNum)
+
+type htProc =
+    HtProc of (string , attr) Hashtbl.t
 (* 
 type htValueType =
-    | Scope of (string , htValueType) Hashtbl.t
-    | SybParam of (param_indc * snicktype * stackNum)
-    | SybVar of (variable * stackNum) 
+    | HtProc of (string , htValueType) Hashtbl.t
+    | AttrParam of (param_indc * snicktype * stackNum)
+    | AttrVar of (variable * stackNum) 
 *)
 
 let ht_init_size = 10
-let ht_scope_st = Hashtbl.create ht_init_size
+let ht_proc_st = Hashtbl.create ht_init_size
 let func_stack_num_hash = Hashtbl.create ht_init_size
 let func_param_order_hash_table = Hashtbl.create ht_init_size (* WTF *)
 
@@ -39,21 +41,21 @@ and bldht_proc (((proc_id:string), params), proc_body) =
     stack_cnt := -1;
     
     (* 
-    Hashtbl.add ht_scope_st proc_id (Hashtbl.create ht_init_size);  (* WTF *)
+    Hashtbl.add ht_proc_st proc_id (Hashtbl.create ht_init_size);  (* WTF *)
      *)
-    Hashtbl.add ht_scope_st proc_id (Scope(Hashtbl.create ht_init_size));  (* WTF *)
+    Hashtbl.add ht_proc_st proc_id (HtProc(Hashtbl.create ht_init_size));  (* WTF *)
 
     addParams
-        (get_scope_st(Hashtbl.find ht_scope_st proc_id))
+        (get_proc_st(Hashtbl.find ht_proc_st proc_id))
         (* 
-        Hashtbl.find ht_scope_st proc_id
+        Hashtbl.find ht_proc_st proc_id
          *)
         params;
     
     addVars
-        (get_scope_st(Hashtbl.find ht_scope_st proc_id))
+        (get_proc_st(Hashtbl.find ht_proc_st proc_id))
         (* 
-        Hashtbl.find ht_scope_st proc_id
+        Hashtbl.find ht_proc_st proc_id
          *)
         proc_body.decls;
                 
@@ -65,7 +67,7 @@ and addParams scope_st params =
     List.iter
         (fun (pindc, ptype , pid) -> ( 
             incr stack_cnt;
-            Hashtbl.add scope_st pid (SybParam(pindc,ptype,!stack_cnt))
+            Hashtbl.add scope_st pid (AttrParam(pindc,ptype,!stack_cnt))
         ))
         params
  *)
@@ -74,7 +76,7 @@ and addParams scope_st params =
 
 and addParam scope_st (pindc, ptype , pid) = 
     incr stack_cnt;
-    Hashtbl.add scope_st pid (SybParam(pindc,ptype,!stack_cnt))
+    Hashtbl.add scope_st pid (AttrParam(pindc,ptype,!stack_cnt))
 
 and addVars scope_st vars =
     List.iter (addVar scope_st) vars
@@ -82,5 +84,5 @@ and addVars scope_st vars =
 and addVar scope_st var =
     incr stack_cnt
 
-and get_scope_st scope = match scope with
-    | Scope(ht) -> ht
+and get_proc_st scope = match scope with
+    | HtProc(ht) -> ht
