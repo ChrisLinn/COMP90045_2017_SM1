@@ -75,9 +75,11 @@ and print_decl fmtr (var_type, variable) =
     fprintf fmtr "%a %a;" print_type var_type print_var variable
 
 (* Print a variable. *)
-and print_var fmtr = function
+and print_var fmtr = function(* 
     | Single_variable ident -> fprintf fmtr "%s" ident
-    | Array_variable (ident, itvls) -> fprintf fmtr "%s[%a]" ident print_itvls itvls
+    | Array_variable (ident, itvls) -> fprintf fmtr "%s[%a]" ident print_itvls itvls *)
+    | Variable (ident, None) -> fprintf fmtr "%s" ident
+    | Variable (ident, Some itvls) -> fprintf fmtr "%s[%a]" ident print_itvls itvls
 
 (* Print list of intervals. *)
 and print_itvls fmtr = function
@@ -117,9 +119,11 @@ and print_comps_stmt fmtr = function
                 print_expr expr print_stmts stmts
 
 (* Print element to be assigned to or be read / written. *)
-and print_elem fmtr = function
+and print_elem fmtr = function(* 
     | Single_elem ident -> fprintf fmtr "%s" ident
-    | Array_elem (ident, idxs) -> fprintf fmtr "%s[%a]" ident print_exprs idxs
+    | Array_elem (ident, idxs) -> fprintf fmtr "%s[%a]" ident print_exprs idxs *)
+    | Elem (ident, None) -> fprintf fmtr "%s" ident
+    | Elem (ident, Some idxs) -> fprintf fmtr "%s[%a]" ident print_exprs idxs
 
 (* Print an expression. *)
 and print_expr fmtr = function

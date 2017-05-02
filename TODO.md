@@ -5,8 +5,13 @@
 + [ ] codegen
 + [ ] may need to alter AST
 + [ ] array
+    + [ ] option type
 + [ ] error handling
-    + [ ] semantic failure report in codegen
+    + [ ] semantic error report in codegen
         + [ ] justification needed for semantic analysis
             + [ ] report or raise a failure
+        + [ ] print_dupe_proc_errors
 + [ ] optimization
++ [ ] ifdebug dump symbol table
++ [ ] lineno seems unuserful?
+    + [ ] seems used for error reporting, can be useful for semantic error report 

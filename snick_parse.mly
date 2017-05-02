@@ -100,8 +100,10 @@ decl:
     | typespec variable SEMICOLON { ($1, $2) }
 
 variable:
-    | IDENT { Single_variable $1 }
-    | IDENT dimension { Array_variable ($1, $2) }
+    | IDENT { Variable ($1, None) }
+    | IDENT dimension { Variable ($1, Some $2) }
+/*    | IDENT { Single_variable $1 }  */
+/*    | IDENT dimension { Array_variable ($1, $2) }   */
 
 dimension:
     LSQBRACK intervals RSQBRACK { List.rev $2 }
@@ -136,8 +138,10 @@ comps_stmt:
     | WHILE expr DO stmts OD { While ($2, List.rev $4) }
 
 elem:
-    | IDENT { Single_elem $1 }
-    | IDENT LSQBRACK exprs RSQBRACK { Array_elem ($1, List.rev $3) }
+    | IDENT { Elem ($1, None) }
+    | IDENT LSQBRACK exprs RSQBRACK { Elem ($1, Some (List.rev $3)) }
+/*    | IDENT { Single_elem $1 }    */
+/*    | IDENT LSQBRACK exprs RSQBRACK { Array_elem ($1, List.rev $3) }*/
 
 expr:
     /* Variable element */

@@ -24,9 +24,12 @@ type snicktype =
 type interval = (int * int)
 
 (* variable representations *)
+(* 
 type variable =
     | Single_variable of ident
     | Array_variable of (ident * interval list)
+ *)
+type variable = Variable of (ident * interval list option)
 
 (* single declation *)
 type decl = (snicktype * variable)
@@ -55,10 +58,12 @@ type expr =
     | Ebinop of (expr * optr * expr)
     | Eunop of (optr * expr)
 (* element to read, write or assign *)
+and elem = Elem of (ident * expr list option)
+(*     
 and elem =
     | Single_elem of ident
     | Array_elem of (ident * expr list)
-
+ *)
 (* Expression that can be written (either an expression or string). *)
 type write_expr =
     | Expr of expr
