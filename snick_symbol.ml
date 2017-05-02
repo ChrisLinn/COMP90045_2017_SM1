@@ -16,16 +16,16 @@ type bound = (int * int * int) (* (lower * upper * offset_size) *)
 (* Bound on an array symbol object *)
 type bounds = bound list
 
-type sbValType =
-    | PVal of param 
-    | DVal of decl
+type symbValType =
+    | ParamVal of param 
+    | DeclVal of decl
 
-type symbol = (symbolKind * symType * sbValType * int * bool * bounds option)
+type symbol = (symbolKind * symType * symbValType * int * bool * bounds option)
 (* 
 typedef struct symbol_data {
     SymbolKind  kind;
     SymType     type;
-    void        *sym_value;    ??????????????????????
+    void        *sym_value;    can be useful (update/opt)
     int         line_no;        seems unuseful so removed
     int         slot;
     BOOL        used;
@@ -36,8 +36,8 @@ typedef struct symbol_data {
 type scope = Scope of (ident * (string, symbol) Hashtbl.t * param list * int)
 (* 
  typedef struct scope_data {
-    char *id;                   ?????????????????????
-    void *table;                   ?????????????????????
+    char *id;                   
+    void *table;                   seems scope's symbol table
     void *params;                   ?????????????????????
     int line_no;                seems unuseful so removed
     int next_slot;              can be global?????
@@ -48,7 +48,7 @@ type scope = Scope of (ident * (string, symbol) Hashtbl.t * param list * int)
 type sym_table = (Hashtbl.t * bool) *)
 (* 
 typedef struct symbol_table {
-    void *table;                  ?????????????????/
+    void *table;                  seems unuseful for us
     BOOL initialised;
 } sym_table;
  *)
@@ -74,17 +74,31 @@ and generate_params_symbols scope params =
     List.iter (generate_param_symbol scope) params
 
 and generate_param_symbol
-        (Scope(scopeid,ht_st,params,nslot)) (indc,ptype,paramid) =
+        (Scope(scopeid,ht_st,params,nslot)) (indc,paramtype,paramid) =
     let
         sym_kind = sym_kind_from_ast_indc indc
         and
-        sym_type = sym_type_from_ast_type ptype
+        sym_type = sym_type_from_ast_type paramtype
     in
     Hashtbl.add ht_st paramid 
-                (sym_kind,sym_type,PVal(indc,ptype,paramid),nslot,false,None); 
+            (sym_kind,sym_type,
+                ParamVal(indc,paramtype,paramid),nslot,false,None); 
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
 
-and generate_decls_symbols scope decls = ()
+and generate_decls_symbols scope decls =
+    List.iter (generate_decl_symbol scope) decls
+
+and generate_decl_symbol
+        (Scope(scopeid,ht_st,params,nslot))
+        (decltype, Variable(declid,mbintvls)) =
+    let
+        sym_type = sym_type_from_ast_type decltype
+    in
+    Hashtbl.add ht_st declid 
+            (SYM_LOCAL,sym_type,
+                DeclVal(decltype,Variable(declid,mbintvls)),nslot,false,None); 
+    Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
+
 
 and get_scope_st (Scope(_,ht_st,_,_)) = ht_st
 

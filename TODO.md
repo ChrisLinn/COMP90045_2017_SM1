@@ -11,6 +11,8 @@
 + [ ] array
     + [ ] option type
 + [ ] error handling
+    + [ ] find main
+        + [ ] print main first?
     + [ ] semantic error report in codegen
         + [ ] justification needed for semantic analysis
             + [ ] report or raise a failure
