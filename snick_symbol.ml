@@ -29,14 +29,14 @@ typedef struct symbol_data {
 } symbol;
  *)
 
-type scope = (ident * (string, symbol) Hashtbl.t * param list * int)
+type scope = Scope of (ident * (string, symbol) Hashtbl.t * param list * int)
 (* 
  typedef struct scope_data {
     char *id;                   ?????????????????????
     void *table;                   ?????????????????????
     void *params;                   ?????????????????????
     int line_no;                seems unuseful so removed
-    int next_slot;
+    int next_slot;              can be global?????
 } scope;
  *)
 
@@ -49,19 +49,25 @@ typedef struct symbol_table {
 } sym_table;
  *)
 
-let ht_init_size = 20
-(* let sym_table = Hashtbl.create ht_init_size
- *)
+let ht_inis = 20
+let ht_scopes = Hashtbl.create ht_inis
+
 let rec gen_sym_table prog =
     List.iter generate_scope prog
 
-and generate_scope proc =
-    create_scope;
+and generate_scope ((proc_id,params),proc_body) =
+    create_scope proc_id params;
     generate_params_symbols;
     generate_decls_symbols;
 
-and create_scope = ()
+and create_scope scope_id params =
+    Hashtbl.add
+        ht_scopes
+        scope_id
+        (Scope(scope_id, (Hashtbl.create ht_inis), params, 0))
 
 and generate_params_symbols = ()
 
 and generate_decls_symbols = ()
+
+and get_scope_st (Scope(_,ht_st,_,_)) = ht_st

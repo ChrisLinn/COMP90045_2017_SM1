@@ -1,6 +1,8 @@
 # Todo
 
 + [ ] symbol table
+    + [ ] stack_cnt for a scope or a table?
+        + [ ] dont understand slots_needed_for_table
 + [ ] analyze
 + [ ] codegen
 + [ ] may need to alter AST
