@@ -3,6 +3,8 @@
 + [ ] symbol table
     + [ ] stack_cnt for a scope or a table?
         + [ ] dont understand slots_needed_for_table
+    + [ ] sbValType
+        + [ ] great, seems can be used to opt (update type and value)
 + [ ] analyze
 + [ ] codegen
 + [ ] may need to alter AST
