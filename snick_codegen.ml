@@ -1,3 +1,4 @@
+open Snick_ast
 open Snick_analyze
 open Snick_symbol
 
@@ -33,6 +34,7 @@ type brKind =
 
 type brLine =
     | BrOp of opType
+    | BrProc of string
 
 
 type brLines = brLine list option
@@ -44,8 +46,8 @@ let brprog = ref [BrOp(OpCall("main"));BrOp(OpHalt)]
 
 let rec compile prog =
     analyse prog;
-    let brprog = gen_br_program prog in
-        print_lines brprog
+    gen_br_program prog;
+    print_lines
 (*i guess we dont need to check table == NULL, we could just check Snick_analyze.isValid*)
 (* 
 compile(FILE *fp, Program *prog) {
@@ -60,7 +62,7 @@ compile(FILE *fp, Program *prog) {
 }
 *)
 
-and print_lines lines = ()
+and print_lines = ()
 
 and gen_br_program prog =
     (* gen_call "main";  *)
@@ -72,4 +74,22 @@ and gen_br_program prog =
 and gen_call proc_id =
     brprog := List.append !brprog [BrOp(OpCall(proc_id))]
 
-and gen_br_proc proc = ()
+and gen_br_proc ((proc_id,params),proc_body) =
+    let
+        scope = Hashtbl.find ht_scopes proc_id
+    in
+        begin
+            gen_proc_label proc_id;
+            gen_oz_prologue params proc_body.decls scope;
+            gen_oz_stmts proc_body.stmts scope;
+            gen_oz_epilogue scope            
+        end
+
+and gen_proc_label proc_id =
+    brprog := List.append !brprog [BrProc(proc_id)]
+
+and gen_oz_prologue params decls scope =()
+
+and gen_oz_stmts stmts scope = ()
+
+and gen_oz_epilogue scope = ()
