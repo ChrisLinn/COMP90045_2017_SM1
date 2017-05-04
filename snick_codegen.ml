@@ -23,12 +23,12 @@ type opType =
     | OpCall of string
     | OpHalt
 
-type brKind =
+(* type brKind =
     | BR_BUILTIN
     | BR_PROC
     | BR_LABEL
     | BR_OP
-    | BR_COMMENT
+    | BR_COMMENT *)
 
 (* type brValueType = *)
 

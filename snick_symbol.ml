@@ -1,6 +1,6 @@
 open Snick_ast
 
-type symbolKind =
+type symKind =
     | SYM_LOCAL
     | SYM_PARAM_VAL
     | SYM_PARAM_REF
@@ -16,20 +16,21 @@ type bound = (int * int * int) (* (lower * upper * offset_size) *)
 (* Bound on an array symbol object *)
 type bounds = bound list
 
-type symbValType =
+type symValType =
     | ParamVal of param 
     | DeclVal of decl
-
-type symbol = (symbolKind * symType * symbValType * int * bool * bounds option)
+(* 
+type symbol = (symbolKind * symType * symbValType * int * bool * bounds option) *)
+type symbol = (symKind * symType * int * bounds option)
 (* 
 typedef struct symbol_data {
     SymbolKind  kind;
     SymType     type;
-    void        *sym_value;    can be useful (update/opt)
+    void        *sym_value;    can be useful (update/optmz)
     int         line_no;        seems unuseful so removed
     int         slot;
-    BOOL        used;
-    Bounds  *bounds;           ??????????????????????
+    BOOL        used;           ??????????????????????
+    Bounds  *bounds;
 } symbol;
  *)
 
@@ -79,10 +80,11 @@ and generate_param_symbol
         sym_kind = sym_kind_from_ast_indc indc
         and
         sym_type = sym_type_from_ast_type paramtype
-    in
+    in(* 
     Hashtbl.add ht_st paramid 
             (sym_kind,sym_type,
-                ParamVal(indc,paramtype,paramid),nslot,false,None); 
+                ParamVal(indc,paramtype,paramid),nslot,false,None);  *)
+    Hashtbl.add ht_st paramid (sym_kind,sym_type,nslot,None); 
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
 
 and generate_decls_symbols scope decls =
@@ -90,13 +92,14 @@ and generate_decls_symbols scope decls =
 
 and generate_decl_symbol
         (Scope(scopeid,ht_st,params,nslot))
-        (decltype, Variable(declid,mbintvls)) =
+        (decltype, Variable(declid,optn_intvls)) =
     let
         sym_type = sym_type_from_ast_type decltype
-    in
+    in(* 
     Hashtbl.add ht_st declid 
             (SYM_LOCAL,sym_type,
-                DeclVal(decltype,Variable(declid,mbintvls)),nslot,false,None); 
+                DeclVal(decltype,Variable(declid,optn_intvls)),nslot,false,None);  *)
+    Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None); 
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
 
 
