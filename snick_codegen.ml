@@ -43,7 +43,7 @@ type brLines = brLine list option
 
 type brProg = brLines
 
-let brprog = ref [BrOp(OpCall("main"));BrOp(OpHalt)]
+let brprog = ref []
 
 let rec compile prog =
     analyse prog;
@@ -66,14 +66,11 @@ compile(FILE *fp, Program *prog) {
 and print_lines = ()
 
 and gen_br_program prog =
-    (* gen_call "main";  *)
-    (* gen_halt; *)
+    gen_call "main";
+    gen_halt;
 (*     gen_oz_out_of_bounds;
     gen_oz_div_by_zero; *)
     List.iter gen_br_proc prog
-
-and gen_call proc_id =
-    brprog := List.append !brprog [BrOp(OpCall(proc_id))]
 
 and gen_br_proc ((proc_id,params),proc_body) =
     let
@@ -85,9 +82,6 @@ and gen_br_proc ((proc_id,params),proc_body) =
         gen_oz_stmts scope proc_body.stmts;
         gen_oz_epilogue scope            
     end
-
-and gen_proc_label proc_id =
-    brprog := List.append !brprog [BrProc(proc_id)]
 
 and gen_oz_prologue scope params decls =
     (* gen_comment *)
@@ -110,7 +104,6 @@ and gen_br_param scope_ht cnt (_, _, param_id) =
     match sym with
     | (_,_,nslot,_) -> gen_biop "store" nslot cnt
     
-
 and gen_br_decls scope decls =
     List.iter gen_br_decl decls
 
@@ -120,6 +113,17 @@ and gen_oz_stmts scope stmts = ()
 
 and gen_oz_epilogue scope =
     gen_unop "pop" (get_scope_nslot scope);
+
+and gen_call proc_id =
+    brprog := List.append !brprog [BrOp(OpCall(proc_id))]
+
+and gen_halt =
+    brprog := List.append !brprog [BrOp(OpHalt)]
+
+and gen_proc_label proc_id =
+    brprog := List.append !brprog [BrProc(proc_id)]
+
+and gen_return = 
     brprog := List.append !brprog [BrOp(OpReturn)]
 
 (* and gen_unop op x = match op with
