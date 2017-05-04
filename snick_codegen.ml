@@ -23,7 +23,6 @@ type opType =
     | OpCall of string
     | OpHalt
     | OpPush of int
-    | OpPop of int
     | OpStore of (int * int)
     | OpReturn
 
@@ -44,7 +43,7 @@ type brLines = brLine list option
 
 type brProg = brLines
 
-let brprog = ref []
+let brprog = ref [BrOp(OpCall("main"));BrOp(OpHalt)]
 
 let rec compile prog =
     analyse prog;
@@ -67,11 +66,14 @@ compile(FILE *fp, Program *prog) {
 and print_lines = ()
 
 and gen_br_program prog =
-    gen_call "main";
-    gen_halt;
+    (* gen_call "main";  *)
+    (* gen_halt; *)
 (*     gen_oz_out_of_bounds;
     gen_oz_div_by_zero; *)
     List.iter gen_br_proc prog
+
+and gen_call proc_id =
+    brprog := List.append !brprog [BrOp(OpCall(proc_id))]
 
 and gen_br_proc ((proc_id,params),proc_body) =
     let
@@ -84,9 +86,12 @@ and gen_br_proc ((proc_id,params),proc_body) =
         gen_oz_epilogue scope            
     end
 
+and gen_proc_label proc_id =
+    brprog := List.append !brprog [BrProc(proc_id)]
+
 and gen_oz_prologue scope params decls =
     (* gen_comment *)
-    gen_push (get_scope_nslot scope);
+    gen_unop "push" (get_scope_nslot scope);
     gen_br_params (get_scope_st scope) 0 params;
     gen_br_decls (get_scope_st scope) decls;
     
@@ -103,7 +108,7 @@ and gen_br_param scope_ht cnt (_, _, param_id) =
         sym = Hashtbl.find scope_ht param_id
     in
     match sym with
-    | (_,_,nslot,_) -> gen_store nslot cnt
+    | (_,_,nslot,_) -> gen_biop "store" nslot cnt
     
 
 and gen_br_decls scope decls =
@@ -114,26 +119,36 @@ and gen_br_decl decl = ()
 and gen_oz_stmts scope stmts = ()
 
 and gen_oz_epilogue scope =
-    gen_pop (get_scope_nslot scope);
-    gen_return
-
-and gen_call proc_id =
-    brprog := List.append !brprog [BrOp(OpCall(proc_id))]
-
-and gen_halt =
-    brprog := List.append !brprog [BrOp(OpHalt)]
-
-and gen_proc_label proc_id =
-    brprog := List.append !brprog [BrProc(proc_id)]
-
-and gen_push x =
-    brprog := List.append !brprog [BrOp(OpPush(x))]
-
-and gen_pop x =
-    brprog := List.append !brprog [BrOp(OpPop(x))]
-
-and gen_store x1 x2 =
-    brprog := List.append !brprog [BrOp(OpStore(x1,x2))]
-
-and gen_return =
+    gen_unop "pop" (get_scope_nslot scope);
     brprog := List.append !brprog [BrOp(OpReturn)]
+
+(* and gen_unop op x = match op with
+    | "push" -> brprog := List.append !brprog [BrOp(OpPush(x))]
+    | _ -> ()
+ *)
+and gen_unop op x =
+    let 
+        line = match op with
+                | "push" -> BrOp(OpPush(x))
+                | _ -> raise (Failure ("wrong gen_unop "^op))
+    in
+    brprog := List.append !brprog [line]
+
+(* and gen_biop op x1 x2 = match op with
+    | "store" -> brprog := List.append !brprog [BrOp(OpStore(x1,x2))]
+    | _ -> ()
+ *)
+and gen_biop op x1 x2 =
+    let 
+        line = match op with
+                | "store" -> BrOp(OpStore(x1,x2))
+                | _ -> raise (Failure ("wrong gen_biop "^op))
+    in
+    brprog := List.append !brprog [line]
+
+and gen_triop op x1 x2 x3 =
+    let 
+        line = match op with
+                | _ -> raise (Failure ("wrong gen_triop "^op))
+    in
+    brprog := List.append !brprog [line]
