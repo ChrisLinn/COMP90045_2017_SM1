@@ -121,18 +121,28 @@ stmts:
     | stmts stmt { $2 :: $1 }
     | stmt { [$1] }
 
-stmt:
-    | atom_stmt { Atom_stmt $1 }
-    | comps_stmt { Comps_stmt $1 }
+/* stmt: */
+/*     | atom_stmt { Atom_stmt $1 } */
+/*     | comps_stmt { Comps_stmt $1 } */
 
-atom_stmt:
+/* atom_stmt: */
+/*     | elem ASSIGN expr SEMICOLON { Assign ($1, $3) } */
+/*     | READ elem SEMICOLON { Read $2 } */
+/*     | WRITE STRING_CONST SEMICOLON { Write (String $2) } */
+/*     | WRITE expr SEMICOLON { Write (Expr $2) } */
+/*     | IDENT LPAREN exprs_emptiable RPAREN SEMICOLON { Call ($1, List.rev $3) } */
+
+/* comps_stmt: */
+/*     | IF expr THEN stmts FI { If_then ($2, List.rev $4) } */
+/*     | IF expr THEN stmts ELSE stmts FI { If_then_else ($2, List.rev $4, List.rev $6) } */
+/*     | WHILE expr DO stmts OD { While ($2, List.rev $4) } */
+
+stmt:
     | elem ASSIGN expr SEMICOLON { Assign ($1, $3) }
     | READ elem SEMICOLON { Read $2 }
     | WRITE STRING_CONST SEMICOLON { Write (String $2) }
     | WRITE expr SEMICOLON { Write (Expr $2) }
     | IDENT LPAREN exprs_emptiable RPAREN SEMICOLON { Call ($1, List.rev $3) }
-
-comps_stmt:
     | IF expr THEN stmts FI { If_then ($2, List.rev $4) }
     | IF expr THEN stmts ELSE stmts FI { If_then_else ($2, List.rev $4, List.rev $6) }
     | WHILE expr DO stmts OD { While ($2, List.rev $4) }

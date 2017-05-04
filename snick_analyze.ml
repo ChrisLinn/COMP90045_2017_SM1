@@ -11,9 +11,12 @@ let rec analyse prog =
     check_main                    (*???????*)
 
 and analyse_proc ((proc_id,_),prog_body) =
-    analyse_statements prog_body.stmts proc_id
+    analyse_statements proc_id prog_body.stmts
 
-and analyse_statements stmts proc_id = ()
+and analyse_statements proc_id stmts =
+    List.iter (analyse_statement proc_id) stmts
+
+and analyse_statement proc_id stmt = ()
 
 and check_unused_symbols prog = ()
 

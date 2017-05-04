@@ -91,6 +91,7 @@ and print_itvls fmtr = function
 and print_itvl fmtr (st_pnt, end_pnt) =
     fprintf fmtr "%d..%d" st_pnt end_pnt
 
+(*
 (* Print statement. *)
 and print_stmt fmtr = function
     | Atom_stmt atom_stmt -> fprintf fmtr "%a" print_atom_stmt atom_stmt
@@ -110,6 +111,26 @@ and print_atom_stmt fmtr = function
 
 (* Print composite statement. *)
 and print_comps_stmt fmtr = function
+    | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,fi"
+                                print_expr expr print_stmts stmts
+    | If_then_else (expr, then_stmts, else_stmts) ->
+        fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,else@;<0 4>@[<v>%a@]@,fi"
+                print_expr expr print_stmts then_stmts print_stmts else_stmts
+    | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[<v>%a@]@,od"
+                print_expr expr print_stmts stmts
+*)    
+
+(* Print statement. *)
+and print_stmt fmtr = function
+    | Assign (elem, expr) -> fprintf fmtr "%a := %a;" print_elem elem print_expr expr
+    | Read elem -> fprintf fmtr "read %a;" print_elem elem
+    | Write expr -> 
+        begin
+            match expr with
+            | Expr wexpr -> fprintf fmtr "write %a;" print_expr wexpr
+            | String str -> fprintf fmtr "write %s;" str
+        end
+    | Call (ident, exprs) -> fprintf fmtr "%s(%a);" ident print_exprs exprs
     | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,fi"
                                 print_expr expr print_stmts stmts
     | If_then_else (expr, then_stmts, else_stmts) ->

@@ -70,6 +70,7 @@ type write_expr =
     | String of string
 
 (* statement *)
+(* 
 type stmt =
     | Atom_stmt of atom_stmt
     | Comps_stmt of comps_stmt
@@ -79,6 +80,17 @@ and atom_stmt = (* atomic statement *)
     | Write of write_expr
     | Call of (ident * expr list)
 and comps_stmt = (* composite statement *)
+    | If_then of (expr * stmt list)
+    | If_then_else of (expr * stmt list * stmt list)
+    | While of (expr * stmt list)
+ *)
+type stmt =
+(* atomic statement *)
+    | Assign of (elem * expr)
+    | Read of elem
+    | Write of write_expr
+    | Call of (ident * expr list)
+(* composite statement *)
     | If_then of (expr * stmt list)
     | If_then_else of (expr * stmt list * stmt list)
     | While of (expr * stmt list)
