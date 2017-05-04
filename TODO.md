@@ -21,4 +21,5 @@
 + [ ] optimization
 + [ ] ifdebug dump symbol table
 + [ ] lineno seems unuserful?
-    + [ ] seems used for error reporting, can be useful for semantic error report 
+    + [ ] seems used for error reporting, can be useful for semantic error report
++ [ ] better to gen_main & gen_halt or init?

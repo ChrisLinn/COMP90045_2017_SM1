@@ -1,7 +1,7 @@
 open Snick_ast
 open Snick_analyze
 open Snick_symbol
-
+(* 
 type opCode =
     | OP_PUSH_STACK_FRAME | OP_POP_STACK_FRAME
     | OP_HALT
@@ -17,11 +17,12 @@ type opCode =
     | OP_AND | OP_OR | OP_NOT
     | OP_BRANCH_ON_TRUE | OP_BRANCH_ON_FALSE | OP_BRANCH_UNCOND
     | OP_CALL | OP_CALL_BUILTIN | OP_RETURN
-    | OP_DEBUG_REG | OP_DEBUG_SLOT | OP_DEBUG_STACK
+    | OP_DEBUG_REG | OP_DEBUG_SLOT | OP_DEBUG_STACK *)
 
 type opType =
     | OpCall of string
     | OpHalt
+    | OpPush of int
 
 (* type brKind =
     | BR_BUILTIN
@@ -33,16 +34,14 @@ type opType =
 (* type brValueType = *)
 
 type brLine =
-    | BrOp of opType
     | BrProc of string
-
+    | BrOp of opType
 
 type brLines = brLine list option
 
 type brProg = brLines
 
 let brprog = ref [BrOp(OpCall("main"));BrOp(OpHalt)]
-
 
 let rec compile prog =
     analyse prog;
@@ -80,7 +79,7 @@ and gen_br_proc ((proc_id,params),proc_body) =
     in
         begin
             gen_proc_label proc_id;
-            gen_oz_prologue params proc_body.decls scope;
+            gen_oz_prologue params proc_body.decls (get_scope_nslot scope);
             gen_oz_stmts proc_body.stmts scope;
             gen_oz_epilogue scope            
         end
@@ -88,7 +87,12 @@ and gen_br_proc ((proc_id,params),proc_body) =
 and gen_proc_label proc_id =
     brprog := List.append !brprog [BrProc(proc_id)]
 
-and gen_oz_prologue params decls scope =()
+and gen_oz_prologue params decls nlsot =
+    (* gen_comment *)
+    gen_push nlsot
+
+and gen_push nlsot =
+    brprog := List.append !brprog [BrOp(OpPush(nlsot))]
 
 and gen_oz_stmts stmts scope = ()
 

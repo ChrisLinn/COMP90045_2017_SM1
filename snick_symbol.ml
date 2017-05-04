@@ -105,6 +105,8 @@ and generate_decl_symbol
 
 and get_scope_st (Scope(_,ht_st,_,_)) = ht_st
 
+and get_scope_nslot (Scope(_,_,_,nslot)) = nslot
+
 and sym_type_from_ast_type = function
     | Bool -> SYM_BOOL
     | Int -> SYM_INT
