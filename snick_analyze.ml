@@ -17,7 +17,15 @@ and analyse_statements proc_id stmts =
     List.iter (analyse_statement proc_id) stmts
 
 and analyse_statement proc_id stmt = match stmt with
-    | Assign(_) -> analyse_assign stmt proc_id
+    | Assign(elem,expr) -> ()
+(*         let
+            l_type = get_elem_type elem and
+            r_type = get_expr_type expr
+        in
+            if l_type = r_type then
+                ()
+            else
+                raise (Failure "type unmatch!") *)
     | Read(_) -> analyse_read stmt proc_id
     | Write(_) -> analyse_write stmt proc_id
     | Call(_) -> analyse_call stmt proc_id
@@ -38,6 +46,8 @@ and analyse_if_then stmt proc_id = ()
 and analyse_if_then_else stmt proc_id = ()
 
 and analyse_while stmt proc_id = ()
+
+and get_expr_type exp = ()
 
 and check_unused_symbols prog = ()
 

@@ -11,6 +11,7 @@
 + [ ] array
     + [ ] option type
 + [ ] error handling
+    + [ ] analyze (recursively) assign/if/while/read
     + [ ] find main
         + [ ] print main first?
     + [ ] semantic error report in codegen
