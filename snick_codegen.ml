@@ -76,12 +76,12 @@ and gen_br_proc ((proc_id,params),proc_body) =
     let
         scope = Hashtbl.find ht_scopes proc_id
     in
-    begin
+    (
         gen_proc_label proc_id;
         gen_oz_prologue scope params proc_body.decls;
         gen_oz_stmts scope proc_body.stmts;
         gen_oz_epilogue scope            
-    end
+    )
 
 and gen_oz_prologue scope params decls =
     (* gen_comment *)
@@ -91,10 +91,10 @@ and gen_oz_prologue scope params decls =
     
 and gen_br_params scope_ht cnt = function
     | x::xs ->
-        begin
+        (
             gen_br_param scope_ht cnt x;
             gen_br_params scope_ht (cnt+1) xs
-        end
+        )
     | [] -> ()
 
 and gen_br_param scope_ht cnt (_, _, param_id) =
@@ -113,6 +113,7 @@ and gen_oz_stmts scope stmts = ()
 
 and gen_oz_epilogue scope =
     gen_unop "pop" (get_scope_nslot scope);
+    gen_return
 
 and gen_call proc_id =
     brprog := List.append !brprog [BrOp(OpCall(proc_id))]
