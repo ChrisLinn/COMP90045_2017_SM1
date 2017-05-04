@@ -23,6 +23,7 @@ type opType =
     | OpCall of string
     | OpHalt
     | OpPush of int
+    | OpStore of (int * int)
 
 (* type brKind =
     | BR_BUILTIN
@@ -77,23 +78,74 @@ and gen_br_proc ((proc_id,params),proc_body) =
     let
         scope = Hashtbl.find ht_scopes proc_id
     in
-        begin
-            gen_proc_label proc_id;
-            gen_oz_prologue params proc_body.decls (get_scope_nslot scope);
-            gen_oz_stmts proc_body.stmts scope;
-            gen_oz_epilogue scope            
-        end
+    begin
+        gen_proc_label proc_id;
+        gen_oz_prologue scope params proc_body.decls;
+        gen_oz_stmts scope proc_body.stmts;
+        gen_oz_epilogue scope            
+    end
 
 and gen_proc_label proc_id =
     brprog := List.append !brprog [BrProc(proc_id)]
 
-and gen_oz_prologue params decls nlsot =
+and gen_oz_prologue scope params decls =
     (* gen_comment *)
-    gen_push nlsot
+    gen_unop "push" (get_scope_nslot scope);
+    gen_br_params (get_scope_st scope) 0 params;
+    gen_br_decls (get_scope_st scope) decls;
+    
+and gen_br_params scope_ht cnt = function
+    | x::xs ->
+        begin
+            gen_br_param scope_ht cnt x;
+            gen_br_params scope_ht (cnt+1) xs
+        end
+    | [] -> ()
 
-and gen_push nlsot =
-    brprog := List.append !brprog [BrOp(OpPush(nlsot))]
+and gen_br_param scope_ht cnt (_, _, param_id) =
+    let
+        sym = Hashtbl.find scope_ht param_id
+    in
+    match sym with
+    | (_,_,nslot,_) -> gen_biop "store" nslot cnt
+    
 
-and gen_oz_stmts stmts scope = ()
+and gen_br_decls scope decls =
+    List.iter gen_br_decl decls
+
+and gen_br_decl decl = ()
+
+and gen_oz_stmts scope stmts = ()
 
 and gen_oz_epilogue scope = ()
+
+(* and gen_unop op x = match op with
+    | "push" -> brprog := List.append !brprog [BrOp(OpPush(x))]
+    | _ -> ()
+ *)
+and gen_unop op x =
+    let 
+        line = match op with
+                | "push" -> BrOp(OpPush(x))
+                | _ -> raise (Failure ("wrong gen_unop "^op))
+    in
+    brprog := List.append !brprog [line]
+
+(* and gen_biop op x1 x2 = match op with
+    | "store" -> brprog := List.append !brprog [BrOp(OpStore(x1,x2))]
+    | _ -> ()
+ *)
+and gen_biop op x1 x2 =
+    let 
+        line = match op with
+                | "store" -> BrOp(OpStore(x1,x2))
+                | _ -> raise (Failure ("wrong gen_biop "^op))
+    in
+    brprog := List.append !brprog [line]
+
+and gen_triop op x1 x2 x3 =
+    let 
+        line = match op with
+                | _ -> raise (Failure ("wrong gen_triop "^op))
+    in
+    brprog := List.append !brprog [line]
