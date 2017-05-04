@@ -24,6 +24,7 @@ type opType =
     | OpHalt
     | OpPush of int
     | OpStore of (int * int)
+    | OpReturn
 
 (* type brKind =
     | BR_BUILTIN
@@ -117,7 +118,9 @@ and gen_br_decl decl = ()
 
 and gen_oz_stmts scope stmts = ()
 
-and gen_oz_epilogue scope = ()
+and gen_oz_epilogue scope =
+    gen_unop "pop" (get_scope_nslot scope);
+    brprog := List.append !brprog [BrOp(OpReturn)]
 
 (* and gen_unop op x = match op with
     | "push" -> brprog := List.append !brprog [BrOp(OpPush(x))]
