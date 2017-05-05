@@ -8,6 +8,7 @@
             + [ ] removed temporally
 + [ ] analyze
 + [ ] codegen
+    + [ ] don't understand ini_regs's counting
 + [ ] may need to alter AST
 + [ ] array
     + [ ] option type

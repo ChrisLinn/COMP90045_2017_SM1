@@ -25,6 +25,8 @@ type opType =
     | OpPush of int
     | OpStore of (int * int)
     | OpReturn
+    | OpIntConst of (int * int)
+    | OpRealConst of (int * int)
 
 (* type brKind =
     | BR_BUILTIN
@@ -138,10 +140,6 @@ and ini_regs decls =
             gen_real_const !real_reg 0.0;
     )
 
-and gen_int_const x y = ()
-
-and gen_real_const x y = ()
-
 and gen_oz_stmts scope stmts = ()
 
 and gen_oz_epilogue scope =
@@ -156,6 +154,12 @@ and gen_halt =
 
 and gen_proc_label proc_id =
     brprog := List.append !brprog [BrProc(proc_id)]
+
+and gen_int_const reg val =
+    brprog := List.append !brprog [BrOp(OpIntConst(reg,val))]
+
+and gen_real_const reg val =
+    brprog := List.append !brprog [BrOp(OpRealConst(reg,val))]
 
 and gen_return = 
     brprog := List.append !brprog [BrOp(OpReturn)]
