@@ -115,3 +115,8 @@ and sym_type_from_ast_type = function
 and sym_kind_from_ast_indc = function
     | Val -> SYM_PARAM_VAL
     | Ref -> SYM_PARAM_REF
+
+and ast_type_from_sym_type = function
+    | SYM_BOOL -> Bool
+    | SYM_INT -> Int
+    | SYM_REAL -> Float 

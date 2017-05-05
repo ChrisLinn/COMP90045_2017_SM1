@@ -52,9 +52,9 @@ let main () =
         let prog = Snick_parse.program Snick_lex.token lexbuf in
         match !mode with
         | PrettyPrint ->
-            Snick_pprint.print_program Format.std_formatter prog 
+            Snick_pprint.print_program Format.std_formatter prog
         | Compile ->
-            print_string "Compiling function is not yet enabled!!!\n"
+            Snick_codegen.compile prog
     with
         (* Handle failure from lexer, print error position. *)
         | Snick_lex.LexErr ->
@@ -63,6 +63,6 @@ let main () =
         | Parsing.Parse_error ->
             raise (Failure ("Parsing Error" ^ (err_pos lexbuf)))
         | Failure x ->
-            raise (Failure x)
+            raise (Failure (x)^ (err_pos lexbuf))
 
 let _ = main ()

@@ -1,6 +1,6 @@
 open Snick_ast
-open Snick_analyze
 open Snick_symbol
+open Snick_analyze
 (* 
 type opCode =
     | OP_PUSH_STACK_FRAME | OP_POP_STACK_FRAME
@@ -45,7 +45,9 @@ type brLines = brLine list option
 
 type brProg = brLines
 
+
 let brprog = ref []
+let label = ref 0
 
 let rec compile prog =
     analyse prog;
@@ -70,8 +72,8 @@ and print_lines = ()
 and gen_br_program prog =
     gen_call "main";
     gen_halt;
-(*     gen_oz_out_of_bounds;
-    gen_oz_div_by_zero; *)
+(*     gen_br_out_of_bounds;
+    gen_br_div_by_zero; *)
     List.iter gen_br_proc prog
 
 and gen_br_proc ((proc_id,params),proc_body) =
@@ -79,12 +81,12 @@ and gen_br_proc ((proc_id,params),proc_body) =
     in
     (
         gen_proc_label proc_id;
-        gen_oz_prologue scope params proc_body.decls;
-        gen_oz_stmts scope proc_body.stmts;
-        gen_oz_epilogue scope            
+        gen_br_prologue scope params proc_body.decls;
+        gen_br_stmts scope proc_body.stmts;
+        gen_br_epilogue scope            
     )
 
-and gen_oz_prologue scope params decls =
+and gen_br_prologue scope params decls =
     (* gen_comment *)
     gen_unop "push" (get_scope_nslot scope);
     gen_br_params (get_scope_st scope) 0 params;
@@ -102,7 +104,7 @@ and gen_br_param scope_ht cnt (_, _, param_id) =
     let sym = Hashtbl.find scope_ht param_id
     in
     match sym with
-    | (_,_,nslot,_) -> gen_biop "store" nslot cnt
+    | (_,_,nslot,_) -> gen_binop "store" nslot cnt
     
 and gen_br_decls scope_ht decls =
     let cnt = ref 0
@@ -154,7 +156,7 @@ and gen_br_decls scope_ht decls =
                             reg := !int_reg;
 
                         if optn_bounds = None then
-                            gen_biop "store" nslot !reg
+                            gen_binop "store" nslot !reg
                         else
                             gen_br_init_array nslot reg optn_bounds
                     )
@@ -165,9 +167,33 @@ and gen_br_decls scope_ht decls =
 
 and gen_br_init_array nslot reg optn_bounds = ()
 
-and gen_oz_stmts scope stmts = ()
+and gen_br_stmts scope stmts =
+    List.iter (gen_br_stmt scope) stmts
 
-and gen_oz_epilogue scope =
+and gen_br_stmt scope stmt = match stmt with
+    | Assign(elem,expr) -> gen_br_assign scope stmt 
+    | Read(elem) -> gen_br_read scope stmt 
+    | Write(expr) -> gen_br_write scope stmt 
+    | Call(ident,exprs) -> gen_br_call scope stmt 
+    | If_then(expr,stmts) -> gen_br_ifthen scope stmt 
+    | If_then_else(expr,stmts1,stmts2) -> gen_br_ifthenelse scope stmt 
+    | While(expr,stmts) -> gen_br_while scope stmt 
+
+and gen_br_assign scope stmt = ()
+
+and gen_br_read scope stmt = ()
+
+and gen_br_write scope stmt = ()
+
+and gen_br_call scope stmt = ()
+
+and gen_br_ifthen scope stmt = ()
+
+and gen_br_ifthenelse scope stmt = ()
+
+and gen_br_while scope stmt = ()
+
+and gen_br_epilogue scope =
     gen_unop "pop" (get_scope_nslot scope);
     gen_return
 
@@ -200,14 +226,14 @@ and gen_unop op x =
     in
     brprog := List.append !brprog [line]
 
-(* and gen_biop op x1 x2 = match op with
+(* and gen_binop op x1 x2 = match op with
     | "store" -> brprog := List.append !brprog [BrOp(OpStore(x1,x2))]
     | _ -> ()
  *)
-and gen_biop op x1 x2 =
+and gen_binop op x1 x2 =
     let line = match op with
                 | "store" -> BrOp(OpStore(x1,x2))
-                | _ -> raise (Failure ("wrong gen_biop "^op))
+                | _ -> raise (Failure ("wrong gen_binop "^op))
     in
     brprog := List.append !brprog [line]
 
