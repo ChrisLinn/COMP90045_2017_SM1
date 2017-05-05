@@ -63,6 +63,6 @@ let main () =
         | Parsing.Parse_error ->
             raise (Failure ("Parsing Error" ^ (err_pos lexbuf)))
         | Failure x ->
-            raise (Failure (x)^ (err_pos lexbuf))
+            raise (Failure (x^ (err_pos lexbuf)))
 
 let _ = main ()
