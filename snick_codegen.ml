@@ -73,8 +73,7 @@ and gen_br_program prog =
     List.iter gen_br_proc prog
 
 and gen_br_proc ((proc_id,params),proc_body) =
-    let
-        scope = Hashtbl.find ht_scopes proc_id
+    let scope = Hashtbl.find ht_scopes proc_id
     in
     (
         gen_proc_label proc_id;
@@ -90,24 +89,58 @@ and gen_oz_prologue scope params decls =
     gen_br_decls (get_scope_st scope) decls;
     
 and gen_br_params scope_ht cnt = function
+    | [] -> ()
     | x::xs ->
         (
             gen_br_param scope_ht cnt x;
             gen_br_params scope_ht (cnt+1) xs
         )
-    | [] -> ()
 
 and gen_br_param scope_ht cnt (_, _, param_id) =
-    let
-        sym = Hashtbl.find scope_ht param_id
+    let sym = Hashtbl.find scope_ht param_id
     in
     match sym with
     | (_,_,nslot,_) -> gen_biop "store" nslot cnt
     
 and gen_br_decls scope decls =
-    List.iter gen_br_decl decls
+    ini_regs decls
 
-and gen_br_decl decl = ()
+and ini_regs decls =
+    let cnt = ref 0
+    and ints_flag = ref false
+    and int_reg = ref 0
+    and reals_flag = ref false
+    and real_reg = ref 0
+    in
+    (
+        List.iter
+            (
+                fun (var_type, _) ->
+                (
+                    if (not !reals_flag) && (var_type = Float) then
+                    (
+                        reals_flag := true;
+                        real_reg := !cnt;
+                        incr cnt
+                    )
+                    else if (not !ints_flag) then
+                    (
+                        ints_flag := true;
+                        int_reg := !cnt;
+                        incr cnt
+                    )
+                )
+            )
+            decls;
+        if !ints_flag then
+            gen_int_const !int_reg 0;
+        if !reals_flag then
+            gen_real_const !real_reg 0.0;
+    )
+
+and gen_int_const x y = ()
+
+and gen_real_const x y = ()
 
 and gen_oz_stmts scope stmts = ()
 
@@ -132,8 +165,7 @@ and gen_return =
     | _ -> ()
  *)
 and gen_unop op x =
-    let 
-        line = match op with
+    let line = match op with
                 | "push" -> BrOp(OpPush(x))
                 | _ -> raise (Failure ("wrong gen_unop "^op))
     in
@@ -144,16 +176,14 @@ and gen_unop op x =
     | _ -> ()
  *)
 and gen_biop op x1 x2 =
-    let 
-        line = match op with
+    let line = match op with
                 | "store" -> BrOp(OpStore(x1,x2))
                 | _ -> raise (Failure ("wrong gen_biop "^op))
     in
     brprog := List.append !brprog [line]
 
 and gen_triop op x1 x2 x3 =
-    let 
-        line = match op with
+    let line = match op with
                 | _ -> raise (Failure ("wrong gen_triop "^op))
     in
     brprog := List.append !brprog [line]

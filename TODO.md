@@ -4,12 +4,16 @@
     + [ ] stack_cnt for a scope or a table?
         + [ ] dont understand slots_needed_for_table
     + [ ] sbValType
-        + [ ] great, seems can be used to opt (update type and value)
+        + [ ] great, seems can be used to opt (update type and value)?
+            + [ ] removed temporally
 + [ ] analyze
 + [ ] codegen
 + [ ] may need to alter AST
 + [ ] array
     + [ ] option type
+    + [ ] decls
+        + [ ] analyze
+        + [ ] codegen
 + [ ] error handling
     + [ ] analyze (recursively) assign/if/while/read
     + [ ] find main
