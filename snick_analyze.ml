@@ -51,9 +51,9 @@ and analyse_if_then_else scope_st stmt = ()
 and analyse_while scope_st stmt = ()
 
 and get_expr_type scope_st = function
-    | Ebool(_) -> Bool
-    | Eint(_) -> Int
-    | Efloat(_) -> Float
+    | Ebool(_) -> SYM_BOOL
+    | Eint(_) -> SYM_INT
+    | Efloat(_) -> SYM_REAL
     | Eparen(expr) -> get_expr_type scope_st expr
     | Ebinop(lexpr,optr,rexpr) -> get_expr_type scope_st lexpr
     | Eunop(optr,expr) -> get_expr_type scope_st expr
@@ -62,7 +62,7 @@ and get_expr_type scope_st = function
 and get_elem_type scope_st (Elem(id,_)) =
     let (_,sym_type,_,_) = Hashtbl.find scope_st id
     in
-    ast_type_from_sym_type sym_type
+    sym_type
 
 and check_unused_symbols prog = ()
 
