@@ -104,41 +104,66 @@ and gen_br_param scope_ht cnt (_, _, param_id) =
     match sym with
     | (_,_,nslot,_) -> gen_biop "store" nslot cnt
     
-and gen_br_decls scope decls =
-    ini_regs decls
-
-and ini_regs decls =
+and gen_br_decls scope_ht decls =
     let cnt = ref 0
     and ints_flag = ref false
     and int_reg = ref 0
     and reals_flag = ref false
     and real_reg = ref 0
+    and reg = ref 0
     in
     (
         List.iter
-            (
-                fun (var_type, _) ->
+            (fun (_, Variable(id,_)) ->
                 (
-                    if (not !reals_flag) && (var_type = Float) then
+                    let (_,sym_type,_,_) = Hashtbl.find scope_ht id
+                    in
                     (
-                        reals_flag := true;
-                        real_reg := !cnt;
-                        incr cnt
-                    )
-                    else if (not !ints_flag) then
-                    (
-                        ints_flag := true;
-                        int_reg := !cnt;
-                        incr cnt
+                        if (not !reals_flag) && (sym_type = SYM_REAL) then
+                        (
+                            reals_flag := true;
+                            real_reg := !cnt;
+                            incr cnt
+                        )
+                        else if (not !ints_flag) then
+                        (
+                            ints_flag := true;
+                            int_reg := !cnt;
+                            incr cnt
+                        )
                     )
                 )
             )
             decls;
+
         if !ints_flag then
             gen_int_const !int_reg 0;
         if !reals_flag then
             gen_real_const !real_reg 0.0;
+
+        List.iter
+            (fun (_, Variable(id,_)) ->
+                (
+                    let (_,sym_type,nslot,optn_bounds) =
+                            Hashtbl.find scope_ht id
+                    in
+                    (
+                        if sym_type = SYM_REAL then
+                            reg := !real_reg
+                        else
+                            reg := !int_reg
+
+                        if optn_bounds = None then
+                            gen_binop "store" nslot reg
+                        else
+                            gen_br_init_array nslot reg optn_bounds
+                    )
+                )
+            )
+            decls;
     )
+
+and gen_br_init_array nslot reg optn_bounds = ()
 
 and gen_oz_stmts scope stmts = ()
 

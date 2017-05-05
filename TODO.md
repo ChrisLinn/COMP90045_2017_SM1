@@ -8,7 +8,9 @@
             + [ ] removed temporally
 + [ ] analyze
 + [ ] codegen
-    + [ ] don't understand ini_regs's counting
+    + [ ] gen_br_decls
+        + [ ] what about bool
+            + [ ] because brill is writen in c!
 + [ ] may need to alter AST
 + [ ] array
     + [ ] option type
