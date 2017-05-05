@@ -26,7 +26,7 @@ type opType =
     | OpStore of (int * int)
     | OpReturn
     | OpIntConst of (int * int)
-    | OpRealConst of (int * int)
+    | OpRealConst of (int * float)
 
 (* type brKind =
     | BR_BUILTIN
@@ -151,10 +151,10 @@ and gen_br_decls scope_ht decls =
                         if sym_type = SYM_REAL then
                             reg := !real_reg
                         else
-                            reg := !int_reg
+                            reg := !int_reg;
 
                         if optn_bounds = None then
-                            gen_binop "store" nslot reg
+                            gen_biop "store" nslot !reg
                         else
                             gen_br_init_array nslot reg optn_bounds
                     )
@@ -180,11 +180,11 @@ and gen_halt =
 and gen_proc_label proc_id =
     brprog := List.append !brprog [BrProc(proc_id)]
 
-and gen_int_const reg val =
-    brprog := List.append !brprog [BrOp(OpIntConst(reg,val))]
+and gen_int_const reg int_const =
+    brprog := List.append !brprog [BrOp(OpIntConst(reg,int_const))]
 
-and gen_real_const reg val =
-    brprog := List.append !brprog [BrOp(OpRealConst(reg,val))]
+and gen_real_const reg real_const =
+    brprog := List.append !brprog [BrOp(OpRealConst(reg,real_const))]
 
 and gen_return = 
     brprog := List.append !brprog [BrOp(OpReturn)]
