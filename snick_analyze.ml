@@ -58,11 +58,18 @@ and get_expr_type scope_st = function
     | Eparen(expr) -> get_expr_type scope_st expr
     | Ebinop(lexpr,optr,rexpr) ->
     (
-        if (((get_expr_type scope_st lexpr)=SYM_REAL)
-        ||((get_expr_type scope_st lexpr)=SYM_REAL)) then
-            SYM_REAL
-        else
-            get_expr_type scope_st lexpr
+        match optr with
+        | Op_or| Op_and | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge ->
+            SYM_BOOL
+        | Op_add | Op_sub | Op_mul | Op_div ->
+        (
+            if (((get_expr_type scope_st lexpr)=SYM_REAL)
+            ||((get_expr_type scope_st lexpr)=SYM_REAL)) then
+                SYM_REAL
+            else
+                SYM_INT
+        )
+        | _ -> raise (Failure "invalid optr in Ebinop")
     )
     | Eunop(optr,expr) -> get_expr_type scope_st expr
 

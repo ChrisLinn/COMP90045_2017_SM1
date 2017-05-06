@@ -388,7 +388,8 @@ and gen_br_expr scope nreg = function
 
 and gen_br_expr_binop scope nreg lexpr optr rexpr = ()
 
-and gen_br_expr_unop scope nreg optr expr = ()
+and gen_br_expr_unop scope nreg optr expr =
+    gen_br_expr scope nreg expr;
 
 and gen_br_expr_id scope nreg id =
     let (symkind,symtype,nslot,_) = Hashtbl.find (get_scope_st scope) id
