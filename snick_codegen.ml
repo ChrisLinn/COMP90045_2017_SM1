@@ -25,7 +25,7 @@ type opType =
     (*unop*)
     | OpPush of int
     | OpBranchUncond of int
-    (*binup*)
+    (*binop*)
     | OpStore of (int * int)
     | OpLoad of (int * int)
     | OpLoadIndirect of (int * int)
@@ -35,12 +35,39 @@ type opType =
     | OpLoadAddress of (int * int)
     | OpStoreIndirect of (int * int)
     | OpNot of (int * int)
-    | OpSubInt of (int * int * int)
+    (*triop*)
+    | OpOr of (int * int * int)
+    | OpAnd of (int * int * int)
+    | OpEq of (int * int * int)
+    | OpNe of (int * int * int)
+    | OpAddReal of (int * int * int)
     | OpSubReal of (int * int * int)
+    | OpMulReal of (int * int * int)
+    | OpDivReal of (int * int * int)
+    | OpCmpEqReal of (int * int * int)
+    | OpCmpNeReal of (int * int * int)
+    | OpCmpLtReal of (int * int * int)
+    | OpCmpLeReal of (int * int * int)
+    | OpCmpGtReal of (int * int * int)
+    | OpCmpGeReal of (int * int * int)
+    | OpAddInt of (int * int * int)
+    | OpSubInt of (int * int * int)
+    | OpMulInt of (int * int * int)
+    | OpDivInt of (int * int * int)
+    | OpCmpEqInt of (int * int * int)
+    | OpCmpNeInt of (int * int * int)
+    | OpCmpLtInt of (int * int * int)
+    | OpCmpLeInt of (int * int * int)
+    | OpCmpGtInt of (int * int * int)
+    | OpCmpGeInt of (int * int * int)
     | OpReturn
     | OpIntConst of (int * int)
     | OpRealConst of (int * float)
     | OpStringConst of (int * string)
+
+
+
+
 
 (* type brKind =
     | BR_BUILTIN
@@ -440,13 +467,13 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
 
         if ((lexpr_type = SYM_BOOL) && (rexpr_type = SYM_BOOL)) then
             gen_br_expr_binop_bool
-                nreg !lexpr_nreg !rexpr_nreg (Ebinop(lexpr,optr,rexpr))
+                nreg !lexpr_nreg !rexpr_nreg optr
         else if ((lexpr_type = SYM_REAL) || (rexpr_type = SYM_INT)) then
             gen_br_expr_binop_float
-                nreg !lexpr_nreg !rexpr_nreg (Ebinop(lexpr,optr,rexpr))
+                nreg !lexpr_nreg !rexpr_nreg optr
         else
             gen_br_expr_binop_int
-                nreg !lexpr_nreg !rexpr_nreg (Ebinop(lexpr,optr,rexpr))
+                nreg !lexpr_nreg !rexpr_nreg optr
     )
 
 and get_reg_usage scope = function
@@ -489,11 +516,38 @@ and get_reg_usage scope = function
         | Elem(id,Some idxs) -> (*aaaaaray*) 0
     )
 
-and gen_br_expr_binop_bool nreg lexpr_nreg rexpr_nreg binexpr = ()
+and gen_br_expr_binop_bool nreg lexpr_nreg rexpr_nreg = function
+    | Op_or -> gen_triop "or" nreg lexpr_nreg rexpr_nreg
+    | Op_and -> gen_triop "and" nreg lexpr_nreg rexpr_nreg
+    | Op_eq -> gen_triop "eq" nreg lexpr_nreg rexpr_nreg
+    | Op_ne -> gen_triop "ne" nreg lexpr_nreg rexpr_nreg
+    | _ -> raise (Failure "invalid op for bool binop expr!")
 
-and gen_br_expr_binop_float nreg lexpr_nreg rexpr_nreg binexpr = ()
+and gen_br_expr_binop_float nreg lexpr_nreg rexpr_nreg = function
+    | Op_add -> gen_triop "add_real" nreg lexpr_nreg rexpr_nreg
+    | Op_sub -> gen_triop "sub_real" nreg lexpr_nreg rexpr_nreg
+    | Op_mul -> gen_triop "mul_real" nreg lexpr_nreg rexpr_nreg
+    | Op_div -> gen_triop "div_real" nreg lexpr_nreg rexpr_nreg
+    | Op_eq -> gen_triop "cmp_eq_real" nreg lexpr_nreg rexpr_nreg
+    | Op_ne -> gen_triop "cmp_ne_real" nreg lexpr_nreg rexpr_nreg
+    | Op_lt -> gen_triop "cmp_lt_real" nreg lexpr_nreg rexpr_nreg
+    | Op_le -> gen_triop "cmp_le_real" nreg lexpr_nreg rexpr_nreg
+    | Op_gt -> gen_triop "cmp_gt_real" nreg lexpr_nreg rexpr_nreg
+    | Op_ge -> gen_triop "cmp_ge_real" nreg lexpr_nreg rexpr_nreg
+    | _ -> raise (Failure "invalid op for float binop expr!")
 
-and gen_br_expr_binop_int nreg lexpr_nreg rexpr_nreg binexpr = ()
+and gen_br_expr_binop_int nreg lexpr_nreg rexpr_nreg = function
+    | Op_add -> gen_triop "add_int" nreg lexpr_nreg rexpr_nreg
+    | Op_sub -> gen_triop "sub_int" nreg lexpr_nreg rexpr_nreg
+    | Op_mul -> gen_triop "mul_int" nreg lexpr_nreg rexpr_nreg
+    | Op_div -> gen_triop "div_int" nreg lexpr_nreg rexpr_nreg
+    | Op_eq -> gen_triop "cmp_eq_int" nreg lexpr_nreg rexpr_nreg
+    | Op_ne -> gen_triop "cmp_ne_int" nreg lexpr_nreg rexpr_nreg
+    | Op_lt -> gen_triop "cmp_lt_int" nreg lexpr_nreg rexpr_nreg
+    | Op_le -> gen_triop "cmp_le_int" nreg lexpr_nreg rexpr_nreg
+    | Op_gt -> gen_triop "cmp_gt_int" nreg lexpr_nreg rexpr_nreg
+    | Op_ge -> gen_triop "cmp_ge_int" nreg lexpr_nreg rexpr_nreg
+    | _ -> raise (Failure "invalid op for int binop expr!")
 
 and gen_br_expr_unop scope nreg optr expr =
     gen_br_expr scope nreg expr;
@@ -592,8 +646,30 @@ and gen_binop op x1 x2 =
 
 and gen_triop op x1 x2 x3 =
     let line = match op with
-                | "sub_int" -> BrOp(OpSubInt(x1,x2,x3))
+                | "or" -> BrOp(OpOr(x1,x2,x3))
+                | "and" -> BrOp(OpAnd(x1,x2,x3))
+                | "eq" -> BrOp(OpEq(x1,x2,x3))
+                | "ne" -> BrOp(OpNe(x1,x2,x3))
+                | "add_real" -> BrOp(OpAddReal(x1,x2,x3))
                 | "sub_real" -> BrOp(OpSubReal(x1,x2,x3))
+                | "mul_real" -> BrOp(OpMulReal(x1,x2,x3))
+                | "div_real" -> BrOp(OpDivReal(x1,x2,x3))
+                | "cmp_eq_real" -> BrOp(OpCmpEqReal(x1,x2,x3))
+                | "cmp_ne_real" -> BrOp(OpCmpNeReal(x1,x2,x3))
+                | "cmp_lt_real" -> BrOp(OpCmpLtReal(x1,x2,x3))
+                | "cmp_le_real" -> BrOp(OpCmpLeReal(x1,x2,x3))
+                | "cmp_gt_real" -> BrOp(OpCmpGtReal(x1,x2,x3))
+                | "cmp_ge_real" -> BrOp(OpCmpGeReal(x1,x2,x3))
+                | "add_int" -> BrOp(OpAddInt(x1,x2,x3))
+                | "sub_int" -> BrOp(OpSubInt(x1,x2,x3))
+                | "mul_int" -> BrOp(OpMulInt(x1,x2,x3))
+                | "div_int" -> BrOp(OpDivInt(x1,x2,x3))
+                | "cmp_eq_int" -> BrOp(OpCmpEqInt(x1,x2,x3))
+                | "cmp_ne_int" -> BrOp(OpCmpNeInt(x1,x2,x3))
+                | "cmp_lt_int" -> BrOp(OpCmpLtInt(x1,x2,x3))
+                | "cmp_le_int" -> BrOp(OpCmpLeInt(x1,x2,x3))
+                | "cmp_gt_int" -> BrOp(OpCmpGtInt(x1,x2,x3))
+                | "cmp_ge_int" -> BrOp(OpCmpGeInt(x1,x2,x3))
                 | _ -> raise (Failure ("wrong gen_triop "^op))
     in
     brprog := List.append !brprog [line]
