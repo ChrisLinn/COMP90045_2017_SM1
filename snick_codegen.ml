@@ -72,6 +72,8 @@ type brProg = brLines
 
 
 let brprog = ref []
+(* let out_of_bounds_label = 0 *)
+(* let div_by_zero_label = 1 *)
 let next_label = ref 0
 
 let rec compile prog =
@@ -427,7 +429,7 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
                 gen_int_const (nreg+2) 0;
                 gen_triop "cmp_eq_int" (nreg+2) (nreg+2) rexpr_nreg
             );
-            gen_binop "branch_on_true" (nreg+2) 1
+            gen_binop "branch_on_true" (nreg+2) div_by_zero_label
         )
         *)
 
