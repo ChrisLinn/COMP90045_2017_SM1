@@ -212,7 +212,7 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
     and expr_type = get_expr_type (get_scope_st scope) expr
     in
     (
-        gen_br_expr scope 0 expr;
+        gen_br_expr scope 0 (Some symtype) expr;
         if ((symtype = SYM_REAL) && (expr_type = SYM_INT)) then
             gen_binop "int_to_real" 0 0;
         if optn_idxs <> None then
@@ -254,7 +254,7 @@ and gen_br_read scope (Elem(id,optn_idxs)) =
 and gen_br_write scope = function
     | Expr(expr) ->
     (
-        gen_br_expr scope 0 expr;
+        gen_br_expr scope 0 None expr;
         match (get_expr_type (get_scope_st scope) expr) with
         | SYM_BOOL -> gen_call_builtin "print_bool"
         | SYM_INT -> gen_call_builtin "print_int"
@@ -302,7 +302,7 @@ and gen_br_call scope proc_id args =
                         )
                         | (Val,param_type,_) ->
                         (
-                            gen_br_expr scope !nreg arg;
+                            gen_br_expr scope !nreg None arg;
                             if (((get_expr_type scope_st arg) = SYM_INT)
                             && (param_type = Float)) then
                                 gen_binop "int_to_real" !nreg !nreg
@@ -323,7 +323,7 @@ and gen_br_ifthen scope expr stmts =
     in
     (
         incr next_label;
-        gen_br_expr scope 0 expr;
+        gen_br_expr scope 0 None expr;
         gen_binop "branch_on_false" 0 after_label;
         gen_br_stmts scope stmts;
         gen_label after_label
@@ -338,7 +338,7 @@ and gen_br_ifthenelse scope expr then_stmts else_stmts =
         in
         (
             incr next_label;
-            gen_br_expr scope 0 expr;
+            gen_br_expr scope 0 None expr;
             gen_binop "branch_on_false" 0 else_label;
             gen_br_stmts scope then_stmts;
             gen_unop "branch_uncond" after_label;
@@ -358,7 +358,7 @@ and gen_br_while scope expr stmts =
         (
             incr next_label;
             gen_label begin_label;
-            gen_br_expr scope 0 expr;
+            gen_br_expr scope 0 None expr;
             gen_binop "branch_on_false" 0 after_label;
             gen_br_stmts scope stmts;
             gen_unop "branch_uncond" begin_label;
@@ -366,7 +366,7 @@ and gen_br_while scope expr stmts =
         )
     )
 
-and gen_br_expr scope nreg = function
+and gen_br_expr scope nreg ifr_type = function
     | Ebool(bool_const) ->
     (
         match bool_const with
@@ -375,10 +375,10 @@ and gen_br_expr scope nreg = function
     )
     | Eint(int_const) -> gen_int_const nreg int_const
     | Efloat(float_const) -> gen_real_const nreg float_const
-    | Eparen(expr) -> gen_br_expr scope nreg expr
+    | Eparen(expr) -> gen_br_expr scope nreg ifr_type expr
     | Ebinop(lexpr,optr,rexpr) ->
-        gen_br_expr_binop scope nreg lexpr optr rexpr
-    | Eunop(optr,expr) -> gen_br_expr_unop scope nreg optr expr
+        gen_br_expr_binop scope nreg ifr_type lexpr optr rexpr
+    | Eunop(optr,expr) -> gen_br_expr_unop scope nreg ifr_type optr expr
     | Eelem(elem) ->
     (
         match elem with
@@ -386,9 +386,13 @@ and gen_br_expr scope nreg = function
         | Elem(id,Some idxs) -> gen_br_expr_array_val scope nreg id idxs
     )
 
-and gen_br_expr_binop scope nreg lexpr optr rexpr = ()
+and gen_br_expr_binop scope nreg ifr_type lexpr optr rexpr = ()
 
-and gen_br_expr_unop scope nreg optr expr = ()
+and gen_br_expr_unop scope nreg ifr_type optr expr =
+    let expr_type = get_expr_type (get_scope_st scope) expr
+    in
+    (
+    )
 
 and gen_br_expr_id scope nreg id =
     let (symkind,symtype,nslot,_) = Hashtbl.find (get_scope_st scope) id
