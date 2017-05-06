@@ -22,13 +22,17 @@ type opCode =
 type opType =
     | OpCall of string
     | OpHalt
+    (*unop*)
     | OpPush of int
     | OpBranchUncond of int
+    (*binup*)
     | OpStore of (int * int)
     | OpLoad of (int * int)
     | OpLoadIndirect of (int * int)
     | OpBranchOnTrue of (int * int)
     | OpBranchOnFalse of (int * int)
+    | OpIntToReal of (int * int)
+    | OpLoadAddress of (int * int)
     | OpReturn
     | OpIntConst of (int * int)
     | OpRealConst of (int * float)
@@ -72,6 +76,10 @@ compile(FILE *fp, Program *prog) {
     return (int)(!ozprog);
 }
 *)
+    
+and strip_paren expr = match expr with
+    | Eparen paren_expr -> strip_paren paren_expr
+    | _ -> expr
 
 and print_lines = ()
 
@@ -164,14 +172,14 @@ and gen_br_decls scope_st decls =
                         if optn_bounds = None then
                             gen_binop "store" nslot !reg
                         else
-                            gen_br_init_array nslot reg optn_bounds
+                            gen_br_init_array nslot !reg optn_bounds
                     )
                 )
             )
             decls;
     )
 
-and gen_br_init_array nslot reg optn_bounds = ()
+and gen_br_init_array nslot nreg optn_bounds = ()
 
 and gen_br_stmts scope stmts =
     List.iter (gen_br_stmt scope) stmts
@@ -192,28 +200,56 @@ and gen_br_read scope elem = ()
 
 and gen_br_write scope write_expr = ()
 
-and gen_br_call this_scope proc_id args =
+and gen_br_call scope proc_id args =
     let params = get_scope_params (Hashtbl.find ht_scopes proc_id)
     and nreg = ref 0
+    and scope_st = get_scope_st scope
     in
     (
     (*try with Invalid_argument if the two lists are determined to have different lengths*)
         List.iter2
             (fun arg param ->
                 (
-                    match param with
-                    | (Ref,_,_) ->
                     (
-                    )
-                    | (Val,_,_) ->
-                    (
-                    )
+                        match param with
+                        | (Ref,_,_) ->
+                        (
+                            match (strip_paren arg) with
+                            | Eelem(Elem(id,optn_idxs)) ->
+                            (
+                                let (symkind,symtype,nslot,optn_bounds) =
+                                    Hashtbl.find scope_st id
+                                in
+                                (
+                                    if symkind = SYM_PARAM_REF then
+                                        gen_binop "load" !nreg nslot
+                                    else if optn_idxs <> None then
+                                        gen_br_expr_array_addr
+                                            scope !nreg (Elem(id,optn_idxs))
+                                    else
+                                        gen_binop "load_address" !nreg nslot
+                                )
+                            )
+                            | _ -> 
+                                raise (Failure "can't pass non-elem to a ref")
+                        )
+                        | (Val,param_type,_) ->
+                        (
+                            gen_br_expr scope !nreg arg;
+                            if (((get_expr_type scope_st arg) = SYM_INT)
+                            && (param_type = Float)) then
+                                gen_binop "int_to_real" !nreg !nreg
+                        )
+                    );
+                    incr nreg
                 )
             )
             args
             params;
         gen_call proc_id
     )
+
+and gen_br_expr_array_addr scope nreg elem = ()
 
 and gen_br_ifthen scope expr stmts =
     let after_label = !next_label
@@ -320,11 +356,11 @@ and gen_proc_label proc_id =
 and gen_label nlabel = 
     brprog := List.append !brprog [BrLabel(nlabel)]
 
-and gen_int_const reg int_const =
-    brprog := List.append !brprog [BrOp(OpIntConst(reg,int_const))]
+and gen_int_const nreg int_const =
+    brprog := List.append !brprog [BrOp(OpIntConst(nreg,int_const))]
 
-and gen_real_const reg real_const =
-    brprog := List.append !brprog [BrOp(OpRealConst(reg,real_const))]
+and gen_real_const nreg real_const =
+    brprog := List.append !brprog [BrOp(OpRealConst(nreg,real_const))]
 
 and gen_return = 
     brprog := List.append !brprog [BrOp(OpReturn)]
@@ -352,6 +388,8 @@ and gen_binop op x1 x2 =
                 | "load_indrect" -> BrOp(OpLoadIndirect(x1,x2))
                 | "branch_on_true" -> BrOp(OpBranchOnTrue(x1,x2))
                 | "branch_on_false" -> BrOp(OpBranchOnFalse(x1,x2))
+                | "int_to_real" -> BrOp(OpIntToReal(x1,x2))
+                | "load_address" -> BrOp(OpLoadAddress(x1,x2))
                 | _ -> raise (Failure ("wrong gen_binop "^op))
     in
     brprog := List.append !brprog [line]

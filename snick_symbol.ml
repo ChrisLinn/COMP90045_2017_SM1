@@ -39,7 +39,7 @@ type scope = Scope of (ident * (string, symbol) Hashtbl.t * param list * int)
  typedef struct scope_data {
     char *id;                   
     void *table;                   seems scope's symbol table
-    void *params;                   ?????????????????????
+    void *params;                   
     int line_no;                seems unuseful so removed
     int next_slot;              can be global?????
 } scope;

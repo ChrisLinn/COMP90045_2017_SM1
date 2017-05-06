@@ -56,7 +56,14 @@ and get_expr_type scope_st = function
     | Eint(_) -> SYM_INT
     | Efloat(_) -> SYM_REAL
     | Eparen(expr) -> get_expr_type scope_st expr
-    | Ebinop(lexpr,optr,rexpr) -> get_expr_type scope_st lexpr
+    | Ebinop(lexpr,optr,rexpr) ->
+    (
+        if (((get_expr_type scope_st lexpr)=SYM_REAL)
+        ||((get_expr_type scope_st lexpr)=SYM_REAL)) then
+            SYM_REAL
+        else
+            get_expr_type scope_st lexpr
+    )
     | Eunop(optr,expr) -> get_expr_type scope_st expr
 
 and get_elem_type scope_st (Elem(id,_)) =

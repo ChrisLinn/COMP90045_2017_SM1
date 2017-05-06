@@ -25,6 +25,7 @@
         + [ ] justification needed for semantic analysis
             + [ ] report or raise a failure
         + [ ] print_dupe_proc_errors
+    + [ ] type check in get_expr_type
 + [ ] optimization
 + [ ] ifdebug dump symbol table
 + [ ] lineno seems unuserful?
