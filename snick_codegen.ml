@@ -182,8 +182,8 @@ and gen_br_stmt scope stmt = match stmt with
     | Write(expr) -> gen_br_write scope expr 
     | Call(ident,exprs) -> gen_br_call scope ident exprs 
     | If_then(expr,stmts) -> gen_br_ifthen scope expr stmts 
-    | If_then_else(expr,stmts1,stmts2) ->
-        gen_br_ifthenelse scope expr stmts1 stmts2 
+    | If_then_else(expr,then_stmts,else_stmts) ->
+        gen_br_ifthenelse scope expr then_stmts else_stmts 
     | While(expr,stmts) -> gen_br_while scope expr stmts
 
 and gen_br_assign scope elem expr = ()
@@ -205,7 +205,24 @@ and gen_br_ifthen scope expr stmts =
         gen_label after_label
     )
 
-and gen_br_ifthenelse scope expr stmts1 stmts2 = ()
+and gen_br_ifthenelse scope expr then_stmts else_stmts =
+    let else_label = !next_label
+    in
+    (
+        incr next_label;
+        let after_label = !next_label
+        in
+        (
+            incr next_label;
+            gen_br_expr scope 0 expr;
+            gen_binop "branch_on_false" 0 else_label;
+            gen_br_stmts scope then_stmts;
+            gen_unop "branch_uncond" after_label;
+            gen_label else_label;
+            gen_br_stmts scope else_stmts;
+            gen_label after_label
+        )
+    )
 
 and gen_br_while scope expr stmts =
     let begin_label = !next_label
