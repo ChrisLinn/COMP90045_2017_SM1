@@ -53,6 +53,9 @@ type bltInType =
     | BltInPrintInt
     | BltInPrintReal
     | BltInPrintString
+    | BltInReadBool
+    | BltInReadInt
+    | BltInReadReal
 
 type brLine =
     | BrProc of string
@@ -225,7 +228,28 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
             gen_binop "store" nslot 0
     )
 
-and gen_br_read scope elem = ()
+and gen_br_read scope (Elem(id,optn_idxs)) =
+    let (symkind,symtype,nslot,optn_bounds) 
+        = Hashtbl.find (get_scope_st scope) id
+    in
+    (
+        (
+            match symtype with
+            | SYM_BOOL -> gen_call_builtin "read_bool"
+            | SYM_INT -> gen_call_builtin "read_int"
+            | SYM_REAL -> gen_call_builtin "read_real"
+        );
+        if optn_idxs <> None then
+        (
+        )
+        else if symkind = SYM_PARAM_REF then
+        (
+            gen_binop "load" 1 nslot;
+            gen_binop "store_indirect" 1 0
+        )
+        else
+            gen_binop "store" nslot 0
+    )
 
 and gen_br_write scope = function
     | Expr(expr) ->
@@ -451,6 +475,9 @@ and gen_call_builtin bi_func =
                 | "print_int" -> BrBltIn(BltInPrintInt)
                 | "print_real" -> BrBltIn(BltInPrintReal)
                 | "print_string" -> BrBltIn(BltInPrintString)
+                | "read_bool" -> BrBltIn(BltInReadBool)
+                | "read_int" -> BrBltIn(BltInReadInt)
+                | "read_real" -> BrBltIn(BltInReadReal)
                 | _ -> raise (Failure ("wrong bi_func "^bi_func))
     in
     brprog := List.append !brprog [line]
