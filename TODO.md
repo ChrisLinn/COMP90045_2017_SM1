@@ -17,6 +17,10 @@
     + [ ] decls
         + [ ] analyze
         + [ ] codegen
+            + [ ] gen_br_init_array
+            + [ ] gen_br_assign
+            + [ ] gen_br_expr_array_addr
+            + [ ] gen_br_expr_array_val
 + [ ] error handling
     + [ ] analyze (recursively) assign/if/while/read
     + [ ] find main

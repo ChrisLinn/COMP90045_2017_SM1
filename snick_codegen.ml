@@ -33,6 +33,7 @@ type opType =
     | OpBranchOnFalse of (int * int)
     | OpIntToReal of (int * int)
     | OpLoadAddress of (int * int)
+    | OpStoreIndirect of (int * int)
     | OpReturn
     | OpIntConst of (int * int)
     | OpRealConst of (int * float)
@@ -202,7 +203,27 @@ and gen_br_stmt scope stmt = match stmt with
         gen_br_ifthenelse scope expr then_stmts else_stmts 
     | While(expr,stmts) -> gen_br_while scope expr stmts
 
-and gen_br_assign scope elem expr = ()
+and gen_br_assign scope (Elem(id,optn_idxs)) expr =
+    let (symkind,symtype,nslot,optn_bounds) = 
+        Hashtbl.find (get_scope_st scope) id
+    and expr_type = get_expr_type (get_scope_st scope) expr
+    in
+    (
+        gen_br_expr scope 0 expr;
+        if ((symtype = SYM_REAL) && (expr_type = SYM_INT)) then
+            gen_binop "int_to_real" 0 0;
+        if optn_idxs <> None then
+        (
+
+        )
+        else if symkind = SYM_PARAM_REF then
+        (
+            gen_binop "load" 1 nslot;
+            gen_binop "store_indirect" 1 0
+        )
+        else
+            gen_binop "store" nslot 0
+    )
 
 and gen_br_read scope elem = ()
 
@@ -413,6 +434,7 @@ and gen_binop op x1 x2 =
                 | "branch_on_false" -> BrOp(OpBranchOnFalse(x1,x2))
                 | "int_to_real" -> BrOp(OpIntToReal(x1,x2))
                 | "load_address" -> BrOp(OpLoadAddress(x1,x2))
+                | "store_indirect" -> BrOp(OpStoreIndirect(x1,x2))
                 | _ -> raise (Failure ("wrong gen_binop "^op))
     in
     brprog := List.append !brprog [line]
