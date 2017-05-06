@@ -12,6 +12,8 @@
         + [ ] what about bool
             + [ ] because brill is writen in c!
 + [ ] may need to alter AST
++ [ ] int_to_float
+    + [ ] recursive call ref
 + [ ] array
     + [ ] option type
     + [ ] decls
