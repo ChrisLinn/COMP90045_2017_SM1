@@ -481,7 +481,3 @@ and gen_call_builtin bi_func =
                 | _ -> raise (Failure ("wrong bi_func "^bi_func))
     in
     brprog := List.append !brprog [line]
-                | "read_real" -> BrBltIn(BltInReadReal)
-                | _ -> raise (Failure ("wrong bi_func "^bi_func))
-    in
-    brprog := List.append !brprog [line]
