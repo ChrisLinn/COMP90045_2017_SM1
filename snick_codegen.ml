@@ -389,7 +389,71 @@ and gen_br_expr scope nreg = function
         | Elem(id,Some idxs) -> gen_br_expr_array_val scope nreg id idxs
     )
 
-and gen_br_expr_binop scope nreg lexpr optr rexpr = ()
+and gen_br_expr_binop scope nreg lexpr optr rexpr =
+    let lexpr_type = get_expr_type (get_scope_st scope) lexpr
+    and rexpr_type = get_expr_type (get_scope_st scope) rexpr
+    and lexpr_reg_usage = get_reg_usage scope lexpr
+    and rexpr_reg_usage = get_reg_usage scope rexpr
+    and lexpr_nreg = ref 0
+    and rexpr_nreg = ref 0
+    in
+    (
+        if lexpr_reg_usage >= rexpr_reg_usage then
+        (
+            lexpr_nreg := nreg;
+            rexpr_nreg := (nreg+1);
+            gen_br_expr scope !lexpr_nreg lexpr;
+            gen_br_expr scope !rexpr_nreg rexpr
+        )
+        else
+        (
+            lexpr_nreg := (nreg+1);
+            rexpr_nreg := nreg;
+            gen_br_expr scope !rexpr_nreg rexpr;
+            gen_br_expr scope !lexpr_nreg lexpr
+        );
+
+        (*check div_by_0*)
+        (*
+        if optr = Op_div then
+        (
+            if rexpr_type = SYM_REAL then
+            (
+                gen_real_const (nreg+2) 0.0;
+                gen_triop "cmp_eq_real" (nreg+2) (nreg+2) rexpr_nreg
+            )
+            else
+            (
+                gen_int_const (nreg+2) 0;
+                gen_triop "cmp_eq_int" (nreg+2) (nreg+2) rexpr_nreg
+            );
+            gen_binop "branch_on_true" (nreg+2) 1
+        )
+        *)
+
+        if ((lexpr_type = SYM_INT) && (rexpr_type = SYM_REAL)) then
+            gen_binop "int_to_real" lexpr_nreg lexpr_nreg
+        else if ((lexpr_type = SYM_REAL) && (rexpr_type = SYM_INT)) then
+            gen_binop "int_to_real" rexpr_nreg rexpr_nreg;
+
+        if ((lexpr_type = SYM_BOOL) && (rexpr_type = SYM_BOOL)) then
+            gen_br_expr_binop_bool
+                nreg lexpr_nreg rexpr_nreg (Ebinop(lexpr,optr,rexpr))
+        else if ((lexpr_type = SYM_REAL) || (rexpr_type = SYM_INT)) then
+            gen_br_expr_binop_float
+                nreg lexpr_nreg rexpr_nreg (Ebinop(lexpr,optr,rexpr))
+        else
+            gen_br_expr_binop_int
+                nreg lexpr_nreg rexpr_nreg (Ebinop(lexpr,optr,rexpr))
+    )
+
+and get_reg_usage scope expr = ()
+
+and gen_br_expr_binop_bool nreg lexpr_nreg rexpr_nreg binexpr = ()
+
+and gen_br_expr_binop_float nreg lexpr_nreg rexpr_nreg binexpr = ()
+
+and gen_br_expr_binop_int nreg lexpr_nreg rexpr_nreg binexpr = ()
 
 and gen_br_expr_unop scope nreg optr expr =
     gen_br_expr scope nreg expr;

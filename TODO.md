@@ -25,6 +25,7 @@
             + [ ] gen_br_read
             + [ ] gen_br_expr_array_addr
             + [ ] gen_br_expr_array_val
+            + [ ] get_reg_usage
 + [ ] error handling
     + [ ] analyze (recursively) assign/if/while/read
     + [ ] find main
@@ -34,7 +35,11 @@
             + [ ] report or raise a failure
         + [ ] print_dupe_proc_errors
     + [ ] type check in get_expr_type
++ [ ] gen_comment
 + [ ] optimization
++ [ ] div_by_zero
+    + [ ] gen_br_div_by_zero
+    + [ ] in 
 + [ ] ifdebug dump symbol table
 + [ ] lineno seems unuserful?
     + [ ] seems used for error reporting, can be useful for semantic error report
