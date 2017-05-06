@@ -194,7 +194,16 @@ and gen_br_write scope write_expr = ()
 
 and gen_br_call scope ident exprs = ()
 
-and gen_br_ifthen scope expr stmts = ()
+and gen_br_ifthen scope expr stmts =
+    let after_label = !next_label
+    in
+    (
+        incr next_label;
+        gen_br_expr scope 0 expr;
+        gen_binop "branch_on_false" 0 after_label;
+        gen_br_stmts scope stmts;
+        gen_label after_label
+    )
 
 and gen_br_ifthenelse scope expr stmts1 stmts2 = ()
 
@@ -202,17 +211,17 @@ and gen_br_while scope expr stmts =
     let begin_label = !next_label
     in
     (
-        gen_label begin_label;
         incr next_label;
         let after_label = !next_label
         in
         (
+            incr next_label;
+            gen_label begin_label;
             gen_br_expr scope 0 expr;
             gen_binop "branch_on_false" 0 after_label;
             gen_br_stmts scope stmts;
             gen_unop "branch_uncond" begin_label;
             gen_label after_label
-            incr next_label;
         )
     )
 
