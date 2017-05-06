@@ -180,7 +180,7 @@ and gen_br_stmt scope stmt = match stmt with
     | Assign(elem,expr) -> gen_br_assign scope elem expr 
     | Read(elem) -> gen_br_read scope elem 
     | Write(expr) -> gen_br_write scope expr 
-    | Call(ident,exprs) -> gen_br_call scope ident exprs 
+    | Call(proc_id,args) -> gen_br_call scope proc_id args 
     | If_then(expr,stmts) -> gen_br_ifthen scope expr stmts 
     | If_then_else(expr,then_stmts,else_stmts) ->
         gen_br_ifthenelse scope expr then_stmts else_stmts 
@@ -192,7 +192,28 @@ and gen_br_read scope elem = ()
 
 and gen_br_write scope write_expr = ()
 
-and gen_br_call scope ident exprs = ()
+and gen_br_call this_scope proc_id args =
+    let params = get_scope_params (Hashtbl.find ht_scopes proc_id)
+    and nreg = ref 0
+    in
+    (
+    (*try with Invalid_argument if the two lists are determined to have different lengths*)
+        List.iter2
+            (fun arg param ->
+                (
+                    match param with
+                    | (Ref,_,_) ->
+                    (
+                    )
+                    | (Val,_,_) ->
+                    (
+                    )
+                )
+            )
+            args
+            params;
+        gen_call proc_id
+    )
 
 and gen_br_ifthen scope expr stmts =
     let after_label = !next_label

@@ -103,7 +103,11 @@ and generate_decl_symbol
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
 
 
+and get_scope_id (Scope(id,_,_,_)) = id
+
 and get_scope_st (Scope(_,ht_st,_,_)) = ht_st
+
+and get_scope_params (Scope(_,_,params,_)) = params
 
 and get_scope_nslot (Scope(_,_,_,nslot)) = nslot
 
