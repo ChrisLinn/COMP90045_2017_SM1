@@ -24,32 +24,23 @@ type opType =
     | OpHalt
     (*unop*)
     | OpPush of int
+    | OpPop of int
     | OpBranchUncond of int
     (*binop*)
-    | OpStore of (int * int)
     | OpLoad of (int * int)
+    | OpStore of (int * int)
+    | OpLoadAddress of (int * int)
     | OpLoadIndirect of (int * int)
+    | OpStoreIndirect of (int * int)
     | OpBranchOnTrue of (int * int)
     | OpBranchOnFalse of (int * int)
     | OpIntToReal of (int * int)
-    | OpLoadAddress of (int * int)
-    | OpStoreIndirect of (int * int)
     | OpNot of (int * int)
     (*triop*)
     | OpOr of (int * int * int)
     | OpAnd of (int * int * int)
     | OpEq of (int * int * int)
     | OpNe of (int * int * int)
-    | OpAddReal of (int * int * int)
-    | OpSubReal of (int * int * int)
-    | OpMulReal of (int * int * int)
-    | OpDivReal of (int * int * int)
-    | OpCmpEqReal of (int * int * int)
-    | OpCmpNeReal of (int * int * int)
-    | OpCmpLtReal of (int * int * int)
-    | OpCmpLeReal of (int * int * int)
-    | OpCmpGtReal of (int * int * int)
-    | OpCmpGeReal of (int * int * int)
     | OpAddInt of (int * int * int)
     | OpSubInt of (int * int * int)
     | OpMulInt of (int * int * int)
@@ -60,14 +51,20 @@ type opType =
     | OpCmpLeInt of (int * int * int)
     | OpCmpGtInt of (int * int * int)
     | OpCmpGeInt of (int * int * int)
+    | OpAddReal of (int * int * int)
+    | OpSubReal of (int * int * int)
+    | OpMulReal of (int * int * int)
+    | OpDivReal of (int * int * int)
+    | OpCmpEqReal of (int * int * int)
+    | OpCmpNeReal of (int * int * int)
+    | OpCmpLtReal of (int * int * int)
+    | OpCmpLeReal of (int * int * int)
+    | OpCmpGtReal of (int * int * int)
+    | OpCmpGeReal of (int * int * int)
     | OpReturn
     | OpIntConst of (int * int)
     | OpRealConst of (int * float)
     | OpStringConst of (int * string)
-
-
-
-
 
 (* type brKind =
     | BR_BUILTIN
@@ -76,16 +73,14 @@ type opType =
     | BR_OP
     | BR_COMMENT *)
 
-(* type brValueType = *)
-
 type bltInType =
-    | BltInPrintBool
-    | BltInPrintInt
-    | BltInPrintReal
-    | BltInPrintString
-    | BltInReadBool
     | BltInReadInt
     | BltInReadReal
+    | BltInReadBool
+    | BltInPrintInt
+    | BltInPrintReal
+    | BltInPrintBool
+    | BltInPrintString
 
 type brLine =
     | BrProc of string
@@ -620,6 +615,7 @@ and gen_return =
 and gen_unop op x =
     let line = match op with
                 | "push" -> BrOp(OpPush(x))
+                | "pop" -> BrOp(OpPop(x))
                 | "branch_uncond" -> BrOp(OpBranchUncond(x))
                 | _ -> raise (Failure ("wrong gen_unop "^op))
     in
@@ -631,14 +627,14 @@ and gen_unop op x =
  *)
 and gen_binop op x1 x2 =
     let line = match op with
-                | "store" -> BrOp(OpStore(x1,x2))
                 | "load" -> BrOp(OpLoad(x1,x2))
+                | "store" -> BrOp(OpStore(x1,x2))
+                | "load_address" -> BrOp(OpLoadAddress(x1,x2))
                 | "load_indrect" -> BrOp(OpLoadIndirect(x1,x2))
+                | "store_indirect" -> BrOp(OpStoreIndirect(x1,x2))
                 | "branch_on_true" -> BrOp(OpBranchOnTrue(x1,x2))
                 | "branch_on_false" -> BrOp(OpBranchOnFalse(x1,x2))
                 | "int_to_real" -> BrOp(OpIntToReal(x1,x2))
-                | "load_address" -> BrOp(OpLoadAddress(x1,x2))
-                | "store_indirect" -> BrOp(OpStoreIndirect(x1,x2))
                 | "not" -> BrOp(OpNot(x1,x2))
                 | _ -> raise (Failure ("wrong gen_binop "^op))
     in
@@ -650,16 +646,6 @@ and gen_triop op x1 x2 x3 =
                 | "and" -> BrOp(OpAnd(x1,x2,x3))
                 | "eq" -> BrOp(OpEq(x1,x2,x3))
                 | "ne" -> BrOp(OpNe(x1,x2,x3))
-                | "add_real" -> BrOp(OpAddReal(x1,x2,x3))
-                | "sub_real" -> BrOp(OpSubReal(x1,x2,x3))
-                | "mul_real" -> BrOp(OpMulReal(x1,x2,x3))
-                | "div_real" -> BrOp(OpDivReal(x1,x2,x3))
-                | "cmp_eq_real" -> BrOp(OpCmpEqReal(x1,x2,x3))
-                | "cmp_ne_real" -> BrOp(OpCmpNeReal(x1,x2,x3))
-                | "cmp_lt_real" -> BrOp(OpCmpLtReal(x1,x2,x3))
-                | "cmp_le_real" -> BrOp(OpCmpLeReal(x1,x2,x3))
-                | "cmp_gt_real" -> BrOp(OpCmpGtReal(x1,x2,x3))
-                | "cmp_ge_real" -> BrOp(OpCmpGeReal(x1,x2,x3))
                 | "add_int" -> BrOp(OpAddInt(x1,x2,x3))
                 | "sub_int" -> BrOp(OpSubInt(x1,x2,x3))
                 | "mul_int" -> BrOp(OpMulInt(x1,x2,x3))
@@ -670,19 +656,29 @@ and gen_triop op x1 x2 x3 =
                 | "cmp_le_int" -> BrOp(OpCmpLeInt(x1,x2,x3))
                 | "cmp_gt_int" -> BrOp(OpCmpGtInt(x1,x2,x3))
                 | "cmp_ge_int" -> BrOp(OpCmpGeInt(x1,x2,x3))
+                | "add_real" -> BrOp(OpAddReal(x1,x2,x3))
+                | "sub_real" -> BrOp(OpSubReal(x1,x2,x3))
+                | "mul_real" -> BrOp(OpMulReal(x1,x2,x3))
+                | "div_real" -> BrOp(OpDivReal(x1,x2,x3))
+                | "cmp_eq_real" -> BrOp(OpCmpEqReal(x1,x2,x3))
+                | "cmp_ne_real" -> BrOp(OpCmpNeReal(x1,x2,x3))
+                | "cmp_lt_real" -> BrOp(OpCmpLtReal(x1,x2,x3))
+                | "cmp_le_real" -> BrOp(OpCmpLeReal(x1,x2,x3))
+                | "cmp_gt_real" -> BrOp(OpCmpGtReal(x1,x2,x3))
+                | "cmp_ge_real" -> BrOp(OpCmpGeReal(x1,x2,x3))
                 | _ -> raise (Failure ("wrong gen_triop "^op))
     in
     brprog := List.append !brprog [line]
 
 and gen_call_builtin bi_func =
     let line = match bi_func with
-                | "print_bool" -> BrBltIn(BltInPrintBool)
-                | "print_int" -> BrBltIn(BltInPrintInt)
-                | "print_real" -> BrBltIn(BltInPrintReal)
-                | "print_string" -> BrBltIn(BltInPrintString)
-                | "read_bool" -> BrBltIn(BltInReadBool)
                 | "read_int" -> BrBltIn(BltInReadInt)
                 | "read_real" -> BrBltIn(BltInReadReal)
+                | "read_bool" -> BrBltIn(BltInReadBool)
+                | "print_int" -> BrBltIn(BltInPrintInt)
+                | "print_real" -> BrBltIn(BltInPrintReal)
+                | "print_bool" -> BrBltIn(BltInPrintBool)
+                | "print_string" -> BrBltIn(BltInPrintString)
                 | _ -> raise (Failure ("wrong bi_func "^bi_func))
     in
     brprog := List.append !brprog [line]
