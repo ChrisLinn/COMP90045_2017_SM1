@@ -39,7 +39,8 @@
 + [ ] optimization
 + [ ] div_by_zero
     + [ ] gen_br_div_by_zero
-    + [ ] in 
+    + [ ] label
+    + [ ] get_reg_usage
 + [ ] ifdebug dump symbol table
 + [ ] lineno seems unuserful?
     + [ ] seems used for error reporting, can be useful for semantic error report

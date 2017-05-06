@@ -434,22 +434,60 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
         *)
 
         if ((lexpr_type = SYM_INT) && (rexpr_type = SYM_REAL)) then
-            gen_binop "int_to_real" lexpr_nreg lexpr_nreg
+            gen_binop "int_to_real" !lexpr_nreg !lexpr_nreg
         else if ((lexpr_type = SYM_REAL) && (rexpr_type = SYM_INT)) then
-            gen_binop "int_to_real" rexpr_nreg rexpr_nreg;
+            gen_binop "int_to_real" !rexpr_nreg !rexpr_nreg;
 
         if ((lexpr_type = SYM_BOOL) && (rexpr_type = SYM_BOOL)) then
             gen_br_expr_binop_bool
-                nreg lexpr_nreg rexpr_nreg (Ebinop(lexpr,optr,rexpr))
+                nreg !lexpr_nreg !rexpr_nreg (Ebinop(lexpr,optr,rexpr))
         else if ((lexpr_type = SYM_REAL) || (rexpr_type = SYM_INT)) then
             gen_br_expr_binop_float
-                nreg lexpr_nreg rexpr_nreg (Ebinop(lexpr,optr,rexpr))
+                nreg !lexpr_nreg !rexpr_nreg (Ebinop(lexpr,optr,rexpr))
         else
             gen_br_expr_binop_int
-                nreg lexpr_nreg rexpr_nreg (Ebinop(lexpr,optr,rexpr))
+                nreg !lexpr_nreg !rexpr_nreg (Ebinop(lexpr,optr,rexpr))
     )
 
-and get_reg_usage scope expr = ()
+and get_reg_usage scope = function
+    | Ebool(_) -> 0
+    | Eint(_) -> 0
+    | Efloat(_) -> 0
+    | Eparen(expr) -> get_reg_usage scope expr
+    | Ebinop(lexpr,optr,rexpr) ->
+    (
+        let lexpr_reg_usage = get_reg_usage scope lexpr
+        and rexpr_reg_usage = get_reg_usage scope rexpr
+        in
+        let min_count = min lexpr_reg_usage rexpr_reg_usage
+        and max_count = max lexpr_reg_usage rexpr_reg_usage
+        in
+        let reg_usage_total = max max_count (min_count+1)
+        in
+        (
+            if optr = Op_div then
+                (max reg_usage_total 2)
+            else
+                reg_usage_total
+        )
+    )
+    | Eunop(optr,expr) ->
+    (
+        let expr_reg_usage = get_reg_usage scope expr
+        in
+        (
+            if optr = Op_minus then
+                (max expr_reg_usage 1)
+            else
+                expr_reg_usage
+        )
+    ) 
+    | Eelem(elem) ->
+    (
+        match elem with
+        | Elem(id,None) -> 0
+        | Elem(id,Some idxs) -> (*aaaaaray*) 0
+    )
 
 and gen_br_expr_binop_bool nreg lexpr_nreg rexpr_nreg binexpr = ()
 
