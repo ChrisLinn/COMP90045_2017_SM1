@@ -34,6 +34,9 @@ type opType =
     | OpIntToReal of (int * int)
     | OpLoadAddress of (int * int)
     | OpStoreIndirect of (int * int)
+    | OpNot of (int * int)
+    | OpSubInt of (int * int * int)
+    | OpSubReal of (int * int * int)
     | OpReturn
     | OpIntConst of (int * int)
     | OpRealConst of (int * float)
@@ -390,6 +393,24 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr = ()
 
 and gen_br_expr_unop scope nreg optr expr =
     gen_br_expr scope nreg expr;
+    let expr_type = get_expr_type (get_scope_st scope) expr
+    in
+    (
+        if ((expr_type = SYM_BOOL) && (optr = Op_not)) then
+            gen_binop "not" nreg nreg
+        else if ((expr_type = SYM_INT) && (optr = Op_minus)) then
+        (
+            gen_int_const (nreg+1) 0;
+            gen_triop "sub_int" nreg (nreg+1) nreg
+        )
+        else if ((expr_type = SYM_REAL) && (optr = Op_minus)) then
+        (
+            gen_real_const (nreg+1) 0.0;
+            gen_triop "sub_real" nreg (nreg+1) nreg
+        )
+        else
+            raise (Failure "invalid optr for unop expr!")
+    )
 
 and gen_br_expr_id scope nreg id =
     let (symkind,symtype,nslot,_) = Hashtbl.find (get_scope_st scope) id
@@ -460,12 +481,15 @@ and gen_binop op x1 x2 =
                 | "int_to_real" -> BrOp(OpIntToReal(x1,x2))
                 | "load_address" -> BrOp(OpLoadAddress(x1,x2))
                 | "store_indirect" -> BrOp(OpStoreIndirect(x1,x2))
+                | "not" -> BrOp(OpNot(x1,x2))
                 | _ -> raise (Failure ("wrong gen_binop "^op))
     in
     brprog := List.append !brprog [line]
 
 and gen_triop op x1 x2 x3 =
     let line = match op with
+                | "sub_int" -> BrOp(OpSubInt(x1,x2,x3))
+                | "sub_real" -> BrOp(OpSubReal(x1,x2,x3))
                 | _ -> raise (Failure ("wrong gen_triop "^op))
     in
     brprog := List.append !brprog [line]
