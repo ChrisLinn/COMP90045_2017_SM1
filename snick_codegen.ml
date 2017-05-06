@@ -23,7 +23,12 @@ type opType =
     | OpCall of string
     | OpHalt
     | OpPush of int
+    | OpBranchUncond of int
     | OpStore of (int * int)
+    | OpLoad of (int * int)
+    | OpLoadIndirect of (int * int)
+    | OpBranchOnTrue of (int * int)
+    | OpBranchOnFalse of (int * int)
     | OpReturn
     | OpIntConst of (int * int)
     | OpRealConst of (int * float)
@@ -40,6 +45,7 @@ type opType =
 type brLine =
     | BrProc of string
     | BrOp of opType
+    | BrLabel of int
 
 type brLines = brLine list option
 
@@ -47,7 +53,7 @@ type brProg = brLines
 
 
 let brprog = ref []
-let label = ref 0
+let next_label = ref 0
 
 let rec compile prog =
     analyse prog;
@@ -92,21 +98,21 @@ and gen_br_prologue scope params decls =
     gen_br_params (get_scope_st scope) 0 params;
     gen_br_decls (get_scope_st scope) decls;
     
-and gen_br_params scope_ht cnt = function
+and gen_br_params scope_st cnt = function
     | [] -> ()
     | x::xs ->
         (
-            gen_br_param scope_ht cnt x;
-            gen_br_params scope_ht (cnt+1) xs
+            gen_br_param scope_st cnt x;
+            gen_br_params scope_st (cnt+1) xs
         )
 
-and gen_br_param scope_ht cnt (_, _, param_id) =
-    let sym = Hashtbl.find scope_ht param_id
+and gen_br_param scope_st cnt (_, _, param_id) =
+    let sym = Hashtbl.find scope_st param_id
     in
     match sym with
     | (_,_,nslot,_) -> gen_binop "store" nslot cnt
     
-and gen_br_decls scope_ht decls =
+and gen_br_decls scope_st decls =
     let cnt = ref 0
     and ints_flag = ref false
     and int_reg = ref 0
@@ -118,7 +124,7 @@ and gen_br_decls scope_ht decls =
         List.iter
             (fun (_, Variable(id,_)) ->
                 (
-                    let (_,sym_type,_,_) = Hashtbl.find scope_ht id
+                    let (_,sym_type,_,_) = Hashtbl.find scope_st id
                     in
                     (
                         if (not !reals_flag) && (sym_type = SYM_REAL) then
@@ -147,7 +153,7 @@ and gen_br_decls scope_ht decls =
             (fun (_, Variable(id,_)) ->
                 (
                     let (_,sym_type,nslot,optn_bounds) =
-                            Hashtbl.find scope_ht id
+                            Hashtbl.find scope_st id
                     in
                     (
                         if sym_type = SYM_REAL then
@@ -171,27 +177,85 @@ and gen_br_stmts scope stmts =
     List.iter (gen_br_stmt scope) stmts
 
 and gen_br_stmt scope stmt = match stmt with
-    | Assign(elem,expr) -> gen_br_assign scope stmt 
-    | Read(elem) -> gen_br_read scope stmt 
-    | Write(expr) -> gen_br_write scope stmt 
-    | Call(ident,exprs) -> gen_br_call scope stmt 
-    | If_then(expr,stmts) -> gen_br_ifthen scope stmt 
-    | If_then_else(expr,stmts1,stmts2) -> gen_br_ifthenelse scope stmt 
-    | While(expr,stmts) -> gen_br_while scope stmt 
+    | Assign(elem,expr) -> gen_br_assign scope elem expr 
+    | Read(elem) -> gen_br_read scope elem 
+    | Write(expr) -> gen_br_write scope expr 
+    | Call(ident,exprs) -> gen_br_call scope ident exprs 
+    | If_then(expr,stmts) -> gen_br_ifthen scope expr stmts 
+    | If_then_else(expr,stmts1,stmts2) ->
+        gen_br_ifthenelse scope expr stmts1 stmts2 
+    | While(expr,stmts) -> gen_br_while scope expr stmts
 
-and gen_br_assign scope stmt = ()
+and gen_br_assign scope elem expr = ()
 
-and gen_br_read scope stmt = ()
+and gen_br_read scope elem = ()
 
-and gen_br_write scope stmt = ()
+and gen_br_write scope write_expr = ()
 
-and gen_br_call scope stmt = ()
+and gen_br_call scope ident exprs = ()
 
-and gen_br_ifthen scope stmt = ()
+and gen_br_ifthen scope expr stmts = ()
 
-and gen_br_ifthenelse scope stmt = ()
+and gen_br_ifthenelse scope expr stmts1 stmts2 = ()
 
-and gen_br_while scope stmt = ()
+and gen_br_while scope expr stmts =
+    let begin_label = !next_label
+    in
+    (
+        gen_label begin_label;
+        incr next_label;
+        let after_label = !next_label
+        in
+        (
+            gen_br_expr scope 0 expr;
+            gen_binop "branch_on_false" 0 after_label;
+            gen_br_stmts scope stmts;
+            gen_unop "branch_uncond" begin_label;
+            gen_label after_label
+            incr next_label;
+        )
+    )
+
+and gen_br_expr scope nreg = function
+    | Ebool(bool_const) ->
+    (
+        match bool_const with
+         | true -> gen_int_const nreg 1
+         | false -> gen_int_const nreg 0
+    )
+    | Eint(int_const) -> gen_int_const nreg int_const
+    | Efloat(float_const) -> gen_real_const nreg float_const
+    | Eparen(expr) -> gen_br_expr scope nreg expr
+    | Ebinop(lexpr,optr,rexpr) ->
+        gen_br_expr_binop scope nreg lexpr optr rexpr
+    | Eunop(optr,expr) -> gen_br_expr_unop scope nreg optr expr
+    | Eelem(elem) ->
+    (
+        match elem with
+        | Elem(id,None) -> gen_br_expr_id scope nreg id
+        | Elem(id,Some idxs) -> gen_br_expr_array_val scope nreg id idxs
+    )
+
+and gen_br_expr_binop scope nreg lexpr optr rexpr = ()
+
+and gen_br_expr_unop scope nreg optr expr = ()
+
+and gen_br_expr_id scope nreg id =
+    let scope_st = get_scope_st scope
+    in
+    let (symkind,symtype,nslot,_) = Hashtbl.find scope_st id
+    in
+    (
+        match symkind with
+        | SYM_PARAM_REF ->
+        (
+            gen_binop "load" nreg nslot;
+            gen_binop "load_indrect" nreg nreg
+        )
+        | _ -> gen_binop "load" nreg nslot
+    )
+
+and gen_br_expr_array_val scope nreg id idxs = ()
 
 and gen_br_epilogue scope =
     gen_unop "pop" (get_scope_nslot scope);
@@ -205,6 +269,9 @@ and gen_halt =
 
 and gen_proc_label proc_id =
     brprog := List.append !brprog [BrProc(proc_id)]
+
+and gen_label nlabel = 
+    brprog := List.append !brprog [BrLabel(nlabel)]
 
 and gen_int_const reg int_const =
     brprog := List.append !brprog [BrOp(OpIntConst(reg,int_const))]
@@ -222,6 +289,7 @@ and gen_return =
 and gen_unop op x =
     let line = match op with
                 | "push" -> BrOp(OpPush(x))
+                | "branch_uncond" -> BrOp(OpBranchUncond(x))
                 | _ -> raise (Failure ("wrong gen_unop "^op))
     in
     brprog := List.append !brprog [line]
@@ -233,6 +301,10 @@ and gen_unop op x =
 and gen_binop op x1 x2 =
     let line = match op with
                 | "store" -> BrOp(OpStore(x1,x2))
+                | "load" -> BrOp(OpLoad(x1,x2))
+                | "load_indrect" -> BrOp(OpLoadIndirect(x1,x2))
+                | "branch_on_true" -> BrOp(OpBranchOnTrue(x1,x2))
+                | "branch_on_false" -> BrOp(OpBranchOnFalse(x1,x2))
                 | _ -> raise (Failure ("wrong gen_binop "^op))
     in
     brprog := List.append !brprog [line]
