@@ -36,6 +36,7 @@ type opType =
     | OpReturn
     | OpIntConst of (int * int)
     | OpRealConst of (int * float)
+    | OpStringConst of (int * string)
 
 (* type brKind =
     | BR_BUILTIN
@@ -46,10 +47,17 @@ type opType =
 
 (* type brValueType = *)
 
+type bltInType =
+    | BltInPrintBool
+    | BltInPrintInt
+    | BltInPrintReal
+    | BltInPrintString
+
 type brLine =
     | BrProc of string
     | BrOp of opType
     | BrLabel of int
+    | BrBltIn of bltInType
 
 type brLines = brLine list option
 
@@ -187,7 +195,7 @@ and gen_br_stmts scope stmts =
 and gen_br_stmt scope stmt = match stmt with
     | Assign(elem,expr) -> gen_br_assign scope elem expr 
     | Read(elem) -> gen_br_read scope elem 
-    | Write(expr) -> gen_br_write scope expr 
+    | Write(write_expr) -> gen_br_write scope write_expr 
     | Call(proc_id,args) -> gen_br_call scope proc_id args 
     | If_then(expr,stmts) -> gen_br_ifthen scope expr stmts 
     | If_then_else(expr,then_stmts,else_stmts) ->
@@ -198,7 +206,21 @@ and gen_br_assign scope elem expr = ()
 
 and gen_br_read scope elem = ()
 
-and gen_br_write scope write_expr = ()
+and gen_br_write scope = function
+    | Expr(expr) ->
+    (
+        gen_br_expr scope 0 expr;
+        match (get_expr_type (get_scope_st scope) expr) with
+        | SYM_BOOL -> gen_call_builtin "print_bool"
+        | SYM_INT -> gen_call_builtin "print_int"
+        | SYM_REAL -> gen_call_builtin "print_real"
+    )
+    | String(string_const) ->
+    (
+        gen_string_const 0 string_const;
+        gen_call_builtin "print_string"
+    )
+
 
 and gen_br_call scope proc_id args =
     let params = get_scope_params (Hashtbl.find ht_scopes proc_id)
@@ -324,9 +346,7 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr = ()
 and gen_br_expr_unop scope nreg optr expr = ()
 
 and gen_br_expr_id scope nreg id =
-    let scope_st = get_scope_st scope
-    in
-    let (symkind,symtype,nslot,_) = Hashtbl.find scope_st id
+    let (symkind,symtype,nslot,_) = Hashtbl.find (get_scope_st scope) id
     in
     (
         match symkind with
@@ -361,6 +381,9 @@ and gen_int_const nreg int_const =
 
 and gen_real_const nreg real_const =
     brprog := List.append !brprog [BrOp(OpRealConst(nreg,real_const))]
+
+and gen_string_const nreg string_const =
+    brprog := List.append !brprog [BrOp(OpStringConst(nreg,string_const))]
 
 and gen_return = 
     brprog := List.append !brprog [BrOp(OpReturn)]
@@ -397,5 +420,15 @@ and gen_binop op x1 x2 =
 and gen_triop op x1 x2 x3 =
     let line = match op with
                 | _ -> raise (Failure ("wrong gen_triop "^op))
+    in
+    brprog := List.append !brprog [line]
+
+and gen_call_builtin bi_func =
+    let line = match bi_func with
+                | "print_bool" -> BrBltIn(BltInPrintBool)
+                | "print_int" -> BrBltIn(BltInPrintInt)
+                | "print_real" -> BrBltIn(BltInPrintReal)
+                | "print_string" -> BrBltIn(BltInPrintString)
+                | _ -> raise (Failure ("wrong bi_func "^bi_func))
     in
     brprog := List.append !brprog [line]
