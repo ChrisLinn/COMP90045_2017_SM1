@@ -64,7 +64,7 @@ and get_expr_type scope_st = function
         | Op_add | Op_sub | Op_mul | Op_div ->
         (
             if (((get_expr_type scope_st lexpr)=SYM_REAL)
-            ||((get_expr_type scope_st lexpr)=SYM_REAL)) then
+            ||((get_expr_type scope_st rexpr)=SYM_REAL)) then
                 SYM_REAL
             else
                 SYM_INT

@@ -461,7 +461,7 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
         if ((lexpr_type = SYM_BOOL) && (rexpr_type = SYM_BOOL)) then
             gen_br_expr_binop_bool
                 nreg !lexpr_nreg !rexpr_nreg optr
-        else if ((lexpr_type = SYM_REAL) || (rexpr_type = SYM_INT)) then
+        else if ((lexpr_type = SYM_REAL) || (rexpr_type = SYM_REAL)) then
             gen_br_expr_binop_float
                 nreg !lexpr_nreg !rexpr_nreg optr
         else
