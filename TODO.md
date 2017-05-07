@@ -35,15 +35,15 @@
             + [ ] report or raise a failure
         + [ ] print_dupe_proc_errors
     + [ ] type check in get_expr_type
-+ [ ] gen_comment
 + [ ] optimization
-+ [ ] div_by_zero
-    + [ ] gen_br_div_by_zero
-    + [ ] label
-    + [ ] get_reg_usage
 + [ ] complete line type
 + [ ] ifdebug dump symbol table
 + [X] lineno seems unuserful?
     + [X] seems used for error reporting, can be useful for semantic error report
 + [X] begin-end -> () style
 + [X] better to gen_main & gen_halt or init?
++ [X] gen_comment
++ [X] div_by_zero
+    + [X] gen_br_div_by_zero
+    + [X] label
+    + [X] get_reg_usage
