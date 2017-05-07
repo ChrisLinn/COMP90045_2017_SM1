@@ -80,4 +80,4 @@ and get_elem_type scope_st (Elem(id,_)) =
 
 and check_unused_symbols prog = ()
 
-and check_main = ()
+and check_main prog = ()

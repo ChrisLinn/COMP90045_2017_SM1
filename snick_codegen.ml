@@ -91,6 +91,7 @@ type brLines = brLine list option
 
 type brProg = brLines
 
+let indent = "    "
 
 let brprog = ref []
 (* let out_of_bounds_label = 0 *)
@@ -121,7 +122,7 @@ and strip_paren expr = match expr with
 
 and gen_br_program prog =
     gen_call "main";
-    gen_halt;
+    gen_halt "fk ocaml";
 (*     gen_br_out_of_bounds;
     gen_br_div_by_zero; *)
     List.iter gen_br_proc prog
@@ -579,13 +580,13 @@ and gen_br_expr_array_val scope nreg id idxs = ()
 
 and gen_br_epilogue scope =
     gen_unop "pop" (get_scope_nslot scope);
-    gen_return
+    gen_return "fk ocaml"
 
 and gen_call proc_id =
     brprog := List.append !brprog [BrOp(OpCall(proc_id))]
 
-and gen_halt =
-    brprog := List.append !brprog [BrOp(OpHalt)]
+and gen_halt nvm = match nvm with
+    | _ -> brprog := List.append !brprog [BrOp(OpHalt)]
 
 and gen_proc_label proc_id =
     brprog := List.append !brprog [BrProc(proc_id)]
@@ -602,8 +603,8 @@ and gen_real_const nreg real_const =
 and gen_string_const nreg string_const =
     brprog := List.append !brprog [BrOp(OpStringConst(nreg,string_const))]
 
-and gen_return = 
-    brprog := List.append !brprog [BrOp(OpReturn)]
+and gen_return nvm = match nvm with
+    | _-> brprog := List.append !brprog [BrOp(OpReturn)]
 
 (* and gen_unop op x = match op with
     | "push" -> brprog := List.append !brprog [BrOp(OpPush(x))]
@@ -685,8 +686,6 @@ and print_line = function
     | BrOp(brOp) -> print_br_op brOp
     | BrLabel(nlabel) -> print_br_label nlabel
     | BrBltIn(brBltIn) -> print_br_bltin brBltIn
-
-and indent = "    "
 
 and print_br_proc proc_id =
     fprintf std_formatter "proc_%s:\n" proc_id
