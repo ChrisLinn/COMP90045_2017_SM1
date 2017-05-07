@@ -92,7 +92,7 @@ type brLines = brLine list option
 type brProg = brLines
 
 let indent = "    "
-
+let width = -19
 let brprog = ref []
 let out_of_bounds_label = 0
 let div_by_zero_label = 1
@@ -708,148 +708,148 @@ and print_br_proc proc_id =
 
 and print_br_op = function
     | OpCall(proc_id) ->
-        fprintf std_formatter "%scall proc_%s\n"
-            indent proc_id
+        fprintf std_formatter "%s%*s proc_%s\n"
+            indent width "call" proc_id
     | OpHalt ->
         fprintf std_formatter "%shalt\n"
             indent
     | OpPush(frame_size) ->
-        fprintf std_formatter "%spush_stack_frame %d\n"
-            indent frame_size
+        fprintf std_formatter "%s%*s %d\n"
+            indent width "push_stack_frame" frame_size
     | OpPop(frame_size) ->
-        fprintf std_formatter "%spop_stack_frame %d\n"
-            indent frame_size
+        fprintf std_formatter "%s%*s %d\n"
+            indent width "pop_stack_frame" frame_size
     | OpBranchUncond(nlabel) ->
-        fprintf std_formatter "%sbranch_uncond label%d\n"
-            indent nlabel
+        fprintf std_formatter "%s%*s label%d\n"
+            indent width "branch_uncond" nlabel
     | OpLoad(nreg,nslot) ->
-        fprintf std_formatter "%sload r%d, %d\n"
-            indent nreg nslot
+        fprintf std_formatter "%s%*s r%d, %d\n"
+            indent width "load" nreg nslot
     | OpStore(nslot,nreg) ->
-        fprintf std_formatter "%sstore %d, r%d\n"
-            indent nslot nreg
+        fprintf std_formatter "%s%*s %d, r%d\n"
+            indent width "store" nslot nreg
     | OpLoadAddress(nreg,nslot) ->
-        fprintf std_formatter "%sload_address r%d, %d\n"
-            indent nreg nslot
+        fprintf std_formatter "%s%*s r%d, %d\n"
+            indent width "load_address" nreg nslot
     | OpLoadIndirect(nreg1,nreg2) ->
-        fprintf std_formatter "%sload_indirect r%d, r%d\n"
-            indent nreg1 nreg2
+        fprintf std_formatter "%s%*s r%d, r%d\n"
+            indent width "load_indirect" nreg1 nreg2
     | OpStoreIndirect(nreg1,nreg2) ->
-        fprintf std_formatter "%sstore_indirect r%d, r%d\n"
-            indent nreg1 nreg2
+        fprintf std_formatter "%s%*s r%d, r%d\n"
+            indent width "store_indirect" nreg1 nreg2
     | OpBranchOnTrue(nreg,nlabel) ->
-        fprintf std_formatter "%sbranch_on_true r%d, label%d\n"
-            indent nreg nlabel
+        fprintf std_formatter "%s%*s r%d, label%d\n"
+            indent width "branch_on_true" nreg nlabel
     | OpBranchOnFalse(nreg,nlabel) ->
-        fprintf std_formatter "%sbranch_on_false r%d, label%d\n"
-            indent nreg nlabel
+        fprintf std_formatter "%s%*s r%d, label%d\n"
+            indent width "branch_on_false" nreg nlabel
     | OpIntToReal(nreg_dest,nreg_scr) ->
-        fprintf std_formatter "%sint_to_real r%d, r%d\n"
-            indent nreg_dest nreg_scr
+        fprintf std_formatter "%s%*s r%d, r%d\n"
+            indent width "int_to_real" nreg_dest nreg_scr
     | OpNot(nreg_dest,nreg_scr) ->
-        fprintf std_formatter "%snot r%d, r%d\n"
-            indent nreg_dest nreg_scr
+        fprintf std_formatter "%s%*s r%d, r%d\n"
+            indent width "not" nreg_dest nreg_scr
     | OpOr(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%sor r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "or" nreg_dest nreg1 nreg2
     | OpAnd(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%sand r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "and" nreg_dest nreg1 nreg2
     | OpAddInt(nreg_dest,nreg_int1,nreg_int2) ->
-        fprintf std_formatter "%sadd_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg_int1 nreg_int2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "add_int" nreg_dest nreg_int1 nreg_int2
     | OpSubInt(nreg_dest,nreg_int1,nreg_int2) ->
-        fprintf std_formatter "%ssub_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg_int1 nreg_int2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "sub_int" nreg_dest nreg_int1 nreg_int2
     | OpMulInt(nreg_dest,nreg_int1,nreg_int2) ->
-        fprintf std_formatter "%smul_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg_int1 nreg_int2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "mul_int" nreg_dest nreg_int1 nreg_int2
     | OpDivInt(nreg_dest,nreg_int1,nreg_int2) ->
-        fprintf std_formatter "%sdiv_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg_int1 nreg_int2
-    | OpCmpEqInt(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_eq_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpNeInt(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_ne_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpLtInt(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_lt_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpLeInt(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_le_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpGtInt(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_gt_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpGeInt(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_ge_int r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "div_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpEqInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_eq_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpNeInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_ne_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpLtInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_lt_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpLeInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_le_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpGtInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_gt_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpGeInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_ge_int" nreg_dest nreg_int1 nreg_int2
     | OpAddReal(nreg_dest,nreg_real1,nreg_real2) ->
-        fprintf std_formatter "%sadd_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg_real1 nreg_real2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "add_real" nreg_dest nreg_real1 nreg_real2
     | OpSubReal(nreg_dest,nreg_real1,nreg_real2) ->
-        fprintf std_formatter "%ssub_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg_real1 nreg_real2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "sub_real" nreg_dest nreg_real1 nreg_real2
     | OpMulReal(nreg_dest,nreg_real1,nreg_real2) ->
-        fprintf std_formatter "%smul_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg_real1 nreg_real2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "mul_real" nreg_dest nreg_real1 nreg_real2
     | OpDivReal(nreg_dest,nreg_real1,nreg_real2) ->
-        fprintf std_formatter "%sdiv_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg_real1 nreg_real2
-    | OpCmpEqReal(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_eq_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpNeReal(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_ne_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpLtReal(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_lt_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpLeReal(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_le_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpGtReal(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_gt_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
-    | OpCmpGeReal(nreg_dest,nreg1,nreg2) ->
-        fprintf std_formatter "%scmp_ge_real r%d, r%d, r%d\n"
-            indent nreg_dest nreg1 nreg2
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "div_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpEqReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_eq_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpNeReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_ne_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpLtReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_lt_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpLeReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_le_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpGtReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_gt_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpGeReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_ge_real" nreg_dest nreg_real1 nreg_real2
     | OpReturn ->
         fprintf std_formatter "%sreturn\n"
             indent
     | OpIntConst(nreg,int_const) ->
-        fprintf std_formatter "%sint_const r%d, %d\n"
-            indent nreg int_const
+        fprintf std_formatter "%s%*s r%d, %d\n"
+            indent width "int_const" nreg int_const
     | OpRealConst(nreg,real_const) ->
-        fprintf std_formatter "%sreal_const r%d, %f\n"
-            indent nreg real_const
+        fprintf std_formatter "%s%*s r%d, %f\n"
+            indent width "real_const" nreg real_const
     | OpStringConst(nreg,string_const) ->
-        fprintf std_formatter "%sstring_const r%d, %s\n"
-            indent nreg string_const
+        fprintf std_formatter "%s%*s r%d, %s\n"
+            indent width "string_const" nreg string_const
 
 and print_br_label nlabel =
     fprintf std_formatter "label%d:\n" nlabel
 
 and print_br_bltin = function
     | BltInReadInt ->
-        fprintf std_formatter "%scall_builtin read_int\n"
-            indent
+        fprintf std_formatter "%s%*s read_int\n"
+            indent width "call_builtin"
     | BltInReadReal ->
-        fprintf std_formatter "%scall_builtin read_real\n"
-            indent
+        fprintf std_formatter "%s%*s read_real\n"
+            indent width "call_builtin"
     | BltInReadBool ->
-        fprintf std_formatter "%scall_builtin read_bool\n"
-            indent
+        fprintf std_formatter "%s%*s read_bool\n"
+            indent width "call_builtin"
     | BltInPrintInt ->
-        fprintf std_formatter "%scall_builtin print_int\n"
-            indent
+        fprintf std_formatter "%s%*s print_int\n"
+            indent width "call_builtin"
     | BltInPrintReal ->
-        fprintf std_formatter "%scall_builtin print_real\n"
-            indent
+        fprintf std_formatter "%s%*s print_real\n"
+            indent width "call_builtin"
     | BltInPrintBool ->
-        fprintf std_formatter "%scall_builtin print_bool\n"
-            indent
+        fprintf std_formatter "%s%*s print_bool\n"
+            indent width "call_builtin"
     | BltInPrintString ->
-        fprintf std_formatter "%scall_builtin print_string\n"
-            indent
+        fprintf std_formatter "%s%*s print_string\n"
+            indent width "call_builtin"
