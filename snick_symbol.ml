@@ -29,7 +29,7 @@ typedef struct symbol_data {
     void        *sym_value;    can be useful (update/optmz)
     int         line_no;        seems unuseful so removed
     int         slot;
-    BOOL        used;           ??????????????????????
+    BOOL        used;           for optimization
     Bounds  *bounds;
 } symbol;
  *)
@@ -71,10 +71,8 @@ and generate_param_symbol
         sym_kind = sym_kind_from_ast_indc indc
         and
         sym_type = sym_type_from_ast_type paramtype
-    in(* 
-    Hashtbl.add ht_st paramid 
-            (sym_kind,sym_type,
-                ParamVal(indc,paramtype,paramid),nslot,false,None);  *)
+    in
+    (*Hashtbl.add ht_st paramid (sym_kind,sym_type,nslot,false,None);*)
     Hashtbl.add ht_st paramid (sym_kind,sym_type,nslot,None); 
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
 
@@ -86,10 +84,8 @@ and generate_decl_symbol
         (decltype, Variable(declid,optn_intvls)) =
     let
         sym_type = sym_type_from_ast_type decltype
-    in(* 
-    Hashtbl.add ht_st declid 
-            (SYM_LOCAL,sym_type,
-                DeclVal(decltype,Variable(declid,optn_intvls)),nslot,false,None);  *)
+    in
+    (*Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,false,None);*)
     Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None); 
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
     (*array*)
