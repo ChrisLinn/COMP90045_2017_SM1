@@ -459,15 +459,15 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
             if rexpr_type = SYM_REAL then
             (
                 gen_real_const (nreg+2) 0.0;
-                gen_triop "cmp_eq_real" (nreg+2) (nreg+2) rexpr_nreg
+                gen_triop "cmp_eq_real" (nreg+2) (nreg+2) !rexpr_nreg
             )
             else
             (
                 gen_int_const (nreg+2) 0;
-                gen_triop "cmp_eq_int" (nreg+2) (nreg+2) rexpr_nreg
+                gen_triop "cmp_eq_int" (nreg+2) (nreg+2) !rexpr_nreg
             );
             gen_binop "branch_on_true" (nreg+2) div_by_zero_label
-        )
+        );
 
         if ((lexpr_type = SYM_INT) && (rexpr_type = SYM_REAL)) then
             gen_binop "int_to_real" !lexpr_nreg !lexpr_nreg
