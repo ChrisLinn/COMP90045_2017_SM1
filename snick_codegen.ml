@@ -817,23 +817,23 @@ and print_br_label nlabel =
 
 and print_br_bltin = function
     | BltInReadInt ->
-        fprintf std_formatter "%scall_builtin builtin_read_int\n"
+        fprintf std_formatter "%scall_builtin read_int\n"
             indent
     | BltInReadReal ->
-        fprintf std_formatter "%scall_builtin builtin_read_real\n"
+        fprintf std_formatter "%scall_builtin read_real\n"
             indent
     | BltInReadBool ->
-        fprintf std_formatter "%scall_builtin builtin_read_bool\n"
+        fprintf std_formatter "%scall_builtin read_bool\n"
             indent
     | BltInPrintInt ->
-        fprintf std_formatter "%scall_builtin builtin_print_int\n"
+        fprintf std_formatter "%scall_builtin print_int\n"
             indent
     | BltInPrintReal ->
-        fprintf std_formatter "%scall_builtin builtin_print_real\n"
+        fprintf std_formatter "%scall_builtin print_real\n"
             indent
     | BltInPrintBool ->
-        fprintf std_formatter "%scall_builtin builtin_print_bool\n"
+        fprintf std_formatter "%scall_builtin print_bool\n"
             indent
     | BltInPrintString ->
-        fprintf std_formatter "%scall_builtin builtin_print_string\n"
+        fprintf std_formatter "%scall_builtin print_string\n"
             indent
