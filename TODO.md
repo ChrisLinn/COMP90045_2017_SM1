@@ -36,6 +36,7 @@
         + [ ] print_dupe_proc_errors
     + [ ] type check in get_expr_type
     + [ ] gen_br_call params args num unmatch
+    + [ ] float assigned to int
 + [ ] optimization
 + [ ] complete line type
 + [ ] ifdebug dump symbol table
