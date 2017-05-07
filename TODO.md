@@ -1,8 +1,8 @@
 # Todo
 
 + [ ] symbol table
-    + [ ] stack_cnt for a scope or a table?
-        + [ ] dont understand slots_needed_for_table
+    + [X] stack_cnt for a scope or a table?
+        + [X] dont understand slots_needed_for_table
     + [ ] sbValType
         + [ ] great, seems can be used to opt (update type and value)?
             + [ ] removed temporally
@@ -41,8 +41,9 @@
     + [ ] gen_br_div_by_zero
     + [ ] label
     + [ ] get_reg_usage
++ [ ] complete line type
 + [ ] ifdebug dump symbol table
-+ [ ] lineno seems unuserful?
-    + [ ] seems used for error reporting, can be useful for semantic error report
-+ [ ] better to gen_main & gen_halt or init?
-+ [ ] begin-end -> () style
++ [X] lineno seems unuserful?
+    + [X] seems used for error reporting, can be useful for semantic error report
++ [X] begin-end -> () style
++ [X] better to gen_main & gen_halt or init?

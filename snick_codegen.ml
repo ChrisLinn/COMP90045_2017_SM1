@@ -1,6 +1,7 @@
 open Snick_ast
 open Snick_symbol
 open Snick_analyze
+open Format
 (* 
 type opCode =
     | OP_PUSH_STACK_FRAME | OP_POP_STACK_FRAME
@@ -39,8 +40,6 @@ type opType =
     (*triop*)
     | OpOr of (int * int * int)
     | OpAnd of (int * int * int)
-    | OpEq of (int * int * int)
-    | OpNe of (int * int * int)
     | OpAddInt of (int * int * int)
     | OpSubInt of (int * int * int)
     | OpMulInt of (int * int * int)
@@ -101,7 +100,7 @@ let next_label = ref 0
 let rec compile prog =
     analyse prog;
     gen_br_program prog;
-    print_lines
+    print_lines !brprog
 (*i guess we dont need to check table == NULL, we could just check Snick_analyze.isValid*)
 (* 
 compile(FILE *fp, Program *prog) {
@@ -119,8 +118,6 @@ compile(FILE *fp, Program *prog) {
 and strip_paren expr = match expr with
     | Eparen paren_expr -> strip_paren paren_expr
     | _ -> expr
-
-and print_lines = ()
 
 and gen_br_program prog =
     gen_call "main";
@@ -644,8 +641,6 @@ and gen_triop op x1 x2 x3 =
     let line = match op with
                 | "or" -> BrOp(OpOr(x1,x2,x3))
                 | "and" -> BrOp(OpAnd(x1,x2,x3))
-                | "eq" -> BrOp(OpEq(x1,x2,x3))
-                | "ne" -> BrOp(OpNe(x1,x2,x3))
                 | "add_int" -> BrOp(OpAddInt(x1,x2,x3))
                 | "sub_int" -> BrOp(OpSubInt(x1,x2,x3))
                 | "mul_int" -> BrOp(OpMulInt(x1,x2,x3))
@@ -670,8 +665,8 @@ and gen_triop op x1 x2 x3 =
     in
     brprog := List.append !brprog [line]
 
-and gen_call_builtin bi_func =
-    let line = match bi_func with
+and gen_call_builtin bltin_func =
+    let line = match bltin_func with
                 | "read_int" -> BrBltIn(BltInReadInt)
                 | "read_real" -> BrBltIn(BltInReadReal)
                 | "read_bool" -> BrBltIn(BltInReadBool)
@@ -679,6 +674,167 @@ and gen_call_builtin bi_func =
                 | "print_real" -> BrBltIn(BltInPrintReal)
                 | "print_bool" -> BrBltIn(BltInPrintBool)
                 | "print_string" -> BrBltIn(BltInPrintString)
-                | _ -> raise (Failure ("wrong bi_func "^bi_func))
+                | _ -> raise (Failure ("wrong bltin_func "^bltin_func))
     in
     brprog := List.append !brprog [line]
+
+and print_lines lines = List.iter print_line lines
+
+and print_line = function
+    | BrProc(proc_id) -> print_br_proc proc_id
+    | BrOp(brOp) -> print_br_op brOp
+    | BrLabel(nlabel) -> print_br_label nlabel
+    | BrBltIn(brBltIn) -> print_br_bltin brBltIn
+
+and indent = "    "
+
+and print_br_proc proc_id =
+    fprintf std_formatter "proc_%s:\n" proc_id
+
+and print_br_op = function
+    | OpCall(proc_id) ->
+        fprintf std_formatter "%scall proc_%s\n"
+            indent proc_id
+    | OpHalt ->
+        fprintf std_formatter "%shalt\n"
+            indent
+    | OpPush(frame_size) ->
+        fprintf std_formatter "%spush_stack_frame %d\n"
+            indent frame_size
+    | OpPop(frame_size) ->
+        fprintf std_formatter "%spop_stack_frame %d\n"
+            indent frame_size
+    | OpBranchUncond(nlabel) ->
+        fprintf std_formatter "%sbranch_uncond label%d\n"
+            indent nlabel
+    | OpLoad(nreg,nslot) ->
+        fprintf std_formatter "%sload r%d, %d\n"
+            indent nreg nslot
+    | OpStore(nslot,nreg) ->
+        fprintf std_formatter "%sstore %d, r%d\n"
+            indent nslot nreg
+    | OpLoadAddress(nreg,nslot) ->
+        fprintf std_formatter "%sload_address r%d, %d\n"
+            indent nreg nslot
+    | OpLoadIndirect(nreg1,nreg2) ->
+        fprintf std_formatter "%sload_indirect r%d, r%d\n"
+            indent nreg1 nreg2
+    | OpStoreIndirect(nreg1,nreg2) ->
+        fprintf std_formatter "%sstore_indirect r%d, r%d\n"
+            indent nreg1 nreg2
+    | OpBranchOnTrue(nreg,nlabel) ->
+        fprintf std_formatter "%sbranch_on_true r%d, label%d\n"
+            indent nreg nlabel
+    | OpBranchOnFalse(nreg,nlabel) ->
+        fprintf std_formatter "%sbranch_on_false r%d, label%d\n"
+            indent nreg nlabel
+    | OpIntToReal(nreg_dest,nreg_scr) ->
+        fprintf std_formatter "%sint_to_real r%d, r%d\n"
+            indent nreg_dest nreg_scr
+    | OpNot(nreg_dest,nreg_scr) ->
+        fprintf std_formatter "%snot r%d, r%d\n"
+            indent nreg_dest nreg_scr
+    | OpOr(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%sor r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpAnd(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%sand r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpAddInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%sadd_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg_int1 nreg_int2
+    | OpSubInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%ssub_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg_int1 nreg_int2
+    | OpMulInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%smul_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg_int1 nreg_int2
+    | OpDivInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%sdiv_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg_int1 nreg_int2
+    | OpCmpEqInt(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_eq_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpNeInt(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_ne_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpLtInt(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_lt_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpLeInt(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_le_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpGtInt(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_gt_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpGeInt(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_ge_int r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpAddReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%sadd_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg_real1 nreg_real2
+    | OpSubReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%ssub_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg_real1 nreg_real2
+    | OpMulReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%smul_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg_real1 nreg_real2
+    | OpDivReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%sdiv_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg_real1 nreg_real2
+    | OpCmpEqReal(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_eq_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpNeReal(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_ne_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpLtReal(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_lt_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpLeReal(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_le_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpGtReal(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_gt_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpCmpGeReal(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%scmp_ge_real r%d, r%d, r%d\n"
+            indent nreg_dest nreg1 nreg2
+    | OpReturn ->
+        fprintf std_formatter "%sreturn\n"
+            indent
+    | OpIntConst(nreg,int_const) ->
+        fprintf std_formatter "%sint_const r%d, %d\n"
+            indent nreg int_const
+    | OpRealConst(nreg,real_const) ->
+        fprintf std_formatter "%sreal_const r%d, %f\n"
+            indent nreg real_const
+    | OpStringConst(nreg,string_const) ->
+        fprintf std_formatter "%sstring_const r%d, %s\n"
+            indent nreg string_const
+
+and print_br_label nlabel =
+    fprintf std_formatter "label%d:\n" nlabel
+
+and print_br_bltin = function
+    | BltInReadInt ->
+        fprintf std_formatter "%scall_builtin BUILTIN_READ_INT\n"
+            indent
+    | BltInReadReal ->
+        fprintf std_formatter "%scall_builtin BUILTIN_READ_REAL\n"
+            indent
+    | BltInReadBool ->
+        fprintf std_formatter "%scall_builtin BUILTIN_READ_BOOL\n"
+            indent
+    | BltInPrintInt ->
+        fprintf std_formatter "%scall_builtin BUILTIN_PRINT_INT\n"
+            indent
+    | BltInPrintReal ->
+        fprintf std_formatter "%scall_builtin BUILTIN_PRINT_REAL\n"
+            indent
+    | BltInPrintBool ->
+        fprintf std_formatter "%scall_builtin BUILTIN_PRINT_BOOL\n"
+            indent
+    | BltInPrintString ->
+        fprintf std_formatter "%scall_builtin BUILTIN_PRINT_STRING\n"
+            indent
