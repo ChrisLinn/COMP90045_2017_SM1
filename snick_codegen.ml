@@ -835,5 +835,5 @@ and print_br_bltin = function
         fprintf std_formatter "%scall_builtin builtin_print_bool\n"
             indent
     | BltInPrintString ->
-        fprintf std_formatter "%scall_builtin BUILTIN_PRINT_STRING\n"
+        fprintf std_formatter "%scall_builtin builtin_print_string\n"
             indent
