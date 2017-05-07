@@ -86,6 +86,7 @@ type brLine =
     | BrOp of opType
     | BrLabel of int
     | BrBltIn of bltInType
+    | BrComment of string
 
 type brLines = brLine list option
 
@@ -125,7 +126,7 @@ and gen_br_program prog =
     gen_halt "whatever";
     gen_br_out_of_bounds "whatever";
     gen_br_div_by_zero "whatever";
-    List.iter gen_br_proc prog
+    List.iter gen_br_proc prog    
 
 and gen_br_out_of_bounds = function
     | _ ->
@@ -156,7 +157,7 @@ and gen_br_proc ((proc_id,params),proc_body) =
     )
 
 and gen_br_prologue scope params decls =
-    (* gen_comment *)
+    gen_comment "prologue";
     gen_unop "push" (get_scope_nslot scope);
     gen_br_params (get_scope_st scope) 0 params;
     gen_br_decls (get_scope_st scope) decls;
@@ -250,6 +251,7 @@ and gen_br_stmt scope stmt = match stmt with
     | While(expr,stmts) -> gen_br_while scope expr stmts
 
 and gen_br_assign scope (Elem(id,optn_idxs)) expr =
+    gen_comment "assignment";
     let (symkind,symtype,nslot,optn_bounds) = 
         Hashtbl.find (get_scope_st scope) id
     and expr_type = get_expr_type (get_scope_st scope) expr
@@ -272,6 +274,7 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
     )
 
 and gen_br_read scope (Elem(id,optn_idxs)) =
+    gen_comment "read";
     let (symkind,symtype,nslot,optn_bounds) 
         = Hashtbl.find (get_scope_st scope) id
     in
@@ -294,7 +297,9 @@ and gen_br_read scope (Elem(id,optn_idxs)) =
             gen_binop "store" nslot 0
     )
 
-and gen_br_write scope = function
+and gen_br_write scope write_expr = 
+    gen_comment "write";
+    match write_expr with
     | Expr(expr) ->
     (
         gen_br_expr scope 0 expr;
@@ -311,6 +316,7 @@ and gen_br_write scope = function
 
 
 and gen_br_call scope proc_id args =
+    gen_comment "proc call";
     let params = get_scope_params (Hashtbl.find ht_scopes proc_id)
     and nreg = ref 0
     and scope_st = get_scope_st scope
@@ -362,6 +368,7 @@ and gen_br_call scope proc_id args =
 and gen_br_expr_array_addr scope nreg elem = ()
 
 and gen_br_ifthen scope expr stmts =
+    gen_comment "if";
     let after_label = !next_label
     in
     (
@@ -373,6 +380,7 @@ and gen_br_ifthen scope expr stmts =
     )
 
 and gen_br_ifthenelse scope expr then_stmts else_stmts =
+    gen_comment "if";
     let else_label = !next_label
     in
     (
@@ -392,6 +400,7 @@ and gen_br_ifthenelse scope expr then_stmts else_stmts =
     )
 
 and gen_br_while scope expr stmts =
+    gen_comment "while";
     let begin_label = !next_label
     in
     (
@@ -595,8 +604,12 @@ and gen_br_expr_id scope nreg id =
 and gen_br_expr_array_val scope nreg id idxs = ()
 
 and gen_br_epilogue scope =
+    gen_comment "epilogue";
     gen_unop "pop" (get_scope_nslot scope);
     gen_return "whatever"
+
+and gen_comment comment =
+    brprog := List.append !brprog [BrComment(comment)]
 
 and gen_call proc_id =
     brprog := List.append !brprog [BrOp(OpCall(proc_id))]
@@ -702,6 +715,7 @@ and print_line = function
     | BrOp(brOp) -> print_br_op brOp
     | BrLabel(nlabel) -> print_br_label nlabel
     | BrBltIn(brBltIn) -> print_br_bltin brBltIn
+    | BrComment(brComment) -> print_br_comment brComment
 
 and print_br_proc proc_id =
     fprintf std_formatter "proc_%s:\n" proc_id
@@ -853,3 +867,6 @@ and print_br_bltin = function
     | BltInPrintString ->
         fprintf std_formatter "%s%*s print_string\n"
             indent width "call_builtin"
+
+and print_br_comment brComment =
+    fprintf std_formatter "# %s\n" brComment
