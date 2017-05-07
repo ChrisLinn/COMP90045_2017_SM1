@@ -8,7 +8,7 @@ let rec analyse prog =
     gen_sym_table prog;
     List.iter analyse_proc prog;
     check_unused_symbols prog;    (*???????*)
-    check_main                    (*???????*)
+    check_main prog                  (*???????*)
 
 and analyse_proc ((proc_id,_),prog_body) =
     let scope = Hashtbl.find ht_scopes proc_id
