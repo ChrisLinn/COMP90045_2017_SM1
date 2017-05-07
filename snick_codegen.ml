@@ -239,7 +239,6 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
     in
     (
         (*simplify expression*)
-        (* gen_br_expr scope 0 expr; *)
         (
             match (try_get_expr_value expr) with
             | Some new_expr -> gen_br_expr scope 0 new_expr
@@ -290,7 +289,6 @@ and gen_br_write scope write_expr =
     | Expr(expr) ->
     (
         (*simplify expression*)
-        (* gen_br_expr scope 0 expr; *)
         (
             match (try_get_expr_value expr) with
             | Some new_expr -> gen_br_expr scope 0 new_expr
@@ -345,7 +343,6 @@ and gen_br_call scope proc_id args =
                         | (Val,param_type,_) ->
                         (
                             (*simplify expression*)
-                            (* gen_br_expr scope !nreg arg; *)
                             (
                                 match (try_get_expr_value arg) with
                                 | Some new_expr -> gen_br_expr scope !nreg new_expr
@@ -373,7 +370,6 @@ and gen_br_ifthen scope expr stmts =
     (
         incr next_label;
         (*simplify expression*)
-        (* gen_br_expr scope 0 expr; *)
         (
             match (try_get_expr_value expr) with
             | Some new_expr -> gen_br_expr scope 0 new_expr
@@ -395,7 +391,6 @@ and gen_br_ifthenelse scope expr then_stmts else_stmts =
         (
             incr next_label;
             (*simplify expression*)
-            (* gen_br_expr scope 0 expr; *)
             (
                 match (try_get_expr_value expr) with
                 | Some new_expr -> gen_br_expr scope 0 new_expr
@@ -422,7 +417,6 @@ and gen_br_while scope expr stmts =
             incr next_label;
             gen_label begin_label;
             (*simplify expression*)
-            (* gen_br_expr scope 0 expr; *)
             (
                 match (try_get_expr_value expr) with
                 | Some new_expr -> gen_br_expr scope 0 new_expr
