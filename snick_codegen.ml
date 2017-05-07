@@ -94,9 +94,9 @@ type brProg = brLines
 let indent = "    "
 
 let brprog = ref []
-(* let out_of_bounds_label = 0 *)
-(* let div_by_zero_label = 1 *)
-let next_label = ref 0
+let out_of_bounds_label = 0
+let div_by_zero_label = 1
+let next_label = ref 2
 
 let rec compile prog =
     analyse prog;
@@ -123,9 +123,27 @@ and strip_paren expr = match expr with
 and gen_br_program prog =
     gen_call "main";
     gen_halt "whatever";
-(*     gen_br_out_of_bounds;
-    gen_br_div_by_zero; *)
+    gen_br_out_of_bounds "whatever";
+    gen_br_div_by_zero "whatever";
     List.iter gen_br_proc prog
+
+and gen_br_out_of_bounds = function
+    | _ ->
+    (
+        gen_label out_of_bounds_label;
+        gen_string_const 0 "\"[FATAL]: array element out of bounds!\\n\"";
+        gen_call_builtin "print_string";
+        gen_halt "whatever"
+    )
+
+and gen_br_div_by_zero = function
+    | _ ->
+    (
+        gen_label div_by_zero_label;
+        gen_string_const 0 "\"[FATAL]: division by zero!\\n\"";
+        gen_call_builtin "print_string";
+        gen_halt "whatever"
+    )
 
 and gen_br_proc ((proc_id,params),proc_body) =
     let scope = Hashtbl.find ht_scopes proc_id
@@ -436,7 +454,6 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
         );
 
         (*check div_by_0*)
-        (*
         if optr = Op_div then
         (
             if rexpr_type = SYM_REAL then
@@ -451,7 +468,6 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
             );
             gen_binop "branch_on_true" (nreg+2) div_by_zero_label
         )
-        *)
 
         if ((lexpr_type = SYM_INT) && (rexpr_type = SYM_REAL)) then
             gen_binop "int_to_real" !lexpr_nreg !lexpr_nreg
