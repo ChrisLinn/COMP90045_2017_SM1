@@ -101,7 +101,7 @@ and try_get_expr_value = function
     (
         match (try_get_expr_value expr) with
         | Some (Ebool(bool_const)) -> Some (Ebool( not bool_const))
-        | Some (Eint(int_const)) -> Some (Eint(0-int_const))
-        | Some (Efloat(float_const)) -> Some (Efloat(0.0-float_const))
+        | Some (Eint(int_const)) -> Some (Eint(-int_const))
+        | Some (Efloat(float_const)) -> Some (Efloat(-.float_const))
         | _ -> None
     )
