@@ -677,7 +677,7 @@ and gen_call_builtin bltin_func =
                 | "print_real" -> BrBltIn(BltInPrintReal)
                 | "print_bool" -> BrBltIn(BltInPrintBool)
                 | "print_string" -> BrBltIn(BltInPrintString)
-                | _ -> raise (Failure ("wrong bltin_func "^bltin_func))
+                | _ -> raise (Failure ("wrong bltin_func "))
     in
     brprog := List.append !brprog [line]
 

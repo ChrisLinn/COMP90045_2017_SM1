@@ -81,3 +81,27 @@ and get_elem_type scope_st (Elem(id,_)) =
 and check_unused_symbols prog = ()
 
 and check_main prog = ()
+
+and try_get_expr_value = function
+    | Eelem(elem) -> None
+    | Ebool(bool_const) -> Some (Ebool(bool_const))
+    | Eint(int_const) -> Some (Eint(int_const))
+    | Efloat(float_const) -> Some (Efloat(float_const))
+    | Eparen(expr) -> try_get_expr_value expr
+    | Ebinop(lexpr,optr,rexpr) ->
+    (
+        let lexpr_value = try_get_expr_value lexpr
+        and rexpr_value = try_get_expr_value rexpr
+        in
+        (
+            None
+        )
+    )
+    | Eunop(optr,expr) ->
+    (
+        match (try_get_expr_value expr) with
+        | Some (Ebool(bool_const)) -> Some (Ebool( not bool_const))
+        | Some (Eint(int_const)) -> Some (Eint(0-int_const))
+        | Some (Efloat(float_const)) -> Some (Efloat(0.0-float_const))
+        | _ -> None
+    )

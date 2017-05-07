@@ -27,6 +27,7 @@
             + [ ] gen_br_expr_array_val
             + [ ] get_reg_usage
 + [ ] error handling
+    + [ ] analyse_assign in analyze logic error 
     + [ ] analyze (recursively) assign/if/while/read
     + [ ] find main
         + [ ] print main first?
