@@ -235,7 +235,7 @@ and gen_br_decls scope_st decls =
             decls;
     )
 
-and gen_br_init_array nslot nreg optn_bounds = ()
+and gen_br_init_array nslot nreg optn_bounds = ()  (*array*)
 
 and gen_br_stmts scope stmts =
     List.iter (gen_br_stmt scope) stmts
@@ -365,7 +365,7 @@ and gen_br_call scope proc_id args =
         gen_call proc_id
     )
 
-and gen_br_expr_array_addr scope nreg elem = ()
+and gen_br_expr_array_addr scope nreg elem = () (*array*)
 
 and gen_br_ifthen scope expr stmts =
     gen_comment "if";
@@ -531,7 +531,7 @@ and get_reg_usage scope = function
     (
         match elem with
         | Elem(id,None) -> 0
-        | Elem(id,Some idxs) -> (*aaaaaray*) 0
+        | Elem(id,Some idxs) -> (*array*) 0
     )
 
 and gen_br_expr_binop_bool nreg lexpr_nreg rexpr_nreg = function
@@ -601,7 +601,7 @@ and gen_br_expr_id scope nreg id =
         | _ -> gen_binop "load" nreg nslot
     )
 
-and gen_br_expr_array_val scope nreg id idxs = ()
+and gen_br_expr_array_val scope nreg id idxs = () (*array*)
 
 and gen_br_epilogue scope =
     gen_comment "epilogue";

@@ -101,7 +101,7 @@ and generate_decl_symbol
                 DeclVal(decltype,Variable(declid,optn_intvls)),nslot,false,None);  *)
     Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None); 
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
-
+    (*array*)
 
 and get_scope_id (Scope(id,_,_,_)) = id
 
