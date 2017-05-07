@@ -3,26 +3,18 @@ open Snick_symbol
 open Snick_analyze
 open Format
 (* 
-type opCode =
-    | OP_PUSH_STACK_FRAME | OP_POP_STACK_FRAME
-    | OP_HALT
-    | OP_LOAD | OP_STORE | OP_LOAD_ADDRESS | OP_LOAD_INDIRECT | OP_STORE_INDIRECT
-    | OP_INT_CONST | OP_REAL_CONST | OP_STRING_CONST
-    | OP_INT_TO_REAL | OP_MOVE
-    | OP_ADD_INT | OP_ADD_REAL | OP_ADD_OFFSET
-    | OP_SUB_INT | OP_SUB_REAL | OP_SUB_OFFSET
-    | OP_MUL_INT | OP_MUL_REAL | OP_DIV_INT | OP_DIV_REAL
-    | OP_CMP_EQ_INT |  OP_CMP_NE_INT |  OP_CMP_GT_INT |  OP_CMP_GE_INT
-    | OP_CMP_LT_INT |  OP_CMP_LE_INT |  OP_CMP_EQ_REAL | OP_CMP_NE_REAL
-    | OP_CMP_GT_REAL | OP_CMP_GE_REAL | OP_CMP_LT_REAL | OP_CMP_LE_REAL
-    | OP_AND | OP_OR | OP_NOT
-    | OP_BRANCH_ON_TRUE | OP_BRANCH_ON_FALSE | OP_BRANCH_UNCOND
-    | OP_CALL | OP_CALL_BUILTIN | OP_RETURN
-    | OP_DEBUG_REG | OP_DEBUG_SLOT | OP_DEBUG_STACK *)
+    | OP_MOVE
+    | OP_ADD_OFFSET | OP_SUB_OFFSET
+    | OP_DEBUG_REG | OP_DEBUG_SLOT | OP_DEBUG_STACK
+*)
 
 type opType =
     | OpCall of string
     | OpHalt
+    | OpReturn
+    | OpIntConst of (int * int)
+    | OpRealConst of (int * float)
+    | OpStringConst of (int * string)
     (*unop*)
     | OpPush of int
     | OpPop of int
@@ -60,17 +52,6 @@ type opType =
     | OpCmpLeReal of (int * int * int)
     | OpCmpGtReal of (int * int * int)
     | OpCmpGeReal of (int * int * int)
-    | OpReturn
-    | OpIntConst of (int * int)
-    | OpRealConst of (int * float)
-    | OpStringConst of (int * string)
-
-(* type brKind =
-    | BR_BUILTIN
-    | BR_PROC
-    | BR_LABEL
-    | BR_OP
-    | BR_COMMENT *)
 
 type bltInType =
     | BltInReadInt
@@ -285,7 +266,7 @@ and gen_br_read scope (Elem(id,optn_idxs)) =
             | SYM_INT -> gen_call_builtin "read_int"
             | SYM_REAL -> gen_call_builtin "read_real"
         );
-        if optn_idxs <> None then
+        if optn_idxs <> None then (*array*)
         (
         )
         else if symkind = SYM_PARAM_REF then
@@ -635,10 +616,6 @@ and gen_string_const nreg string_const =
 and gen_return = function
     | _-> brprog := List.append !brprog [BrOp(OpReturn)]
 
-(* and gen_unop op x = match op with
-    | "push" -> brprog := List.append !brprog [BrOp(OpPush(x))]
-    | _ -> ()
- *)
 and gen_unop op x =
     let line = match op with
                 | "push" -> BrOp(OpPush(x))
@@ -648,10 +625,6 @@ and gen_unop op x =
     in
     brprog := List.append !brprog [line]
 
-(* and gen_binop op x1 x2 = match op with
-    | "store" -> brprog := List.append !brprog [BrOp(OpStore(x1,x2))]
-    | _ -> ()
- *)
 and gen_binop op x1 x2 =
     let line = match op with
                 | "load" -> BrOp(OpLoad(x1,x2))

@@ -45,15 +45,6 @@ type scope = Scope of (ident * (string, symbol) Hashtbl.t * param list * int)
 } scope;
  *)
 
-(* 
-type sym_table = (Hashtbl.t * bool) *)
-(* 
-typedef struct symbol_table {
-    void *table;                  seems unuseful for us
-    BOOL initialised;
-} sym_table;
- *)
-
 let ht_inis = 20
 let ht_scopes = Hashtbl.create ht_inis
 
