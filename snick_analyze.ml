@@ -3,7 +3,6 @@ open Snick_symbol
 
 let isValid = ref true
 
-(*i guess we dont need to use to return result of gen_sym_table, we could just update it in Snick_symbol.ml*)
 let rec analyse prog =
     gen_sym_table prog;
     List.iter analyse_proc prog;
@@ -80,6 +79,10 @@ and analyse_expr scope = function (*todo*)
     )
     | Eunop(optr,expr) -> ()
 
+and check_unused_symbols prog = ()
+
+and check_main prog = ()
+
 and get_expr_type scope = function
     | Eelem(elem) -> get_elem_type scope elem
     | Ebool(_) -> SYM_BOOL
@@ -108,10 +111,6 @@ and get_elem_type scope (Elem(id,_)) =
     let (_,sym_type,_,_) = Hashtbl.find (get_scope_st scope) id
     in
     sym_type
-
-and check_unused_symbols prog = ()
-
-and check_main prog = ()
 
 and try_get_expr_value = function
     | Eelem(elem) -> None
