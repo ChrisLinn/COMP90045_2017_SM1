@@ -13,25 +13,23 @@ let rec analyse prog =
 and analyse_proc ((proc_id,_),prog_body) =
     let scope = Hashtbl.find ht_scopes proc_id
     in
-    let scope_st = get_scope_st scope 
-    in
-    analyse_statements scope_st prog_body.stmts
+    analyse_statements scope prog_body.stmts
 
-and analyse_statements scope_st stmts =
-    List.iter (analyse_statement scope_st) stmts
+and analyse_statements scope stmts =
+    List.iter (analyse_statement scope) stmts
 
-and analyse_statement scope_st stmt = match stmt with
-    | Assign(elem,expr) -> analyse_assign scope_st elem expr
-    | Read(_) -> analyse_read scope_st stmt
-    | Write(_) -> analyse_write scope_st stmt
-    | Call(_) -> analyse_call scope_st stmt
-    | If_then(_) -> analyse_if_then scope_st stmt
-    | If_then_else(_) -> analyse_if_then_else scope_st stmt
-    | While(_) -> analyse_while scope_st stmt
+and analyse_statement scope stmt = match stmt with
+    | Assign(elem,expr) -> analyse_assign scope elem expr
+    | Read(_) -> analyse_read scope stmt
+    | Write(_) -> analyse_write scope stmt
+    | Call(_) -> analyse_call scope stmt
+    | If_then(_) -> analyse_if_then scope stmt
+    | If_then_else(_) -> analyse_if_then_else scope stmt
+    | While(_) -> analyse_while scope stmt
 
-and analyse_assign scope_st elem expr = 
-    let l_type = get_elem_type scope_st elem
-    and r_type = get_expr_type scope_st expr
+and analyse_assign scope elem expr = 
+    let l_type = get_elem_type scope elem
+    and r_type = get_expr_type scope expr
     in
         if ((l_type = r_type)
         || ((l_type = SYM_REAL)&&(r_type = SYM_INT))) then
@@ -39,24 +37,24 @@ and analyse_assign scope_st elem expr =
         else
             raise (Failure "assign type unmatch!")
 
-and analyse_read scope_st stmt = ()
+and analyse_read scope stmt = ()
 
-and analyse_write scope_st stmt = ()
+and analyse_write scope stmt = ()
 
-and analyse_call scope_st stmt = ()
+and analyse_call scope stmt = ()
 
-and analyse_if_then scope_st stmt = ()
+and analyse_if_then scope stmt = ()
 
-and analyse_if_then_else scope_st stmt = ()
+and analyse_if_then_else scope stmt = ()
 
-and analyse_while scope_st stmt = ()
+and analyse_while scope stmt = ()
 
-and get_expr_type scope_st = function
-    | Eelem(elem) -> get_elem_type scope_st elem
+and get_expr_type scope = function
+    | Eelem(elem) -> get_elem_type scope elem
     | Ebool(_) -> SYM_BOOL
     | Eint(_) -> SYM_INT
     | Efloat(_) -> SYM_REAL
-    | Eparen(expr) -> get_expr_type scope_st expr
+    | Eparen(expr) -> get_expr_type scope expr
     | Ebinop(lexpr,optr,rexpr) ->
     (
         match optr with
@@ -64,18 +62,18 @@ and get_expr_type scope_st = function
             SYM_BOOL
         | Op_add | Op_sub | Op_mul | Op_div ->
         (
-            if (((get_expr_type scope_st lexpr)=SYM_REAL)
-            ||((get_expr_type scope_st rexpr)=SYM_REAL)) then
+            if (((get_expr_type scope lexpr)=SYM_REAL)
+            ||((get_expr_type scope rexpr)=SYM_REAL)) then
                 SYM_REAL
             else
                 SYM_INT
         )
         | _ -> raise (Failure "invalid optr in Ebinop")
     )
-    | Eunop(optr,expr) -> get_expr_type scope_st expr
+    | Eunop(optr,expr) -> get_expr_type scope expr
 
-and get_elem_type scope_st (Elem(id,_)) =
-    let (_,sym_type,_,_) = Hashtbl.find scope_st id
+and get_elem_type scope (Elem(id,_)) =
+    let (_,sym_type,_,_) = Hashtbl.find (get_scope_st scope) id
     in
     sym_type
 

@@ -237,7 +237,7 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
     gen_comment "assignment";
     let (symkind,symtype,nslot,optn_bounds) = 
         Hashtbl.find (get_scope_st scope) id
-    and expr_type = get_expr_type (get_scope_st scope) expr
+    and expr_type = get_expr_type scope expr
     in
     (
         (*simplify expression*)
@@ -296,7 +296,7 @@ and gen_br_write scope write_expr =
             | Some new_expr -> gen_br_expr scope 0 new_expr
             | _ -> gen_br_expr scope 0 expr
         );
-        match (get_expr_type (get_scope_st scope) expr) with
+        match (get_expr_type scope expr) with
         | SYM_BOOL -> gen_call_builtin "print_bool"
         | SYM_INT -> gen_call_builtin "print_int"
         | SYM_REAL -> gen_call_builtin "print_real"
@@ -350,7 +350,7 @@ and gen_br_call scope proc_id args =
                                 | Some new_expr -> gen_br_expr scope !nreg new_expr
                                 | _ -> gen_br_expr scope !nreg arg
                             );
-                            if (((get_expr_type scope_st arg) = SYM_INT)
+                            if (((get_expr_type scope arg) = SYM_INT)
                             && (param_type = Float)) then
                                 gen_binop "int_to_real" !nreg !nreg
                         )
@@ -452,8 +452,8 @@ and gen_br_expr scope nreg = function
     )
 
 and gen_br_expr_binop scope nreg lexpr optr rexpr =
-    let lexpr_type = get_expr_type (get_scope_st scope) lexpr
-    and rexpr_type = get_expr_type (get_scope_st scope) rexpr
+    let lexpr_type = get_expr_type scope lexpr
+    and rexpr_type = get_expr_type scope rexpr
     and lexpr_reg_usage = get_reg_usage scope lexpr
     and rexpr_reg_usage = get_reg_usage scope rexpr
     and lexpr_nreg = ref 0
@@ -498,13 +498,13 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
 
         if ((lexpr_type = SYM_BOOL) && (rexpr_type = SYM_BOOL)) then
             gen_br_expr_binop_bool
-                nreg !lexpr_nreg !rexpr_nreg optr
+                scope nreg !lexpr_nreg !rexpr_nreg optr
         else if ((lexpr_type = SYM_REAL) || (rexpr_type = SYM_REAL)) then
             gen_br_expr_binop_float
-                nreg !lexpr_nreg !rexpr_nreg optr
+                scope nreg !lexpr_nreg !rexpr_nreg optr
         else
             gen_br_expr_binop_int
-                nreg !lexpr_nreg !rexpr_nreg optr
+                scope nreg !lexpr_nreg !rexpr_nreg optr
     )
 
 and get_reg_usage scope = function
@@ -547,14 +547,14 @@ and get_reg_usage scope = function
         | Elem(id,Some idxs) -> (*array*) 0
     )
 
-and gen_br_expr_binop_bool nreg lexpr_nreg rexpr_nreg = function
+and gen_br_expr_binop_bool scope nreg lexpr_nreg rexpr_nreg = function
     | Op_or -> gen_triop "or" nreg lexpr_nreg rexpr_nreg
     | Op_and -> gen_triop "and" nreg lexpr_nreg rexpr_nreg
     | Op_eq -> gen_triop "eq" nreg lexpr_nreg rexpr_nreg
     | Op_ne -> gen_triop "ne" nreg lexpr_nreg rexpr_nreg
     | _ -> raise (Failure "invalid op for bool binop expr!")
 
-and gen_br_expr_binop_float nreg lexpr_nreg rexpr_nreg = function
+and gen_br_expr_binop_float scope nreg lexpr_nreg rexpr_nreg = function
     | Op_add -> gen_triop "add_real" nreg lexpr_nreg rexpr_nreg
     | Op_sub -> gen_triop "sub_real" nreg lexpr_nreg rexpr_nreg
     | Op_mul -> gen_triop "mul_real" nreg lexpr_nreg rexpr_nreg
@@ -567,7 +567,7 @@ and gen_br_expr_binop_float nreg lexpr_nreg rexpr_nreg = function
     | Op_ge -> gen_triop "cmp_ge_real" nreg lexpr_nreg rexpr_nreg
     | _ -> raise (Failure "invalid op for float binop expr!")
 
-and gen_br_expr_binop_int nreg lexpr_nreg rexpr_nreg = function
+and gen_br_expr_binop_int scope nreg lexpr_nreg rexpr_nreg = function
     | Op_add -> gen_triop "add_int" nreg lexpr_nreg rexpr_nreg
     | Op_sub -> gen_triop "sub_int" nreg lexpr_nreg rexpr_nreg
     | Op_mul -> gen_triop "mul_int" nreg lexpr_nreg rexpr_nreg
@@ -582,7 +582,7 @@ and gen_br_expr_binop_int nreg lexpr_nreg rexpr_nreg = function
 
 and gen_br_expr_unop scope nreg optr expr =
     gen_br_expr scope nreg expr;
-    let expr_type = get_expr_type (get_scope_st scope) expr
+    let expr_type = get_expr_type scope expr
     in
     (
         if ((expr_type = SYM_BOOL) && (optr = Op_not)) then

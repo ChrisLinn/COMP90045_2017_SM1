@@ -29,7 +29,7 @@ typedef struct symbol_data {
     void        *sym_value;    can be useful (update/optmz)
     int         line_no;        seems unuseful so removed
     int         slot;
-    BOOL        used;            can be useful
+    BOOL        used;            can be useful!!!!!!!!!!!
     Bounds  *bounds;
 } symbol;
  *)
