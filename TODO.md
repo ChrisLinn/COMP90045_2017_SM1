@@ -19,15 +19,17 @@
     + [X] check int_to_float in gen_br_expr_unop seems unuseful
 + [ ] array
     + [ ] option type
-    + [ ] decls
-        + [ ] analyze
-        + [ ] codegen
-            + [ ] gen_br_init_array
-            + [ ] gen_br_assign
-            + [ ] gen_br_read
-            + [ ] gen_br_expr_array_addr
-            + [ ] gen_br_expr_array_val
-            + [ ] get_reg_usage
+    - [ ] analyze
+        - [ ] decls negative interval num
+        - [ ] static out_of_bound
+        - [ ] dynamic out_of_bound
+    - [ ] codegen
+        - [ ] gen_br_init_array
+        - [ ] gen_br_assign
+        - [ ] gen_br_read
+        - [ ] gen_br_expr_array_addr
+        - [ ] gen_br_expr_array_val
+        - [ ] get_reg_usage
 + [ ] error handling
     + [ ] analyse_assign in analyze logic error 
     + [ ] analyze (recursively) assign/if/while/read
