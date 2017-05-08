@@ -5,7 +5,6 @@ open Format
 (* 
     | OP_MOVE
     | OP_ADD_OFFSET | OP_SUB_OFFSET
-    | OP_DEBUG_REG | OP_DEBUG_SLOT | OP_DEBUG_STACK
 *)
 
 type opType =
@@ -15,6 +14,9 @@ type opType =
     | OpIntConst of (int * int)
     | OpRealConst of (int * float)
     | OpStringConst of (int * string)
+    | OpDebugReg of int
+    | OpDebugSlot of int
+    | OpDebugStack
     (*unop*)
     | OpPush of int
     | OpPop of int
@@ -644,14 +646,19 @@ and gen_string_const nreg string_const =
     brprog := List.append !brprog [BrOp(OpStringConst(nreg,string_const))]
 
 and gen_return = function
-    | _-> brprog := List.append !brprog [BrOp(OpReturn)]
+    | _ -> brprog := List.append !brprog [BrOp(OpReturn)]
+
+and gen_debug_stack = function
+    | _ -> brprog := List.append !brprog [BrOp(OpDebugStack)]
 
 and gen_unop op x =
     let line = match op with
                 | "push" -> BrOp(OpPush(x))
                 | "pop" -> BrOp(OpPop(x))
                 | "branch_uncond" -> BrOp(OpBranchUncond(x))
-                | _ -> raise (Failure ("wrong gen_unop "^op))
+                | "debug_reg" -> BrOp(OpDebugReg(x))
+                | "debug_slot" -> BrOp(OpDebugSlot(x))
+                | _ -> raise (Failure ("operation "^op^" not yet supported"))
     in
     brprog := List.append !brprog [line]
 
@@ -666,7 +673,7 @@ and gen_binop op x1 x2 =
                 | "branch_on_false" -> BrOp(OpBranchOnFalse(x1,x2))
                 | "int_to_real" -> BrOp(OpIntToReal(x1,x2))
                 | "not" -> BrOp(OpNot(x1,x2))
-                | _ -> raise (Failure ("wrong gen_binop "^op))
+                | _ -> raise (Failure ("operation "^op^" not yet supported"))
     in
     brprog := List.append !brprog [line]
 
@@ -694,7 +701,7 @@ and gen_triop op x1 x2 x3 =
                 | "cmp_le_real" -> BrOp(OpCmpLeReal(x1,x2,x3))
                 | "cmp_gt_real" -> BrOp(OpCmpGtReal(x1,x2,x3))
                 | "cmp_ge_real" -> BrOp(OpCmpGeReal(x1,x2,x3))
-                | _ -> raise (Failure ("wrong gen_triop "^op))
+                | _ -> raise (Failure ("operation "^op^" not yet supported"))
     in
     brprog := List.append !brprog [line]
 
@@ -707,7 +714,8 @@ and gen_call_builtin bltin_func =
                 | "print_real" -> BrBltIn(BltInPrintReal)
                 | "print_bool" -> BrBltIn(BltInPrintBool)
                 | "print_string" -> BrBltIn(BltInPrintString)
-                | _ -> raise (Failure ("wrong bltin_func "^bltin_func))
+                | _ -> raise
+                    (Failure ("bltin_func "^bltin_func^" not yet supported"))
     in
     brprog := List.append !brprog [line]
 
@@ -844,6 +852,15 @@ and print_br_op = function
     | OpStringConst(nreg,string_const) ->
         fprintf std_formatter "%s%*s r%d, %s\n"
             indent width "string_const" nreg string_const
+    | OpDebugReg(nreg) ->
+        fprintf std_formatter "%s%*s r%d\n"
+            indent width "debug_reg" nreg
+    | OpDebugSlot(nslot) ->
+        fprintf std_formatter "%s%*s %d\n"
+            indent width "debug_slot" nslot
+    | OpDebugStack ->
+        fprintf std_formatter "%s%*s\n"
+            indent width "debug_stack"
 
 and print_br_label nlabel =
     fprintf std_formatter "label%d:\n" nlabel
