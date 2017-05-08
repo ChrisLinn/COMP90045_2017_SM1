@@ -3,31 +3,75 @@ open Snick_symbol
 
 let isValid = ref true
 
+
+let ht_inis = 20
+let ht_scopes = Hashtbl.create ht_inis
+
 let rec analyse prog =
     gen_sym_table prog;
-    List.iter analyse_proc prog;
+    List.iter error_detect_proc prog;
     check_unused_symbols prog;    (*???????*)
     check_main prog                  (*???????*)
 
-and analyse_proc ((proc_id,_),prog_body) =
+and gen_sym_table prog =
+    List.iter generate_scope prog
+
+and generate_scope ((proc_id,params),proc_body) =
+    create_scope proc_id params;
+    generate_params_symbols (Hashtbl.find ht_scopes proc_id) params;
+    generate_decls_symbols (Hashtbl.find ht_scopes proc_id) proc_body.decls;
+
+and create_scope scope_id params =
+    Hashtbl.add
+        ht_scopes
+        scope_id
+        (Scope(scope_id, (Hashtbl.create ht_inis), params, 0))
+
+and generate_params_symbols scope params =
+    List.iter (generate_param_symbol scope) params
+
+and generate_param_symbol
+        (Scope(scopeid,ht_st,params,nslot)) (indc,paramtype,paramid) =
+    let
+        sym_kind = sym_kind_from_ast_indc indc
+        and
+        sym_type = sym_type_from_ast_type paramtype
+    in
+    Hashtbl.add ht_st paramid (sym_kind,sym_type,nslot,None); 
+    Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
+
+and generate_decls_symbols scope decls =
+    List.iter (generate_decl_symbol scope) decls
+
+and generate_decl_symbol
+        (Scope(scopeid,ht_st,params,nslot))
+        (decltype, Variable(declid,optn_intvls)) =
+    let
+        sym_type = sym_type_from_ast_type decltype
+    in
+    Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None); 
+    Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
+    (*array*)
+
+and error_detect_proc ((proc_id,_),prog_body) =
     let scope = Hashtbl.find ht_scopes proc_id
     in
-    analyse_statements scope prog_body.stmts
+    error_detect_statements scope prog_body.stmts
 
-and analyse_statements scope stmts =
-    List.iter (analyse_statement scope) stmts
+and error_detect_statements scope stmts =
+    List.iter (error_detect_statement scope) stmts
 
-and analyse_statement scope = function
-    | Assign(elem,expr) -> analyse_assign scope elem expr
-    | Read(elem) -> analyse_read scope elem
-    | Write(write_expr) -> analyse_write scope write_expr
-    | Call(id,exprs) -> analyse_call scope id exprs
-    | If_then(expr,stmts) -> analyse_if_then scope expr stmts
+and error_detect_statement scope = function
+    | Assign(elem,expr) -> error_detect_assign scope elem expr
+    | Read(elem) -> error_detect_read scope elem
+    | Write(write_expr) -> error_detect_write scope write_expr
+    | Call(id,exprs) -> error_detect_call scope id exprs
+    | If_then(expr,stmts) -> error_detect_if_then scope expr stmts
     | If_then_else(expr,then_stmts,else_stmts) ->
-        analyse_if_then_else scope expr then_stmts else_stmts
-    | While(expr,stmts) -> analyse_while scope expr stmts
+        error_detect_if_then_else scope expr then_stmts else_stmts
+    | While(expr,stmts) -> error_detect_while scope expr stmts
 
-and analyse_assign scope elem expr = 
+and error_detect_assign scope elem expr = 
     let l_type = get_elem_type scope elem
     and r_type = get_expr_type scope expr
     in
@@ -38,33 +82,33 @@ and analyse_assign scope elem expr =
             raise (Failure ("Error in proc_"^(get_scope_id scope)^
                         ": assign type unmatch!"))
 
-and analyse_read scope elem = ()   (*todo*)
+and error_detect_read scope elem = ()   (*todo*)
 
-and analyse_write scope = function
-    | Expr(expr) -> analyse_expr scope expr
+and error_detect_write scope = function
+    | Expr(expr) -> error_detect_expr scope expr
     | String(string_const) -> ()
 
-and analyse_call scope id exprs = () (*todo*)
+and error_detect_call scope id exprs = () (*todo*)
 
-and analyse_if_then scope expr stmts =
-    analyse_expr scope expr;
-    analyse_statements scope stmts
+and error_detect_if_then scope expr stmts =
+    error_detect_expr scope expr;
+    error_detect_statements scope stmts
 
-and analyse_if_then_else scope expr then_stmts else_stmts =
-    analyse_expr scope expr;
-    analyse_statements scope then_stmts;
-    analyse_statements scope else_stmts
+and error_detect_if_then_else scope expr then_stmts else_stmts =
+    error_detect_expr scope expr;
+    error_detect_statements scope then_stmts;
+    error_detect_statements scope else_stmts
 
-and analyse_while scope expr stmts =
-    analyse_expr scope expr;
-    analyse_statements scope stmts
+and error_detect_while scope expr stmts =
+    error_detect_expr scope expr;
+    error_detect_statements scope stmts
 
-and analyse_expr scope = function (*todo*)
+and error_detect_expr scope = function (*todo*)
     | Eelem(elem) -> ()
     | Ebool(_) -> ()
     | Eint(_) -> ()
     | Efloat(_) -> ()
-    | Eparen(expr) -> analyse_expr scope expr
+    | Eparen(expr) -> error_detect_expr scope expr
     | Ebinop(lexpr,optr,rexpr) ->
     (
         match optr with
