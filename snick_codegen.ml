@@ -212,14 +212,14 @@ and gen_br_decls scope decls =
                         if optn_bounds = None then
                             gen_binop "store" nslot !reg
                         else
-                            gen_br_init_array nslot !reg optn_bounds
+                            gen_br_init_array scope nslot !reg optn_bounds
                     )
                 )
             )
             decls;
     )
 
-and gen_br_init_array nslot nreg optn_bounds = ()  (*array*)
+and gen_br_init_array scope nslot nreg optn_bounds = ()  (*array*)
 
 and gen_br_stmts scope stmts =
     List.iter (gen_br_stmt scope) stmts
@@ -340,7 +340,13 @@ and gen_br_call scope proc_id args =
                                 )
                             )
                             | _ -> 
-                                raise (Failure "can't pass non-elem to a ref")
+                                raise
+                                    (Failure 
+                                        ("Weird failure in call_"^proc_id^
+                                        " in proc_"^(get_scope_id scope)^
+                                        ": can't pass non-elem to a ref."^
+                                        "Should have been reported.")
+                                    )
                         )
                         | (Val,param_type,_) ->
                         (
