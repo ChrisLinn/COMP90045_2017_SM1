@@ -142,24 +142,24 @@ and gen_br_proc ((proc_id,params),proc_body) =
 and gen_br_prologue scope params decls =
     gen_comment "prologue";
     gen_unop "push" (get_scope_nslot scope);
-    gen_br_params (get_scope_st scope) 0 params;
-    gen_br_decls (get_scope_st scope) decls;
+    gen_br_params scope 0 params;
+    gen_br_decls scope decls;
     
-and gen_br_params scope_st cnt = function
+and gen_br_params scope cnt = function
     | [] -> ()
     | x::xs ->
         (
-            gen_br_param scope_st cnt x;
-            gen_br_params scope_st (cnt+1) xs
+            gen_br_param scope cnt x;
+            gen_br_params scope (cnt+1) xs
         )
 
-and gen_br_param scope_st cnt (_, _, param_id) =
-    let sym = Hashtbl.find scope_st param_id
+and gen_br_param scope cnt (_, _, param_id) =
+    let sym = Hashtbl.find (get_scope_st scope) param_id
     in
     match sym with
     | (_,_,nslot,_) -> gen_binop "store" nslot cnt
     
-and gen_br_decls scope_st decls =
+and gen_br_decls scope decls =
     let cnt = ref 0
     and ints_flag = ref false
     and int_reg = ref 0
@@ -171,7 +171,8 @@ and gen_br_decls scope_st decls =
         List.iter
             (fun (_, Variable(id,_)) ->
                 (
-                    let (_,sym_type,_,_) = Hashtbl.find scope_st id
+                    let (_,sym_type,_,_) =
+                        Hashtbl.find (get_scope_st scope) id
                     in
                     (
                         if (not !reals_flag) && (sym_type = SYM_REAL) then
@@ -200,7 +201,7 @@ and gen_br_decls scope_st decls =
             (fun (_, Variable(id,_)) ->
                 (
                     let (_,sym_type,nslot,optn_bounds) =
-                            Hashtbl.find scope_st id
+                            Hashtbl.find (get_scope_st scope) id
                     in
                     (
                         if sym_type = SYM_REAL then
@@ -312,7 +313,6 @@ and gen_br_call scope proc_id args =
     gen_comment "proc call";
     let params = get_scope_params (Hashtbl.find ht_scopes proc_id)
     and nreg = ref 0
-    and scope_st = get_scope_st scope
     in
     (
     (*try with Invalid_argument if the two lists are determined to have different lengths*)
@@ -327,7 +327,7 @@ and gen_br_call scope proc_id args =
                             | Eelem(Elem(id,optn_idxs)) ->
                             (
                                 let (symkind,symtype,nslot,optn_bounds) =
-                                    Hashtbl.find scope_st id
+                                    Hashtbl.find (get_scope_st scope) id
                                 in
                                 (
                                     if symkind = SYM_PARAM_REF then
@@ -347,7 +347,8 @@ and gen_br_call scope proc_id args =
                             (*simplify expression*)
                             (
                                 match (try_get_expr_value arg) with
-                                | Some new_expr -> gen_br_expr scope !nreg new_expr
+                                | Some new_expr ->
+                                    gen_br_expr scope !nreg new_expr
                                 | _ -> gen_br_expr scope !nreg arg
                             );
                             if (((get_expr_type scope arg) = SYM_INT)
