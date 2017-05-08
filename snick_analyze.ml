@@ -18,14 +18,15 @@ and analyse_proc ((proc_id,_),prog_body) =
 and analyse_statements scope stmts =
     List.iter (analyse_statement scope) stmts
 
-and analyse_statement scope stmt = match stmt with
+and analyse_statement scope = function
     | Assign(elem,expr) -> analyse_assign scope elem expr
-    | Read(_) -> analyse_read scope stmt
-    | Write(_) -> analyse_write scope stmt
-    | Call(_) -> analyse_call scope stmt
-    | If_then(_) -> analyse_if_then scope stmt
-    | If_then_else(_) -> analyse_if_then_else scope stmt
-    | While(_) -> analyse_while scope stmt
+    | Read(elem) -> analyse_read scope elem
+    | Write(write_expr) -> analyse_write scope write_expr
+    | Call(id,exprs) -> analyse_call scope id exprs
+    | If_then(expr,stmts) -> analyse_if_then scope expr stmts
+    | If_then_else(expr,then_stmts,else_stmts) ->
+        analyse_if_then_else scope expr then_stmts else_stmts
+    | While(expr,stmts) -> analyse_while scope expr stmts
 
 and analyse_assign scope elem expr = 
     let l_type = get_elem_type scope elem
@@ -37,17 +38,37 @@ and analyse_assign scope elem expr =
         else
             raise (Failure "assign type unmatch!")
 
-and analyse_read scope stmt = ()
+and analyse_read scope elem = ()
 
-and analyse_write scope stmt = ()
+and analyse_write scope write_expr = ()
 
-and analyse_call scope stmt = ()
+and analyse_call scope id exprs = ()
 
-and analyse_if_then scope stmt = ()
+and analyse_if_then scope expr stmts = ()
 
-and analyse_if_then_else scope stmt = ()
+and analyse_if_then_else scope expr then_stmts else_stmts = ()
 
-and analyse_while scope stmt = ()
+and analyse_while scope expr stmts = ()
+
+and analyse_expr scope = function
+    | Eelem(elem) -> ()
+    | Ebool(_) -> ()
+    | Eint(_) -> ()
+    | Efloat(_) -> ()
+    | Eparen(expr) -> analyse_expr scope expr
+    | Ebinop(lexpr,optr,rexpr) ->
+    (
+        match optr with
+        | Op_or| Op_and | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge ->
+            ()
+        | Op_add | Op_sub | Op_mul | Op_div ->
+        (
+            
+        )
+        | _ -> raise (Failure ("Error in proc_"^(get_scope_id scope)^
+                        ": invalid optr in Ebinop."))
+    )
+    | Eunop(optr,expr) -> ()
 
 and get_expr_type scope = function
     | Eelem(elem) -> get_elem_type scope elem
@@ -68,7 +89,8 @@ and get_expr_type scope = function
             else
                 SYM_INT
         )
-        | _ -> raise (Failure "invalid optr in Ebinop")
+        | _ -> raise (Failure ("Error in proc_"^(get_scope_id scope)^
+                        ": invalid optr in Ebinop."))
     )
     | Eunop(optr,expr) -> get_expr_type scope expr
 
