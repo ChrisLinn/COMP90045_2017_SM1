@@ -248,7 +248,7 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
             gen_binop "int_to_real" 0 0;
         if optn_idxs <> None then
         (
-
+            (*array*)
         )
         else if symkind = SYM_PARAM_REF then
         (

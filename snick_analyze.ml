@@ -33,10 +33,11 @@ and analyse_assign scope_st elem expr =
     let l_type = get_elem_type scope_st elem
     and r_type = get_expr_type scope_st expr
     in
-        if l_type = r_type then
+        if ((l_type = r_type)
+        || ((l_type = SYM_REAL)&&(r_type = SYM_INT))) then
             ()
         else
-            raise (Failure "type unmatch!")
+            raise (Failure "assign type unmatch!")
 
 and analyse_read scope_st stmt = ()
 
