@@ -58,11 +58,11 @@ let main () =
     with
         (* Handle failure from lexer, print error position. *)
         | Snick_lex.LexErr ->
-            raise (Failure ("Lexing Error" ^ (err_pos lexbuf)))
+            failwith ("Lexing Error" ^ (err_pos lexbuf))
         (* Handle error from parser, print error position. *)
         | Parsing.Parse_error ->
-            raise (Failure ("Parsing Error" ^ (err_pos lexbuf)))
+            failwith ("Parsing Error" ^ (err_pos lexbuf))
         | Failure x ->
-            raise (Failure ("Semantic Error: "^x))
+            failwith ("Semantic Error: "^x)
 
 let _ = main ()

@@ -305,7 +305,6 @@ and gen_br_call scope proc_id args =
     and nreg = ref 0
     in
     (
-    (*try with Invalid_argument if the two lists are determined to have different lengths*)
         List.iter2
             (fun arg param ->
                 (
@@ -330,13 +329,10 @@ and gen_br_call scope proc_id args =
                                 )
                             )
                             | _ -> 
-                                raise
-                                    (Failure 
-                                        ("Weird errpr in call_"^proc_id^
+                                failwith ("Weird errpr in call_"^proc_id^
                                         " in proc_"^(get_scope_id scope)^
                                         ": can't pass non-elem to a ref. "^
                                         "Should have been reported.")
-                                    )
                         )
                         | (Val,param_type,_) ->
                         (
@@ -528,7 +524,7 @@ and gen_br_expr_binop_bool scope nreg lexpr_nreg rexpr_nreg = function
     | Op_and -> gen_triop "and" nreg lexpr_nreg rexpr_nreg
     | Op_eq -> gen_triop "eq" nreg lexpr_nreg rexpr_nreg
     | Op_ne -> gen_triop "ne" nreg lexpr_nreg rexpr_nreg
-    | _ -> raise (Failure "invalid op for bool binop expr!")
+    | _ -> failwith "invalid op for bool binop expr!"
 
 and gen_br_expr_binop_float scope nreg lexpr_nreg rexpr_nreg = function
     | Op_add -> gen_triop "add_real" nreg lexpr_nreg rexpr_nreg
@@ -541,7 +537,7 @@ and gen_br_expr_binop_float scope nreg lexpr_nreg rexpr_nreg = function
     | Op_le -> gen_triop "cmp_le_real" nreg lexpr_nreg rexpr_nreg
     | Op_gt -> gen_triop "cmp_gt_real" nreg lexpr_nreg rexpr_nreg
     | Op_ge -> gen_triop "cmp_ge_real" nreg lexpr_nreg rexpr_nreg
-    | _ -> raise (Failure "invalid op for float binop expr!")
+    | _ -> failwith "invalid op for float binop expr!"
 
 and gen_br_expr_binop_int scope nreg lexpr_nreg rexpr_nreg = function
     | Op_add -> gen_triop "add_int" nreg lexpr_nreg rexpr_nreg
@@ -554,7 +550,7 @@ and gen_br_expr_binop_int scope nreg lexpr_nreg rexpr_nreg = function
     | Op_le -> gen_triop "cmp_le_int" nreg lexpr_nreg rexpr_nreg
     | Op_gt -> gen_triop "cmp_gt_int" nreg lexpr_nreg rexpr_nreg
     | Op_ge -> gen_triop "cmp_ge_int" nreg lexpr_nreg rexpr_nreg
-    | _ -> raise (Failure "invalid op for int binop expr!")
+    | _ -> failwith "invalid op for int binop expr!"
 
 and gen_br_expr_unop scope nreg optr expr =
     gen_br_expr scope nreg expr;
@@ -574,7 +570,7 @@ and gen_br_expr_unop scope nreg optr expr =
             gen_triop "sub_real" nreg (nreg+1) nreg
         )
         else
-            raise (Failure "invalid optr for unop expr!")
+            failwith "invalid optr for unop expr!"
     )
 
 and gen_br_expr_id scope nreg id =
@@ -634,7 +630,7 @@ and gen_unop op x =
                 | "branch_uncond" -> BrOp(OpBranchUncond(x))
                 | "debug_reg" -> BrOp(OpDebugReg(x))
                 | "debug_slot" -> BrOp(OpDebugSlot(x))
-                | _ -> raise (Failure ("operation "^op^" not yet supported"))
+                | _ -> failwith ("operation "^op^" not yet supported")
     in
     brprog := List.append !brprog [line]
 
@@ -649,7 +645,7 @@ and gen_binop op x1 x2 =
                 | "branch_on_false" -> BrOp(OpBranchOnFalse(x1,x2))
                 | "int_to_real" -> BrOp(OpIntToReal(x1,x2))
                 | "not" -> BrOp(OpNot(x1,x2))
-                | _ -> raise (Failure ("operation "^op^" not yet supported"))
+                | _ -> failwith ("operation "^op^" not yet supported")
     in
     brprog := List.append !brprog [line]
 
@@ -677,7 +673,7 @@ and gen_triop op x1 x2 x3 =
                 | "cmp_le_real" -> BrOp(OpCmpLeReal(x1,x2,x3))
                 | "cmp_gt_real" -> BrOp(OpCmpGtReal(x1,x2,x3))
                 | "cmp_ge_real" -> BrOp(OpCmpGeReal(x1,x2,x3))
-                | _ -> raise (Failure ("operation "^op^" not yet supported"))
+                | _ -> failwith ("operation "^op^" not yet supported")
     in
     brprog := List.append !brprog [line]
 
@@ -690,8 +686,8 @@ and gen_call_builtin bltin_func =
                 | "print_real" -> BrBltIn(BltInPrintReal)
                 | "print_bool" -> BrBltIn(BltInPrintBool)
                 | "print_string" -> BrBltIn(BltInPrintString)
-                | _ -> raise
-                    (Failure ("bltin_func "^bltin_func^" not yet supported"))
+                | _ -> failwith
+                        ("bltin_func "^bltin_func^" not yet supported")
     in
     brprog := List.append !brprog [line]
 
