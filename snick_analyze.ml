@@ -504,7 +504,7 @@ and print_st scope_id =
     and scope_nslot = get_scope_nslot (Hashtbl.find ht_scopes scope_id)
     in
     (
-        fprintf std_formatter "symbol_table of scope: %s with slots :%d\n"
+        fprintf std_formatter "symbol_table of scope: %s with slots: %d\n"
                                 scope_id scope_nslot;
         fprintf std_formatter "-------------------------\n";
         Hashtbl.iter
