@@ -10,18 +10,7 @@ let ht_scopes = Hashtbl.create ht_inis
 
 let rec analyse prog =
     gen_sym_table prog;
-
-    let main_st = get_scope_st (Hashtbl.find ht_scopes "main")
-    in
-    Hashtbl.iter
-    (fun id (_,_,nslot,_) ->
-        (
-            fprintf std_formatter "symbol:%s nslot:%d\n" id nslot
-        )
-    )
-    main_st;
-
-
+    print_all_sts "whatever";
     check_main prog;
     List.iter error_detect_proc prog;
     check_unused_symbols prog
@@ -50,8 +39,11 @@ and generate_param_symbol
         and
         sym_type = sym_type_from_ast_type paramtype
     in
-    Hashtbl.add ht_st paramid (sym_kind,sym_type,nslot,None); 
-    Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
+    (
+        Hashtbl.add ht_st paramid (sym_kind,sym_type,nslot,None);
+        Hashtbl.replace ht_scopes scopeid 
+            (Scope(scopeid,ht_st,params,nslot+1))
+    )
 
 and generate_decls_symbols scope decls =
     List.iter (generate_decl_symbol scope) decls
@@ -62,8 +54,11 @@ and generate_decl_symbol
     let
         sym_type = sym_type_from_ast_type decltype
     in
-    Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None); 
-    Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
+    (
+        Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None);
+        Hashtbl.replace ht_scopes scopeid 
+            (Scope(scopeid,ht_st,params,nslot+1))
+    )
     (*array*)
 
 and check_main prog =
@@ -494,3 +489,30 @@ and get_elem_type scope (Elem(id,_)) =
     let (_,sym_type,_,_) = Hashtbl.find (get_scope_st scope) id
     in
     sym_type
+
+and print_all_sts = function
+    | _ -> Hashtbl.iter
+            (fun scope_id _ -> 
+                (
+                    print_st scope_id
+                )
+            )
+            ht_scopes
+
+and print_st scope_id = 
+    let scope_st = get_scope_st (Hashtbl.find ht_scopes scope_id)
+    and scope_nslot = get_scope_nslot (Hashtbl.find ht_scopes scope_id)
+    in
+    (
+        fprintf std_formatter "symbol_table of scope: %s with slots :%d\n"
+                                scope_id scope_nslot;
+        fprintf std_formatter "-------------------------\n";
+        Hashtbl.iter
+        (fun id (_,_,nslot,_) ->
+            (
+                fprintf std_formatter "symbol:%s nslot:%d\n" id nslot
+            )
+        )
+        scope_st;
+        fprintf std_formatter "-------------------------\n\n";
+    )

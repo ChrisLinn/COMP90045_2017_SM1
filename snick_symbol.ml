@@ -66,4 +66,4 @@ and sym_kind_from_ast_indc = function
 and ast_type_from_sym_type = function
     | SYM_BOOL -> Bool
     | SYM_INT -> Int
-    | SYM_REAL -> Float 
+    | SYM_REAL -> Float
