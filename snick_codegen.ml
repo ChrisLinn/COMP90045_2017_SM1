@@ -86,19 +86,6 @@ let rec compile prog =
     analyse prog;
     gen_br_program (simplify_prog prog);
     print_lines !brprog
-(*i guess we dont need to check table == NULL, we could just check Snick_analyze.isValid*)
-(* 
-compile(FILE *fp, Program *prog) {
-    void *table = analyse(prog);
-    if (table == NULL) {
-        //Then did not pass semantic analysis. Exit
-        report_error_and_exit("Invalid program.");
-    }
-    OzProgram *ozprog = gen_oz_program(prog, table);
-    print_lines(fp, ozprog->start);
-    return (int)(!ozprog);
-}
-*)
     
 and strip_paren expr = match expr with
     | Eparen paren_expr -> strip_paren paren_expr

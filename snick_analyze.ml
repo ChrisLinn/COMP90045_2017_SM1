@@ -1,5 +1,6 @@
 open Snick_ast
 open Snick_symbol
+open Format
 
 let isValid = ref true
 
@@ -9,6 +10,18 @@ let ht_scopes = Hashtbl.create ht_inis
 
 let rec analyse prog =
     gen_sym_table prog;
+
+    let main_st = get_scope_st (Hashtbl.find ht_scopes "main")
+    in
+    Hashtbl.iter
+    (fun id (_,_,nslot,_) ->
+        (
+            fprintf std_formatter "symbol:%s nslot:%d\n" id nslot
+        )
+    )
+    main_st;
+
+
     check_main prog;
     List.iter error_detect_proc prog;
     check_unused_symbols prog
@@ -130,9 +143,8 @@ and error_detect_elem scope (Elem(id,optn_idxs)) =
                 (
                     match (get_expr_type scope idx) with
                     | SYM_INT -> ()
-                    | _ -> 
-                        failwith ("Array \'"^id^
-                            "\' wrong index type in proc: "
+                    | _ -> failwith ("Array \'"^id^
+                            "\' non-int index in proc: "
                                 ^(get_scope_id scope))
                 )
             )
@@ -149,7 +161,7 @@ and error_detect_write scope = function
     | Expr(expr) -> error_detect_expr scope expr
     | String(string_const) -> ()
 
-and error_detect_call scope id exprs = (*todo*)
+and error_detect_call scope id exprs =
     if (Hashtbl.mem ht_scopes id) then
     (
         List.iter (error_detect_expr scope) exprs;
@@ -159,13 +171,20 @@ and error_detect_call scope id exprs = (*todo*)
         (
             let scan_result = 
                 List.for_all2
-                (fun (_,param_type,_) arg ->
+                (fun (param_indc,param_type,_) arg ->
                     (
                         let arg_type = ast_type_from_sym_type
                                             (get_expr_type scope arg)
                         in
-                        ((param_type = arg_type)
-                        ||((param_type=Float)&&(arg_type=Int)))
+                        (
+                            (param_type = arg_type)
+                            ||
+                            (
+                                (param_indc = Val)
+                                &&
+                                ((param_type=Float)&&(arg_type=Int))
+                            )
+                        )
                     )
                 )
                 params
@@ -200,30 +219,69 @@ and error_detect_expr scope = function
             | SYM_BOOL ->
             (
                 match optr with
-                | Op_or | Op_and | Op_eq | Op_ne -> ()
+                | Op_eq | Op_ne
+                | Op_or | Op_and -> () 
                 | _ -> failwith ("Error in proc \'"^
                                 (get_scope_id scope)^
                                 "\': type unmatch for Ebinop.")
             )
-            | _ -> failwith ("Error in proc \'"^
-                            (get_scope_id scope)^
-                            "\': type unmatch for Ebinop.")
+            | SYM_INT | SYM_REAL -> failwith ("Error in proc \'"^
+                                            (get_scope_id scope)^
+                                            "\': type unmatch for Ebinop.")
         )
-        | SYM_INT | SYM_REAL ->
+        | SYM_INT ->
         (
             match rexpr_type with
-            | SYM_INT | SYM_REAL ->
+            | SYM_INT ->
             (
                 match optr with
-                | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge 
+                | Op_eq | Op_ne 
+                | Op_lt | Op_gt | Op_le | Op_ge 
                 | Op_add | Op_sub | Op_mul | Op_div -> ()
                 | _ -> failwith ("Error in proc \'"^
                                 (get_scope_id scope)^
                                 "\': type unmatch for Ebinop.")
             )
-            | _ -> failwith ("Error in proc \'"^
+            | SYM_REAL ->
+            (
+                match optr with(* 
+                | Op_eq | Op_ne  *)
+                | Op_lt | Op_gt | Op_le | Op_ge 
+                | Op_add | Op_sub | Op_mul | Op_div -> ()
+                | _ -> failwith ("Error in proc \'"^
                                 (get_scope_id scope)^
                                 "\': type unmatch for Ebinop.")
+            )
+            | SYM_BOOL -> failwith ("Error in proc \'"^
+                                    (get_scope_id scope)^
+                                    "\': type unmatch for Ebinop.")
+        )
+        | SYM_REAL ->
+        (
+            match rexpr_type with
+            | SYM_INT ->
+            (
+                match optr with(* 
+                | Op_eq | Op_ne  *)
+                | Op_lt | Op_gt | Op_le | Op_ge 
+                | Op_add | Op_sub | Op_mul | Op_div -> ()
+                | _ -> failwith ("Error in proc \'"^
+                                (get_scope_id scope)^
+                                "\': type unmatch for Ebinop.")
+            )
+            | SYM_REAL ->
+            (
+                match optr with
+                | Op_eq | Op_ne 
+                | Op_lt | Op_gt | Op_le | Op_ge 
+                | Op_add | Op_sub | Op_mul | Op_div -> ()
+                | _ -> failwith ("Error in proc \'"^
+                                (get_scope_id scope)^
+                                "\': type unmatch for Ebinop.")
+            )
+            | SYM_BOOL -> failwith ("Error in proc \'"^
+                                    (get_scope_id scope)^
+                                    "\': type unmatch for Ebinop.")
         )
     )
     | Eunop(optr,expr) ->
@@ -330,14 +388,14 @@ and simplify_expr proc_id = function
                 | Op_div -> Eint(lint/rint)
                 | _ -> failwith ("Weird error in proc \'"^
                         proc_id^
-                        "\': invalid bioptr in Ebinop. "^
+                        "\': invalid optr in Ebinop. "^
                         "Should have been reported.")
             )
             | Efloat(rfloat) ->
             (
-                match optr with
+                match optr with(* 
                 | Op_eq -> Ebool((float_of_int lint)=rfloat)
-                | Op_ne -> Ebool((float_of_int lint)<>rfloat)
+                | Op_ne -> Ebool((float_of_int lint)<>rfloat) *)
                 | Op_lt -> Ebool((float_of_int lint)<rfloat)
                 | Op_gt -> Ebool((float_of_int lint)>rfloat)
                 | Op_le -> Ebool((float_of_int lint)<=rfloat)
@@ -348,7 +406,7 @@ and simplify_expr proc_id = function
                 | Op_div -> Efloat((float_of_int lint)/.rfloat)
                 | _ -> failwith ("Weird error in proc \'"^
                         proc_id^
-                        "\': invalid bioptr in Ebinop. "^
+                        "\': invalid optr in Ebinop. "^
                         "Should have been reported.")
             )
             | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
@@ -358,9 +416,9 @@ and simplify_expr proc_id = function
             match simplified_rexpr with
             | Eint(rint) ->
             (
-                match optr with
+                match optr with(* 
                 | Op_eq -> Ebool(lfloat=(float_of_int rint))
-                | Op_ne -> Ebool(lfloat<>(float_of_int rint))
+                | Op_ne -> Ebool(lfloat<>(float_of_int rint)) *)
                 | Op_lt -> Ebool(lfloat<(float_of_int rint))
                 | Op_gt -> Ebool(lfloat>(float_of_int rint))
                 | Op_le -> Ebool(lfloat<=(float_of_int rint))
@@ -371,7 +429,7 @@ and simplify_expr proc_id = function
                 | Op_div -> Efloat(lfloat/.(float_of_int rint))
                 | _ -> failwith ("Weird error in proc \'"^
                         proc_id^
-                        "\': invalid bioptr in Ebinop. "^
+                        "\': invalid optr in Ebinop. "^
                         "Should have been reported.")
             )
             | Efloat(rfloat) ->
@@ -389,7 +447,7 @@ and simplify_expr proc_id = function
                 | Op_div -> Efloat(lfloat/.rfloat)
                 | _ -> failwith ("Weird error in proc \'"^
                         proc_id^
-                        "\': invalid bioptr in Ebinop. "^
+                        "\': invalid optr in Ebinop. "^
                         "Should have been reported.")
             )
             | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)

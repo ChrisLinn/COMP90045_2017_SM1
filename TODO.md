@@ -6,15 +6,17 @@
     + [X] sbValType
         + [X] great, seems can be used to opt (update type and value)?
             + [X] removed temporally
+    + [ ] line num
+        + [ ] dont know how to get it 
 + [ ] analyze
 + [ ] codegen
-    + [ ] gen_br_decls
-        + [ ] what about bool
-            + [ ] because brill is writen in c!
+    + [X] gen_br_decls
+        + [X] what about bool
+            + [X] because brill is writen in c!
 + [ ] may need to alter AST
 + [ ] int_to_float
     + [ ] recursive call ref
-    + [ ] check int_to_float in gen_br_expr_unop seems unuseful
+    + [X] check int_to_float in gen_br_expr_unop seems unuseful
 + [ ] array
     + [ ] option type
     + [ ] decls
@@ -29,9 +31,10 @@
 + [ ] error handling
     + [ ] analyse_assign in analyze logic error 
     + [ ] analyze (recursively) assign/if/while/read
-    + [ ] gen_br_call params args num unmatch
-    + [ ] float assigned to int
-    + [ ] semantic error report in codegen
+    + [ ] semantic error report in analyze
+    + [X] float assigned to int
+    + [X] pass float arg to int param
+    + [X] gen_br_call params args num unmatch
         + [X] justification needed for semantic analysis
             + [X] report or raise a failure
         + [ ] print_dupe_proc_errors
