@@ -36,21 +36,31 @@ and analyse_assign scope elem expr =
         || ((l_type = SYM_REAL)&&(r_type = SYM_INT))) then
             ()
         else
-            raise (Failure "assign type unmatch!")
+            raise (Failure ("Error in proc_"^(get_scope_id scope)^
+                        ": assign type unmatch!"))
 
-and analyse_read scope elem = ()
+and analyse_read scope elem = ()   (*todo*)
 
-and analyse_write scope write_expr = ()
+and analyse_write scope = function
+    | Expr(expr) -> analyse_expr scope expr
+    | String(string_const) -> ()
 
-and analyse_call scope id exprs = ()
+and analyse_call scope id exprs = () (*todo*)
 
-and analyse_if_then scope expr stmts = ()
+and analyse_if_then scope expr stmts =
+    analyse_expr scope expr;
+    analyse_statements scope stmts
 
-and analyse_if_then_else scope expr then_stmts else_stmts = ()
+and analyse_if_then_else scope expr then_stmts else_stmts =
+    analyse_expr scope expr;
+    analyse_statements scope then_stmts;
+    analyse_statements scope else_stmts
 
-and analyse_while scope expr stmts = ()
+and analyse_while scope expr stmts =
+    analyse_expr scope expr;
+    analyse_statements scope stmts
 
-and analyse_expr scope = function
+and analyse_expr scope = function (*todo*)
     | Eelem(elem) -> ()
     | Ebool(_) -> ()
     | Eint(_) -> ()
