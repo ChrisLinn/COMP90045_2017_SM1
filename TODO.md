@@ -1,11 +1,11 @@
 # Todo
 
-+ [ ] symbol table
++ [X] symbol table
     + [X] stack_cnt for a scope or a table?
         + [X] dont understand slots_needed_for_table
-    + [ ] sbValType
-        + [ ] great, seems can be used to opt (update type and value)?
-            + [ ] removed temporally
+    + [X] sbValType
+        + [X] great, seems can be used to opt (update type and value)?
+            + [X] removed temporally
 + [ ] analyze
 + [ ] codegen
     + [ ] gen_br_decls
@@ -29,16 +29,16 @@
 + [ ] error handling
     + [ ] analyse_assign in analyze logic error 
     + [ ] analyze (recursively) assign/if/while/read
-    + [ ] find main
-        + [ ] print main first?
-    + [ ] semantic error report in codegen
-        + [ ] justification needed for semantic analysis
-            + [ ] report or raise a failure
-        + [ ] print_dupe_proc_errors
-    + [ ] type check in get_expr_type
     + [ ] gen_br_call params args num unmatch
     + [ ] float assigned to int
-+ [ ] optimization
+    + [ ] semantic error report in codegen
+        + [X] justification needed for semantic analysis
+            + [X] report or raise a failure
+        + [ ] print_dupe_proc_errors
+    + [X] type check in get_expr_type
+    + [X] find main
+        + [X] print main first?
++ [X] optimization
 + [ ] complete line type
 + [ ] ifdebug dump symbol table
 + [X] lineno seems unuserful?

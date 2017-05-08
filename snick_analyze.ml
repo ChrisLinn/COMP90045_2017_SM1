@@ -53,7 +53,19 @@ and generate_decl_symbol
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
     (*array*)
 
-and check_main prog = ()   (*todo*)
+and check_main prog =
+    let is_there_main =
+            List.exists
+            (fun ((proc_id,_),_) -> 
+                (
+                    proc_id = "main"
+                )
+            )
+            prog
+    in
+    match is_there_main with
+    | true -> ()
+    | false -> raise (Failure ("No \'main\' procedure definition!"))
 
 and error_detect_proc ((proc_id,_),prog_body) =
     let scope = Hashtbl.find ht_scopes proc_id
