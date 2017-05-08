@@ -103,10 +103,35 @@ and error_detect_assign scope elem expr =
         || ((l_type = SYM_REAL)&&(r_type = SYM_INT))) then
             ()
         else
-            raise (Failure ("Error in proc_"^(get_scope_id scope)^
-                        ": assign type unmatch!"))
+            raise (Failure ("Error in proc \'"^(get_scope_id scope)^
+                        "\': assign type unmatch!"))
 
-and error_detect_elem scope elem = () (*todo*)  (*out of bounds*) (*id existence*)
+and error_detect_elem scope (Elem(id,optn_idxs)) =
+    if (Hashtbl.mem (get_scope_st scope) id) then
+    (
+        match optn_idxs with
+        | None -> ()
+        | Some idxs ->
+        (
+            List.iter
+            (fun idx ->
+                (
+                    match (get_expr_type scope idx) with
+                    | SYM_INT -> ()
+                    | _ -> 
+                        raise (Failure ("Array \'"^id^
+                            "\' wrong index type in proc: "
+                                ^(get_scope_id scope)))
+                )
+            )
+            idxs
+        )
+    )
+    else
+        raise (Failure ("Elem \'"^id^"\' doesn't exist in proc: "^
+                (get_scope_id scope)))
+(*todo*)  
+(*out of bounds*)
 
 and error_detect_write scope = function
     | Expr(expr) -> error_detect_expr scope expr
@@ -130,13 +155,13 @@ and error_detect_expr scope = function
             (
                 match optr with
                 | Op_or | Op_and | Op_eq | Op_ne -> ()
-                | _ -> raise (Failure ("Error in proc_"^
+                | _ -> raise (Failure ("Error in proc \'"^
                                 (get_scope_id scope)^
-                                ": type unmatch for Ebinop. "))
+                                "\': type unmatch for Ebinop."))
             )
-            | _ -> raise (Failure ("Error in proc_"^
+            | _ -> raise (Failure ("Error in proc \'"^
                             (get_scope_id scope)^
-                            ": type unmatch for Ebinop. "))
+                            "\': type unmatch for Ebinop."))
         )
         | SYM_INT | SYM_REAL ->
         (
@@ -146,13 +171,13 @@ and error_detect_expr scope = function
                 match optr with
                 | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge 
                 | Op_add | Op_sub | Op_mul | Op_div -> ()
-                | _ -> raise (Failure ("Error in proc_"^
+                | _ -> raise (Failure ("Error in proc \'"^
                                 (get_scope_id scope)^
-                                ": type unmatch for Ebinop. "))
+                                "\': type unmatch for Ebinop."))
             )
-            | _ -> raise (Failure ("Error in proc_"^
-                            (get_scope_id scope)^
-                            ": type unmatch for Ebinop. "))
+            | _ -> raise (Failure ("Error in proc \'"^
+                                (get_scope_id scope)^
+                                "\': type unmatch for Ebinop."))
         )
     )
     | Eunop(optr,expr) ->
@@ -162,17 +187,17 @@ and error_detect_expr scope = function
         (
             match optr with
             | Op_not -> ()
-            | _ -> raise (Failure ("Error in proc_"^
+            | _ -> raise (Failure ("Error in proc \'"^
                             (get_scope_id scope)^
-                            ": type unmatch for Eunop. "))
+                            "\': type unmatch for Eunop."))
         )
         | _ ->
         (
             match optr with
             | Op_minus -> ()
-            | _ -> raise (Failure ("Error in proc_"^
+            | _ -> raise (Failure ("Error in proc \'"^
                             (get_scope_id scope)^
-                            ": type unmatch for Eunop. "))
+                            "\': type unmatch for Eunop."))
         )
     )
     | _ -> ()
@@ -234,9 +259,9 @@ and simplify_expr proc_id = function
                 | Op_and -> Ebool(lbool&&rbool)
                 | Op_eq -> Ebool(lbool=rbool)
                 | Op_ne -> Ebool(lbool<>rbool)
-                | _ -> raise (Failure ("Weird error in proc_"^
+                | _ -> raise (Failure ("Weird error in proc \'"^
                         proc_id^
-                        ": invalid bioptr in Eunop. "^
+                        "\': invalid bioptr in Ebinop. "^
                         "Should have been reported."))
             )
             | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
@@ -257,9 +282,9 @@ and simplify_expr proc_id = function
                 | Op_sub -> Eint(lint-rint)
                 | Op_mul -> Eint(lint*rint)
                 | Op_div -> Eint(lint/rint)
-                | _ -> raise (Failure ("Weird error in proc_"^
+                | _ -> raise (Failure ("Weird error in proc \'"^
                         proc_id^
-                        ": invalid bioptr in Eunop. "^
+                        "\': invalid bioptr in Ebinop. "^
                         "Should have been reported."))
             )
             | Efloat(rfloat) ->
@@ -275,9 +300,9 @@ and simplify_expr proc_id = function
                 | Op_sub -> Efloat((float_of_int lint)-.rfloat)
                 | Op_mul -> Efloat((float_of_int lint)*.rfloat)
                 | Op_div -> Efloat((float_of_int lint)/.rfloat)
-                | _ -> raise (Failure ("Weird error in proc_"^
+                | _ -> raise (Failure ("Weird error in proc \'"^
                         proc_id^
-                        ": invalid bioptr in Eunop. "^
+                        "\': invalid bioptr in Ebinop. "^
                         "Should have been reported."))
             )
             | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
@@ -298,9 +323,9 @@ and simplify_expr proc_id = function
                 | Op_sub -> Efloat(lfloat-.(float_of_int rint))
                 | Op_mul -> Efloat(lfloat*.(float_of_int rint))
                 | Op_div -> Efloat(lfloat/.(float_of_int rint))
-                | _ -> raise (Failure ("Weird error in proc_"^
+                | _ -> raise (Failure ("Weird error in proc \'"^
                         proc_id^
-                        ": invalid bioptr in Eunop. "^
+                        "\': invalid bioptr in Ebinop. "^
                         "Should have been reported."))
             )
             | Efloat(rfloat) ->
@@ -316,9 +341,9 @@ and simplify_expr proc_id = function
                 | Op_sub -> Efloat(lfloat-.rfloat)
                 | Op_mul -> Efloat(lfloat*.rfloat)
                 | Op_div -> Efloat(lfloat/.rfloat)
-                | _ -> raise (Failure ("Weird error in proc_"^
+                | _ -> raise (Failure ("Weird error in proc \'"^
                         proc_id^
-                        ": invalid bioptr in Eunop. "^
+                        "\': invalid bioptr in Ebinop. "^
                         "Should have been reported."))
             )
             | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
@@ -356,8 +381,8 @@ and get_expr_type scope = function
             else
                 SYM_INT
         )
-        | _ -> raise (Failure ("Error in proc_"^(get_scope_id scope)^
-                        ": invalid unoptr in Ebinop. "))
+        | _ -> raise (Failure ("Error in proc \'"^(get_scope_id scope)^
+                        "\': invalid unoptr in Ebinop. "))
     )
     | Eunop(optr,expr) -> get_expr_type scope expr
 
