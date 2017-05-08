@@ -29,20 +29,18 @@
         - [ ] gen_br_read
         - [ ] gen_br_expr_array_addr
         - [ ] gen_br_expr_array_val
-        - [ ] get_reg_usage
+        - [X] get_reg_usage
 + [ ] error handling
-    + [ ] analyse_assign in analyze logic error 
-    + [ ] analyze (recursively) assign/if/while/read
-    + [ ] semantic error report in analyze
+    - [ ] array/func/elem undelcared/dupe
+    + [X] analyse_assign in analyze logic error 
+    + [X] analyze (recursively) assign/if/while/read
+    + [X] semantic error report in analyze
     + [X] float assigned to int
     + [X] pass float arg to int param
-    + [X] gen_br_call params args num unmatch
-        + [X] justification needed for semantic analysis
-            + [X] report or raise a failure
-        + [ ] print_dupe_proc_errors
     + [X] type check in get_expr_type
     + [X] find main
         + [X] print main first?
+    + [X] gen_br_call params args num unmatch
 + [X] optimization
 + [ ] complete line type
 + [ ] ifdebug dump symbol table
