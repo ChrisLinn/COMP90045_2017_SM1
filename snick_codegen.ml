@@ -84,7 +84,7 @@ let next_label = ref 2
 
 let rec compile prog =
     analyse prog;
-    gen_br_program (reduce_prog prog);
+    gen_br_program (simplify_prog prog);
     print_lines !brprog
 (*i guess we dont need to check table == NULL, we could just check Snick_analyze.isValid*)
 (* 

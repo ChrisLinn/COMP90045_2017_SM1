@@ -9,7 +9,7 @@ let ht_scopes = Hashtbl.create ht_inis
 
 let rec analyse prog =
     gen_sym_table prog;
-    check_main prog;                  (*???????*)
+    check_main prog;
     List.iter error_detect_proc prog;
     check_unused_symbols prog
 
@@ -53,27 +53,49 @@ and generate_decl_symbol
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
     (*array*)
 
-and check_main prog = ()
+and check_main prog = ()   (*todo*)
 
 and error_detect_proc ((proc_id,_),prog_body) =
     let scope = Hashtbl.find ht_scopes proc_id
     in
-    error_detect_statements scope prog_body.stmts
+    (
+        error_detect_decls scope prog_body.decls;
+        error_detect_stmts scope prog_body.stmts
+    )
 
-and error_detect_statements scope stmts =
-    List.iter (error_detect_statement scope) stmts
+and error_detect_decls scope decls =
+    List.iter (error_detect_decl scope) decls
 
-and error_detect_statement scope = function
+and error_detect_decl scope decl = () (*todo*)
+
+and error_detect_stmts scope stmts =
+    List.iter (error_detect_stmt scope) stmts
+
+and error_detect_stmt scope = function
     | Assign(elem,expr) -> error_detect_assign scope elem expr
-    | Read(elem) -> error_detect_read scope elem
+    | Read(elem) -> error_detect_elem scope elem
     | Write(write_expr) -> error_detect_write scope write_expr
     | Call(id,exprs) -> error_detect_call scope id exprs
-    | If_then(expr,stmts) -> error_detect_if_then scope expr stmts
+    | If_then(expr,stmts) ->
+    (
+        error_detect_expr scope expr;
+        error_detect_stmts scope stmts
+    )
     | If_then_else(expr,then_stmts,else_stmts) ->
-        error_detect_if_then_else scope expr then_stmts else_stmts
-    | While(expr,stmts) -> error_detect_while scope expr stmts
+    (
+        error_detect_expr scope expr;
+        error_detect_stmts scope then_stmts;
+        error_detect_stmts scope else_stmts
+    )
+    | While(expr,stmts) ->
+    (
+        error_detect_expr scope expr;
+        error_detect_stmts scope stmts
+    )
 
-and error_detect_assign scope elem expr = 
+and error_detect_assign scope elem expr =
+    error_detect_elem scope elem;
+    error_detect_expr scope expr;
     let l_type = get_elem_type scope elem
     and r_type = get_expr_type scope expr
     in
@@ -84,7 +106,7 @@ and error_detect_assign scope elem expr =
             raise (Failure ("Error in proc_"^(get_scope_id scope)^
                         ": assign type unmatch!"))
 
-and error_detect_read scope elem = ()   (*todo*)
+and error_detect_elem scope elem = () (*todo*)  (*out of bounds*) (*id existence*)
 
 and error_detect_write scope = function
     | Expr(expr) -> error_detect_expr scope expr
@@ -92,81 +114,119 @@ and error_detect_write scope = function
 
 and error_detect_call scope id exprs = () (*todo*)
 
-and error_detect_if_then scope expr stmts =
-    error_detect_expr scope expr;
-    error_detect_statements scope stmts
-
-and error_detect_if_then_else scope expr then_stmts else_stmts =
-    error_detect_expr scope expr;
-    error_detect_statements scope then_stmts;
-    error_detect_statements scope else_stmts
-
-and error_detect_while scope expr stmts =
-    error_detect_expr scope expr;
-    error_detect_statements scope stmts
-
-and error_detect_expr scope = function (*todo*)
-    | Eelem(elem) -> ()
-    | Ebool(_) -> ()
-    | Eint(_) -> ()
-    | Efloat(_) -> ()
+and error_detect_expr scope = function
     | Eparen(expr) -> error_detect_expr scope expr
+    | Eelem(elem) -> error_detect_elem scope elem  
     | Ebinop(lexpr,optr,rexpr) ->
     (
-        match optr with
-        | Op_or| Op_and | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge ->
+        let lexpr_type = get_expr_type scope lexpr
+        and rexpr_type = get_expr_type scope rexpr
+        in
+        match lexpr_type with
+        | SYM_BOOL ->
         (
-
+            match rexpr_type with
+            | SYM_BOOL ->
+            (
+                match optr with
+                | Op_or | Op_and | Op_eq | Op_ne -> ()
+                | _ -> raise (Failure ("Error in proc_"^
+                                (get_scope_id scope)^
+                                ": type unmatch for Ebinop. "))
+            )
+            | _ -> raise (Failure ("Error in proc_"^
+                            (get_scope_id scope)^
+                            ": type unmatch for Ebinop. "))
         )
-        | Op_add | Op_sub | Op_mul | Op_div ->
+        | SYM_INT | SYM_REAL ->
         (
-            
+            match rexpr_type with
+            | SYM_INT | SYM_REAL ->
+            (
+                match optr with
+                | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge 
+                | Op_add | Op_sub | Op_mul | Op_div -> ()
+                | _ -> raise (Failure ("Error in proc_"^
+                                (get_scope_id scope)^
+                                ": type unmatch for Ebinop. "))
+            )
+            | _ -> raise (Failure ("Error in proc_"^
+                            (get_scope_id scope)^
+                            ": type unmatch for Ebinop. "))
         )
-        | _ -> raise (Failure ("Error in proc_"^(get_scope_id scope)^
-                        ": invalid optr in Ebinop."))
     )
-    | Eunop(optr,expr) -> ()
+    | Eunop(optr,expr) ->
+    (
+        match (get_expr_type scope expr) with
+        | SYM_BOOL ->
+        (
+            match optr with
+            | Op_not -> ()
+            | _ -> raise (Failure ("Error in proc_"^
+                            (get_scope_id scope)^
+                            ": type unmatch for Eunop. "))
+        )
+        | _ ->
+        (
+            match optr with
+            | Op_minus -> ()
+            | _ -> raise (Failure ("Error in proc_"^
+                            (get_scope_id scope)^
+                            ": type unmatch for Eunop. "))
+        )
+    )
+    | _ -> ()
 
 and check_unused_symbols prog = () (*todo*)
 
-and reduce_prog prog =
-    List.map reduce_proc prog
+and simplify_prog prog =
+    List.map simplify_proc prog
 
-and reduce_proc ((proc_id,proc_params),proc_body) = 
-    ((proc_id,proc_params),(reduce_proc_body proc_id proc_body))
+and simplify_proc ((proc_id,proc_params),proc_body) = 
+    ((proc_id,proc_params),(simplify_proc_body proc_id proc_body))
 
-and reduce_proc_body proc_id proc_body = 
-    {decls=proc_body.decls;stmts=(reduce_stmts proc_id proc_body.stmts)}
+and simplify_proc_body proc_id proc_body = 
+    {decls=proc_body.decls;stmts=(simplify_stmts proc_id proc_body.stmts)}
 
-and reduce_stmts proc_id stmts =
-    List.map (reduce_stmt proc_id) stmts
+and simplify_stmts proc_id stmts =
+    List.map (simplify_stmt proc_id) stmts
 
-and reduce_stmt proc_id = function
-    | Assign(elem,expr) -> Assign(elem,(reduce_expr proc_id expr))
-    | Read(elem) -> Read(elem)
-    | Write(write_expr) -> Write(reduce_write_expr proc_id write_expr)
-    | Call(id,exprs) -> Call(id,(List.map (reduce_expr proc_id) exprs))
-    | If_then(expr,stmts) ->
-        If_then(reduce_expr proc_id expr,reduce_stmts proc_id stmts)
+and simplify_stmt proc_id = function
+    | Assign(elem,expr) ->
+        Assign((simplify_elem proc_id elem),(simplify_expr proc_id expr)) 
+    | Read(elem) -> Read(simplify_elem proc_id elem)   
+    | Write(write_expr) -> Write(simplify_write_expr proc_id write_expr)
+    | Call(id,exprs) -> Call(id,(List.map (simplify_expr proc_id) exprs))
+    | If_then(expr,stmts) -> If_then((simplify_expr proc_id expr),
+                                (simplify_stmts proc_id stmts))
     | If_then_else(expr,then_stmts,else_stmts) ->
-                            If_then_else(reduce_expr proc_id expr,
-                                reduce_stmts proc_id then_stmts,
-                                reduce_stmts proc_id else_stmts)
-    | While(expr,stmts) ->
-        While(reduce_expr proc_id expr,reduce_stmts proc_id stmts)
+                            If_then_else((simplify_expr proc_id expr),
+                                (simplify_stmts proc_id then_stmts),
+                                (simplify_stmts proc_id else_stmts))
+    | While(expr,stmts) -> While((simplify_expr proc_id expr),
+                                (simplify_stmts proc_id stmts))
 
-and reduce_write_expr proc_id = function
-    | Expr(expr) -> Expr(reduce_expr proc_id expr)
+and simplify_elem proc_id = function
+    | Elem(id,Some idxs) ->
+        Elem(id,Some (List.map (simplify_expr proc_id) idxs))
+    | elem -> elem
+
+and simplify_write_expr proc_id = function
+    | Expr(expr) -> Expr(simplify_expr proc_id expr)
     | String(string_const) -> String(string_const)
 
-and reduce_expr proc_id = function  (*todo*)
-    | Eparen(expr) -> reduce_expr proc_id expr
+and simplify_expr proc_id = function
+    | Eparen(expr) -> simplify_expr proc_id expr
+    | Eelem(elem) -> Eelem(simplify_elem proc_id elem)
     | Ebinop(lexpr,optr,rexpr) ->
     (
-        match (reduce_expr proc_id lexpr) with
+        let simplified_lexpr = simplify_expr proc_id lexpr
+        and simplified_rexpr = simplify_expr proc_id rexpr
+        in
+        match simplified_lexpr with
         | Ebool(lbool) ->
         (
-            match (reduce_expr proc_id rexpr) with
+            match simplified_rexpr with
             | Ebool(rbool) ->
             (
                 match optr with
@@ -179,23 +239,11 @@ and reduce_expr proc_id = function  (*todo*)
                         ": invalid bioptr in Eunop. "^
                         "Should have been reported."))
             )
-            | Eint(rint) -> raise (Failure ("Weird error in proc_"^
-                        proc_id^
-                        ": invalid bioptr in Eunop. "^
-                        "Should have been reported."))
-            | Efloat(rfloat) -> raise (Failure ("Weird error in proc_"^
-                        proc_id^
-                        ": invalid bioptr in Eunop. "^
-                        "Should have been reported."))
-            | _ -> rexpr
+            | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
         )
         | Eint(lint) ->
         (
-            match (reduce_expr proc_id rexpr) with
-            | Ebool(rbool) -> raise (Failure ("Weird error in proc_"^
-                        proc_id^
-                        ": invalid bioptr in Eunop. "^
-                        "Should have been reported."))
+            match simplified_rexpr with
             | Eint(rint) ->
             (
                 match optr with
@@ -232,15 +280,11 @@ and reduce_expr proc_id = function  (*todo*)
                         ": invalid bioptr in Eunop. "^
                         "Should have been reported."))
             )
-            | _ -> rexpr
+            | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
         )
         | Efloat(lfloat) ->
         (
-            match (reduce_expr proc_id rexpr) with
-            | Ebool(rbool) -> raise (Failure ("Weird error in proc_"^
-                        proc_id^
-                        ": invalid bioptr in Eunop. "^
-                        "Should have been reported."))
+            match simplified_rexpr with
             | Eint(rint) ->
             (
                 match optr with
@@ -277,17 +321,19 @@ and reduce_expr proc_id = function  (*todo*)
                         ": invalid bioptr in Eunop. "^
                         "Should have been reported."))
             )
-            | _ -> rexpr
+            | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
         )
-        | _ -> lexpr
+        | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
     )
     | Eunop(optr,expr) ->
     (
-        match (reduce_expr proc_id expr) with
+        let simplified_expr = simplify_expr proc_id expr
+        in
+        match simplified_expr with
         | Ebool(bool_const) -> Ebool(not bool_const)
         | Eint(int_const) -> Eint(-int_const)
         | Efloat(float_const) -> Efloat(-.float_const)
-        | ori_expr -> ori_expr
+        | _ -> Eunop(optr,simplified_expr)
     )
     | ori_expr -> ori_expr
 
@@ -310,9 +356,8 @@ and get_expr_type scope = function
             else
                 SYM_INT
         )
-        | _ -> raise (Failure ("Weird error in proc_"^(get_scope_id scope)^
-                        ": invalid unoptr in Ebinop. "^
-                        "Should have been reported."))
+        | _ -> raise (Failure ("Error in proc_"^(get_scope_id scope)^
+                        ": invalid unoptr in Ebinop. "))
     )
     | Eunop(optr,expr) -> get_expr_type scope expr
 
