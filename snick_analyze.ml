@@ -30,14 +30,14 @@ and create_scope scope_id params =
         (Scope(scope_id, (Hashtbl.create ht_inis), params, 0))
 
 and generate_params_symbols scope params =
-    List.iter (generate_param_symbol scope) params
+    let scope_id = get_scope_id scope
+    in 
+    List.iter (generate_param_symbol scope_id) params
 
-and generate_param_symbol
-        (Scope(scopeid,ht_st,params,nslot)) (indc,paramtype,paramid) =
-    let
-        sym_kind = sym_kind_from_ast_indc indc
-        and
-        sym_type = sym_type_from_ast_type paramtype
+and generate_param_symbol scope_id (indc,paramtype,paramid) =
+    let (Scope(scopeid,ht_st,params,nslot)) = Hashtbl.find ht_scopes scope_id
+    and sym_kind = sym_kind_from_ast_indc indc
+    and sym_type = sym_type_from_ast_type paramtype
     in
     (
         Hashtbl.add ht_st paramid (sym_kind,sym_type,nslot,None);
@@ -46,13 +46,13 @@ and generate_param_symbol
     )
 
 and generate_decls_symbols scope decls =
-    List.iter (generate_decl_symbol scope) decls
+    let scope_id = get_scope_id scope
+    in 
+    List.iter (generate_decl_symbol scope_id) decls
 
-and generate_decl_symbol
-        (Scope(scopeid,ht_st,params,nslot))
-        (decltype, Variable(declid,optn_intvls)) =
-    let
-        sym_type = sym_type_from_ast_type decltype
+and generate_decl_symbol scope_id (decltype, Variable(declid,optn_intvls)) =
+    let (Scope(scopeid,ht_st,params,nslot)) = Hashtbl.find ht_scopes scope_id
+    and sym_type = sym_type_from_ast_type decltype
     in
     (
         Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None);
