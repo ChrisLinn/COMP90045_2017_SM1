@@ -9,9 +9,9 @@ let ht_scopes = Hashtbl.create ht_inis
 
 let rec analyse prog =
     gen_sym_table prog;
+    check_main prog;                  (*???????*)
     List.iter error_detect_proc prog;
-    check_unused_symbols prog;    (*???????*)
-    check_main prog                  (*???????*)
+    check_unused_symbols prog
 
 and gen_sym_table prog =
     List.iter generate_scope prog
@@ -52,6 +52,8 @@ and generate_decl_symbol
     Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None); 
     Hashtbl.replace ht_scopes scopeid (Scope(scopeid,ht_st,params,nslot+1));
     (*array*)
+
+and check_main prog = ()
 
 and error_detect_proc ((proc_id,_),prog_body) =
     let scope = Hashtbl.find ht_scopes proc_id
@@ -113,7 +115,9 @@ and error_detect_expr scope = function (*todo*)
     (
         match optr with
         | Op_or| Op_and | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge ->
-            ()
+        (
+            
+        )
         | Op_add | Op_sub | Op_mul | Op_div ->
         (
             
@@ -123,9 +127,51 @@ and error_detect_expr scope = function (*todo*)
     )
     | Eunop(optr,expr) -> ()
 
-and check_unused_symbols prog = ()
+and check_unused_symbols prog = () (*todo*)
 
-and check_main prog = ()
+and reduce_prog prog =
+    List.map reduce_proc prog
+
+and reduce_proc (proc_header,proc_body) = 
+    (proc_header,(reduce_proc_body proc_body))
+
+and reduce_proc_body proc_body = 
+    {decls=proc_body.decls;stmts=(reduce_stmts proc_body.stmts)}
+
+and reduce_stmts stmts =
+    List.map reduce_stmt stmts
+
+and reduce_stmt = function
+    | Assign(elem,expr) -> Assign(elem,(reduce_expr expr))
+    | Read(elem) -> Read(elem)
+    | Write(write_expr) -> Write(reduce_write_expr write_expr)
+    | Call(id,exprs) -> Call(id,(List.map reduce_expr exprs))
+    | If_then(expr,stmts) -> If_then(reduce_expr expr,reduce_stmts stmts)
+    | If_then_else(expr,then_stmts,else_stmts) ->
+                            If_then_else(reduce_expr expr,
+                                reduce_stmts then_stmts,
+                                reduce_stmts else_stmts)
+    | While(expr,stmts) -> While(reduce_expr expr,reduce_stmts stmts)
+
+and reduce_write_expr = function
+    | Expr(expr) -> Expr(reduce_expr expr)
+    | String(string_const) -> String(string_const)
+
+and reduce_expr = function  (*todo*)
+    | Eparen(expr) -> reduce_expr expr
+    | Ebinop(lexpr,optr,rexpr) ->
+    (
+        Ebinop(lexpr,optr,rexpr)
+    )
+    | Eunop(optr,expr) ->
+    (
+        match (reduce_expr expr) with
+        | Ebool(bool_const) -> Ebool(not bool_const)
+        | Eint(int_const) -> Eint(-int_const)
+        | Efloat(float_const) -> Efloat(-.float_const)
+        | ori_expr -> ori_expr
+    )
+    | ori_expr -> ori_expr
 
 and get_expr_type scope = function
     | Eelem(elem) -> get_elem_type scope elem
@@ -146,8 +192,9 @@ and get_expr_type scope = function
             else
                 SYM_INT
         )
-        | _ -> raise (Failure ("Error in proc_"^(get_scope_id scope)^
-                        ": invalid optr in Ebinop."))
+        | _ -> raise (Failure ("Weird error in proc_"^(get_scope_id scope)^
+                        ": invalid unoptr in Ebinop. "^
+                        "Should have been reported."))
     )
     | Eunop(optr,expr) -> get_expr_type scope expr
 
@@ -155,27 +202,3 @@ and get_elem_type scope (Elem(id,_)) =
     let (_,sym_type,_,_) = Hashtbl.find (get_scope_st scope) id
     in
     sym_type
-
-and try_get_expr_value = function
-    | Eelem(elem) -> None
-    | Ebool(bool_const) -> Some (Ebool(bool_const))
-    | Eint(int_const) -> Some (Eint(int_const))
-    | Efloat(float_const) -> Some (Efloat(float_const))
-    | Eparen(expr) -> try_get_expr_value expr
-    | Ebinop(lexpr,optr,rexpr) ->
-    (
-        let lexpr_value = try_get_expr_value lexpr
-        and rexpr_value = try_get_expr_value rexpr
-        in
-        (
-            None
-        )
-    )
-    | Eunop(optr,expr) ->
-    (
-        match (try_get_expr_value expr) with
-        | Some (Ebool(bool_const)) -> Some (Ebool( not bool_const))
-        | Some (Eint(int_const)) -> Some (Eint(-int_const))
-        | Some (Efloat(float_const)) -> Some (Efloat(-.float_const))
-        | _ -> None
-    )
