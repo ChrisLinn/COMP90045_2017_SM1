@@ -31,7 +31,7 @@
         - [ ] gen_br_expr_array_val
         - [X] get_reg_usage
 + [ ] error handling
-    - [ ] array/func/elem undelcared/dupe
+    - [ ] array/func/elem undelcared/duplicated
     + [X] analyse_assign in analyze logic error 
     + [X] analyze (recursively) assign/if/while/read
     + [X] semantic error report in analyze

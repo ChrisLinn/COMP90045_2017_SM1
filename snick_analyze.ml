@@ -65,13 +65,13 @@ and generate_decl_symbol scope_id (decltype, Variable(declid,optn_intvls)) =
         (
             Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,optn_intvls);
             
-            let leng = ref 0
+            let leng = ref 1
             in
             (
                 List.iter
                 (fun (lo_bound,up_bound) ->
                     (
-                        leng := (up_bound - lo_bound) +1
+                        leng := ((up_bound - lo_bound) +1)*(!leng)
                     )
                 )
                 intvls;
