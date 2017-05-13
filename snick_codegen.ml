@@ -412,9 +412,30 @@ and gen_br_call scope proc_id args =
         gen_call proc_id
     )
 
-and gen_br_expr_array_val scope nreg id idxs =
-    gen_br_expr_array_addr scope nreg id idxs;
-    gen_binop "load_indirect" nreg nreg
+and gen_br_expr_array_val scope nreg id idxs =    
+    match (is_idxs_all_static idxs) with
+    | true ->
+    (
+        let (symkind,symtype,nslot,optn_bounds) =
+                Hashtbl.find (get_scope_st scope) id
+        in
+        (
+            let static_offset =
+            ( 
+                match optn_bounds with
+                | Some bounds -> calc_static_offset idxs
+                                    (get_offset_bases bounds) bounds
+                | None -> failwith "Impossible error."
+            )
+            in
+            gen_binop "load" nreg (nslot+static_offset)
+        )
+    )
+    | false ->
+    (
+        gen_br_expr_array_addr scope nreg id idxs;
+        gen_binop "load_indirect" nreg nreg
+    )
 
 and gen_br_expr_array_addr scope nreg id idxs =
     let (symkind,symtype,nslot,optn_bounds) =
