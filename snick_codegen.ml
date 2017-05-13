@@ -126,7 +126,8 @@ and calc_static_offset idxs bases bounds =
             | (lo_bound,_) ->
             (
                 (int_idx - lo_bound) * (List.hd bases) +
-                calc_static_offset (idxs_tail) (List.tl bases) (List.tl bounds)
+                    calc_static_offset
+                        (idxs_tail) (List.tl bases) (List.tl bounds)
             )
         )
         | _ -> failwith ("Impossible error")
