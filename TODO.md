@@ -15,7 +15,7 @@
     + [X] option type
     - [ ] analyze
         - [X] dynamic out_of_bound
-        - [ ] decls negative interval num
+        - [ ] decls negative interval num / lo_bound>upbound
         - [ ] static out_of_bound
     - [X] codegen
         - [X] gen_br_init_array
