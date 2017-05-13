@@ -10,40 +10,19 @@ type symType =
     | SYM_REAL
     | SYM_INT
 
-(* Bound on an array symbol object *)
-type bound = (int * int * int) (* (lower * upper * offset_size) *)
+type nslot = int
 
-(* Bound on an array symbol object *)
-type bounds = bound list
+type bound = interval
 
-type symValType =
+type symbol = (symKind * symType * nslot * bound list option)
+
+type htScopeSt = (string, symbol) Hashtbl.t
+
+type scope = Scope of (ident * htScopeSt * param list * nslot)
+
+(* type symValType =
     | ParamVal of param 
-    | DeclVal of decl
-(* 
-type symbol = (symbolKind * symType * symbValType * int * bool * bounds option) *)
-type symbol = (symKind * symType * int * bounds option)
-(* 
-typedef struct symbol_data {
-    SymbolKind  kind;
-    SymType     type;
-    void        *sym_value;    can be useful (update/optmz)
-    int         line_no;        seems unuseful so removed
-    int         slot;
-    BOOL        used;            can be useful!!!!!!!!!!!
-    Bounds  *bounds;
-} symbol;
- *)
-
-type scope = Scope of (ident * (string, symbol) Hashtbl.t * param list * int)
-(* 
- typedef struct scope_data {
-    char *id;                   
-    void *table;                   seems scope's symbol table
-    void *params;                   
-    int line_no;                seems unuseful so removed
-    int next_slot;              can be global?????
-} scope;
- *)
+    | DeclVal of decl *)
 
 
 let rec get_scope_id (Scope(id,_,_,_)) = id

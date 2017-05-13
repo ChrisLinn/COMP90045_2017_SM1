@@ -10,10 +10,9 @@ let ht_scopes = Hashtbl.create ht_inis
 
 let rec analyse prog =
     gen_sym_table prog;
-    print_all_sts "whatever";
+    (* print_all_sts "whatever"; *)
     check_main prog;
-    List.iter error_detect_proc prog;
-    check_unused_symbols prog
+    List.iter error_detect_proc prog
 
 and gen_sym_table prog =
     List.iter generate_scope prog
@@ -55,11 +54,32 @@ and generate_decl_symbol scope_id (decltype, Variable(declid,optn_intvls)) =
     and sym_type = sym_type_from_ast_type decltype
     in
     (
-        Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None);
-        Hashtbl.replace ht_scopes scopeid 
-            (Scope(scopeid,ht_st,params,nslot+1))
+        match optn_intvls with
+        | None ->
+        (
+            Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None);
+            Hashtbl.replace ht_scopes scopeid 
+                (Scope(scopeid,ht_st,params,nslot+1))
+        )
+        | Some intvls ->
+        (
+            Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,optn_intvls);
+            
+            let leng = ref 0
+            in
+            (
+                List.iter
+                (fun (lo_bound,up_bound) ->
+                    (
+                        leng := (up_bound - lo_bound) +1
+                    )
+                )
+                intvls;
+                Hashtbl.replace ht_scopes scopeid 
+                    (Scope(scopeid,ht_st,params,nslot+(!leng)))
+            )
+        )
     )
-    (*array*)
 
 and check_main prog =
     let is_there_main =
@@ -300,8 +320,6 @@ and error_detect_expr scope = function
         )
     )
     | _ -> ()
-
-and check_unused_symbols prog = () (*todo*)
 
 and simplify_prog prog =
     List.map simplify_proc prog
