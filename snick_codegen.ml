@@ -96,7 +96,7 @@ and is_idxs_all_static idxs =
     List.for_all
     (fun idx ->
         match idx with
-        | Eint -> true
+        | Eint(_) -> true
         | _ -> false
     )
     idxs
