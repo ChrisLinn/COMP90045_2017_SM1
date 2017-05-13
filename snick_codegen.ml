@@ -370,7 +370,7 @@ and gen_br_call scope proc_id args =
         gen_call proc_id
     )
 
-and gen_br_expr_array_val scope nreg id idxs = (*array*)
+and gen_br_expr_array_val scope nreg id idxs =
     gen_br_expr_array_addr scope nreg id idxs;
     gen_binop "load_indirect" nreg nreg
 
@@ -379,17 +379,71 @@ and gen_br_expr_array_addr scope nreg id idxs = (*array*)
         Hashtbl.find (get_scope_st scope) id
     in 
     (
-        (* List.iter
-        (fun idx ->
-            (
-            )
-        )
-        idxs; *)
+        (
+            match optn_bounds with
+            | Some bounds -> 
+                gen_offset scope nreg idxs (get_offset_bases bounds) bounds
+            | _ ->
+                failwith ("Impossible error. "^
+                            id^" should be an array in proc: "^
+                            (get_scope_id scope))
+        );
         gen_binop "load_address" (nreg+1) nslot;
         gen_triop "sub_offset" nreg (nreg+1) nreg
     )
 
-and gen_offset nreg = 
+
+(*
+    offset idxs bases = (idx - lo_bound) * base + (offset idxs.tl bases.tl)
+    except that: offset idx base = idx - lo_bound
+*)
+and gen_offset scope nreg idxs bases bounds =
+    match idxs with
+    | [] -> failwith ("Impossible error in proc: "^
+                        (get_scope_id scope))
+    | idx::[] ->
+    (
+        match (List.hd bounds) with
+        | (lo_bound,up_bound) ->
+        (
+            gen_br_expr scope nreg idx;
+
+            gen_int_const (nreg+1) lo_bound;
+            gen_triop "cmp_lt_int" (nreg+1) nreg (nreg+1);
+            gen_binop "branch_on_true" (nreg+1) out_of_bounds_label;
+            gen_int_const (nreg+1) up_bound;
+            gen_triop "cmp_gt_int" (nreg+1) nreg (nreg+1);
+            gen_binop "branch_on_true" (nreg+1) out_of_bounds_label;
+
+            gen_int_const (nreg+1) lo_bound;
+            gen_triop "sub_int" nreg nreg (nreg+1)
+        )
+    )
+    | idx::idxs_tail ->
+    (
+        match (List.hd bounds) with
+        | (lo_bound,up_bound) ->
+        (
+            gen_offset scope nreg idxs_tail (List.tl bases) (List.tl bounds);
+
+            gen_br_expr scope (nreg+1) idx;
+
+            gen_int_const (nreg+2) lo_bound;
+            gen_triop "cmp_lt_int" (nreg+2) (nreg+1) (nreg+2);
+            gen_binop "branch_on_true" (nreg+2) out_of_bounds_label;
+            gen_int_const (nreg+2) up_bound;
+            gen_triop "cmp_gt_int" (nreg+2) (nreg+1) (nreg+2);
+            gen_binop "branch_on_true" (nreg+2) out_of_bounds_label;
+
+            gen_int_const (nreg+2) lo_bound;
+            gen_triop "sub_int" (nreg+1) (nreg+1) (nreg+2);
+
+            gen_int_const (nreg+2) (List.hd bases);
+            gen_triop "mul_int" (nreg+1) (nreg+1) (nreg+2);
+
+            gen_triop "add_int" nreg (nreg+1) nreg 
+        )
+    )
 
 
 and get_offset_bases bounds =
@@ -406,9 +460,9 @@ and get_offset_bases bounds =
             )
         )
         (List.rev bounds);
-        offset_bases := List.tl !offset_bases;
+        offset_bases := List.tl !offset_bases;(* 
         offset_bases := List.append [0] (List.tl (List.rev !offset_bases));
-        offset_bases := List.rev !offset_bases;
+        offset_bases := List.rev !offset_bases; *)
         !offset_bases
     )
 
