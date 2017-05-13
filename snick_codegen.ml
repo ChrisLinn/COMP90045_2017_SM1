@@ -54,6 +54,7 @@ type opType =
     | OpCmpLeReal of (int * int * int)
     | OpCmpGtReal of (int * int * int)
     | OpCmpGeReal of (int * int * int)
+    | OpSubOffset of (int * int * int)
 
 type bltInType =
     | BltInReadInt
@@ -454,7 +455,7 @@ and get_offset_bases bounds =
         (fun (lo_bound,up_bound) ->
             (
                 offset_bases := List.append
-                                [((up_bound-lo_bound)*
+                                [((up_bound-lo_bound+1)*
                                     (List.hd !offset_bases))]
                                 !offset_bases
             )
@@ -813,6 +814,7 @@ and gen_triop op x1 x2 x3 =
                 | "cmp_le_real" -> BrOp(OpCmpLeReal(x1,x2,x3))
                 | "cmp_gt_real" -> BrOp(OpCmpGtReal(x1,x2,x3))
                 | "cmp_ge_real" -> BrOp(OpCmpGeReal(x1,x2,x3))
+                | "sub_offset" -> BrOp(OpSubOffset(x1,x2,x3))
                 | _ -> failwith ("operation "^op^" not yet supported")
     in
     brprog := List.append !brprog [line]
@@ -952,6 +954,9 @@ and print_br_op = function
     | OpCmpGeReal(nreg_dest,nreg_real1,nreg_real2) ->
         fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
             indent width "cmp_ge_real" nreg_dest nreg_real1 nreg_real2
+    | OpSubOffset(nreg_dest,nreg_addr,nreg_offset) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "sub_offset" nreg_dest nreg_addr nreg_offset
     | OpReturn ->
         fprintf std_formatter "%sreturn\n"
             indent
