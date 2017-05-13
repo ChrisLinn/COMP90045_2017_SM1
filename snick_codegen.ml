@@ -101,6 +101,38 @@ and is_idxs_all_static idxs =
     )
     idxs
 
+and calc_static_offset idxs bases bounds =
+    match idxs with
+    | [] -> failwith ("Impossible error")
+    | idx::[] ->
+    (
+        match idx with
+        | Eint(int_idx) ->
+        (
+            match (List.hd bounds) with
+            | (lo_bound,_) ->
+            (
+                int_idx - lo_bound
+            )
+        )
+        | _ -> failwith ("Impossible error")
+    )
+    | idx::idxs_tail ->
+    (
+        match idx with
+        | Eint(int_idx) ->
+        (
+            match (List.hd bounds) with
+            | (lo_bound,_) ->
+            (
+                (int_idx - lo_bound) * (List.hd bases) +
+                calc_static_offset (idxs_tail) (List.tl bases) (List.tl bounds)
+            )
+        )
+        | _ -> failwith ("Impossible error")
+    )
+
+
 and gen_br_program prog =
     gen_call "main";
     gen_halt "whatever";
@@ -392,7 +424,8 @@ and gen_br_expr_array_addr scope nreg id idxs =
         (
             match optn_bounds with
             | Some bounds -> 
-                gen_offset scope nreg idxs (get_offset_bases bounds) bounds
+                gen_dynamic_offset scope nreg idxs 
+                    (get_offset_bases bounds) bounds
             | _ ->
                 failwith ("Impossible error. "^
                             id^" should be an array in proc: "^
@@ -407,7 +440,7 @@ and gen_br_expr_array_addr scope nreg id idxs =
     offset idxs bases = (idx - lo_bound) * base + (offset idxs.tl bases.tl)
     except that: offset idx base = idx - lo_bound
 *)
-and gen_offset scope nreg idxs bases bounds =
+and gen_dynamic_offset scope nreg idxs bases bounds =
     match idxs with
     | [] -> failwith ("Impossible error in proc: "^
                         (get_scope_id scope))
@@ -434,7 +467,8 @@ and gen_offset scope nreg idxs bases bounds =
         match (List.hd bounds) with
         | (lo_bound,up_bound) ->
         (
-            gen_offset scope nreg idxs_tail (List.tl bases) (List.tl bounds);
+            gen_dynamic_offset scope nreg idxs_tail 
+                (List.tl bases) (List.tl bounds);
 
             gen_br_expr scope (nreg+1) idx;
 
@@ -464,7 +498,7 @@ and get_offset_bases bounds =
         (fun (lo_bound,up_bound) ->
             (
                 offset_bases := List.append
-                                [((up_bound-lo_bound+1)*
+                                [((up_bound - lo_bound + 1)*
                                     (List.hd !offset_bases))]
                                 !offset_bases
             )
