@@ -5,7 +5,7 @@
         - [ ] elem/array
         - [ ] func
     - [ ] duplicated decl/def
-        - [ ] elem/array
+        - [X] elem/array
         - [ ] func
     + [X] analyse_assign in analyze logic error 
     + [X] analyze (recursively) assign/if/while/read
@@ -20,7 +20,7 @@
     + [X] option type
     - [ ] analyze
         - [X] dynamic out_of_bound
-        - [ ] decls negative interval num / lo_bound>upbound
+        - [X] decls negative interval num / lo_bound>upbound
         - [ ] static out_of_bound
     - [X] codegen
         - [X] gen_br_init_array
