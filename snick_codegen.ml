@@ -646,7 +646,9 @@ and get_reg_usage scope = function
                     List.iter
                     (fun idx ->
                         (
-                            let reg_usage_1 = ((get_reg_usage scope idx)+2)
+                            let reg_usage_1 = max
+                                                ((get_reg_usage scope idx)+2)
+                                                3
                             in
                             reg_usage_total := max
                                                 reg_usage_1 !reg_usage_total
