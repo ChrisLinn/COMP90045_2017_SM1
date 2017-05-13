@@ -244,19 +244,26 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
     in
     (
         gen_br_expr scope 0 expr;
+
         if ((symtype = SYM_REAL) && (expr_type = SYM_INT)) then
             gen_binop "int_to_real" 0 0;
-        if optn_idxs <> None then
+
+        match optn_idxs with
+        | Some idxs ->
         (
-            (*array*)
-        )
-        else if symkind = SYM_PARAM_REF then
-        (
-            gen_binop "load" 1 nslot;
+            gen_br_expr_array_addr scope 1 id idxs;
             gen_binop "store_indirect" 1 0
         )
-        else
-            gen_binop "store" nslot 0
+        | None ->
+        (
+            if symkind = SYM_PARAM_REF then
+            (
+                gen_binop "load" 1 nslot;
+                gen_binop "store_indirect" 1 0
+            )
+            else
+                gen_binop "store" nslot 0
+        )
     )
 
 and gen_br_read scope (Elem(id,optn_idxs)) =
