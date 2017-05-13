@@ -196,17 +196,32 @@ and gen_br_decls scope decls =
                         else
                             reg := !int_reg;
 
-                        if optn_bounds = None then
-                            gen_binop "store" nslot !reg
-                        else
-                            gen_br_init_array scope nslot !reg optn_bounds
+                        match optn_bounds with
+                        | None -> gen_binop "store" nslot !reg
+                        | Some bounds ->
+                            gen_br_init_array scope nslot !reg bounds
                     )
                 )
             )
             decls;
     )
 
-and gen_br_init_array scope nslot nreg optn_bounds = ()  (*array*)
+and gen_br_init_array scope nslot nreg bounds =
+    let num = ref 1
+    in
+    (
+        List.iter
+        (fun (lo_bound,up_bound) ->
+            (
+                num := ((up_bound - lo_bound) +1)*(!num)
+            )
+        )
+        bounds;
+
+        for offset = 0 to (!num-1) do
+            gen_binop "store" (nslot+offset) nreg
+        done
+    )
 
 and gen_br_stmts scope stmts =
     List.iter (gen_br_stmt scope) stmts
