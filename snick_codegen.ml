@@ -293,8 +293,29 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
         match optn_idxs with
         | Some idxs ->
         (
-            gen_br_expr_array_addr scope 1 id idxs;
-            gen_binop "store_indirect" 1 0
+            match (is_idxs_all_static idxs) with
+            | true ->
+            (
+                let (symkind,symtype,nslot,optn_bounds) =
+                        Hashtbl.find (get_scope_st scope) id
+                in
+                (
+                    let static_offset =
+                    ( 
+                        match optn_bounds with
+                        | Some bounds -> calc_static_offset idxs
+                                            (get_offset_bases bounds) bounds
+                        | None -> failwith "Impossible error."
+                    )
+                    in
+                    gen_binop "store" (nslot+static_offset) 0
+                )
+            )
+            | false ->
+            (
+                gen_br_expr_array_addr scope 1 id idxs;
+                gen_binop "store_indirect" 1 0
+            )
         )
         | None ->
         (
@@ -323,8 +344,29 @@ and gen_br_read scope (Elem(id,optn_idxs)) =
         match optn_idxs with
         | Some idxs ->
         (
-            gen_br_expr_array_addr scope 1 id idxs;
-            gen_binop "store_indirect" 1 0
+            match (is_idxs_all_static idxs) with
+            | true ->
+            (
+                let (symkind,symtype,nslot,optn_bounds) =
+                        Hashtbl.find (get_scope_st scope) id
+                in
+                (
+                    let static_offset =
+                    ( 
+                        match optn_bounds with
+                        | Some bounds -> calc_static_offset idxs
+                                            (get_offset_bases bounds) bounds
+                        | None -> failwith "Impossible error."
+                    )
+                    in
+                    gen_binop "store" (nslot+static_offset) 0
+                )
+            )
+            | false ->
+            (
+                gen_br_expr_array_addr scope 1 id idxs;
+                gen_binop "store_indirect" 1 0
+            )
         )
         | None ->
         (
