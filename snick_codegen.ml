@@ -325,7 +325,7 @@ and gen_br_call scope proc_id args =
                                         gen_binop "load" !nreg nslot
                                     else if optn_idxs <> None then
                                         gen_br_expr_array_addr
-                                            scope !nreg (Elem(id,optn_idxs))
+                                            scope !nreg id optn_idxs
                                     else
                                         gen_binop "load_address" !nreg nslot
                                 )
@@ -352,7 +352,24 @@ and gen_br_call scope proc_id args =
         gen_call proc_id
     )
 
-and gen_br_expr_array_addr scope nreg elem = () (*array*)
+and gen_br_expr_array_val scope nreg id idxs = (*array*)
+    gen_br_expr_array_addr scope nreg id idxs;
+    gen_binop "load_indirect" nreg nreg
+
+and get_offset idxs bounds = ()(* 
+    try
+    (
+        match (List.hd bounds) with
+        | (lo_bound,up_bound) ->
+            ((List.hd idxs)-lo_bound)*(get_offset_base (List.tl bounds))+
+            (get_offset (List.tl idxs) (List.tl bounds)) 
+    )
+    with
+    | _ -> () *)
+
+and get_offset_bases = ()
+
+and gen_br_expr_array_addr scope nreg id idxs = () (*array*)
 
 and gen_br_ifthen scope expr stmts =
     gen_comment "if";
@@ -576,7 +593,7 @@ and gen_br_expr_unop scope nreg optr expr =
     )
 
 and gen_br_expr_id scope nreg id =
-    let (symkind,symtype,nslot,_) = Hashtbl.find (get_scope_st scope) id
+    let (symkind,_,nslot,_) = Hashtbl.find (get_scope_st scope) id
     in
     (
         match symkind with
@@ -587,8 +604,6 @@ and gen_br_expr_id scope nreg id =
         )
         | _ -> gen_binop "load" nreg nslot
     )
-
-and gen_br_expr_array_val scope nreg id idxs = () (*array*)
 
 and gen_br_epilogue scope =
     gen_comment "epilogue";
