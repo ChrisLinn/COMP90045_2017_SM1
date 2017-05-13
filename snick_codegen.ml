@@ -665,8 +665,8 @@ and get_reg_usage scope = function
 and gen_br_expr_binop_bool scope nreg lexpr_nreg rexpr_nreg = function
     | Op_or -> gen_triop "or" nreg lexpr_nreg rexpr_nreg
     | Op_and -> gen_triop "and" nreg lexpr_nreg rexpr_nreg
-    | Op_eq -> gen_triop "eq" nreg lexpr_nreg rexpr_nreg
-    | Op_ne -> gen_triop "ne" nreg lexpr_nreg rexpr_nreg
+    | Op_eq -> gen_triop "cmp_eq_real" nreg lexpr_nreg rexpr_nreg
+    | Op_ne -> gen_triop "cmp_ne_real" nreg lexpr_nreg rexpr_nreg
     | _ -> failwith "invalid op for bool binop expr!"
 
 and gen_br_expr_binop_float scope nreg lexpr_nreg rexpr_nreg = function
