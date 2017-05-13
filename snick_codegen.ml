@@ -92,6 +92,15 @@ and strip_paren expr = match expr with
     | Eparen paren_expr -> strip_paren paren_expr
     | _ -> expr
 
+and is_idxs_all_static idxs =
+    List.for_all
+    (fun idx ->
+        match idx with
+        | Eint -> true
+        | _ -> false
+    )
+    idxs
+
 and gen_br_program prog =
     gen_call "main";
     gen_halt "whatever";
