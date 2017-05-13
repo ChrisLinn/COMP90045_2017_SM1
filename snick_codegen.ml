@@ -697,32 +697,35 @@ and get_reg_usage scope = function
         | Elem(id,None) -> 0
         | Elem(id,Some idxs) ->
         (
-            let reg_usage_total = ref 0
-            in
-            (
-                if (List.length idxs) = 1 then
+            if (is_idxs_all_static idxs) then
+                0
+            else
+                let reg_usage_total = ref 0
+                in
                 (
-                    let idx = List.hd idxs
-                    in
-                    reg_usage_total := max ((get_reg_usage scope idx)+1) 2
-                )
-                else
-                (
-                    List.iter
-                    (fun idx ->
-                        (
-                            let reg_usage_1 = max
-                                                ((get_reg_usage scope idx)+2)
-                                                3
-                            in
-                            reg_usage_total := max
-                                                reg_usage_1 !reg_usage_total
-                        )
+                    if (List.length idxs) = 1 then
+                    (
+                        let idx = List.hd idxs
+                        in
+                        reg_usage_total :=
+                            max ((get_reg_usage scope idx)+1) 2
                     )
-                    idxs
-                );
-                !reg_usage_total
-            )
+                    else
+                    (
+                        List.iter
+                        (fun idx ->
+                            (
+                                let reg_usage_1 =
+                                    max ((get_reg_usage scope idx)+2) 3
+                                in
+                                reg_usage_total :=
+                                    max reg_usage_1 !reg_usage_total
+                            )
+                        )
+                        idxs
+                    );
+                    !reg_usage_total
+                )
         )
     )
 
