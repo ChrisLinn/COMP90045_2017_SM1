@@ -583,7 +583,7 @@ and gen_br_expr_id scope nreg id =
         | SYM_PARAM_REF ->
         (
             gen_binop "load" nreg nslot;
-            gen_binop "load_indrect" nreg nreg
+            gen_binop "load_indirect" nreg nreg
         )
         | _ -> gen_binop "load" nreg nslot
     )
@@ -641,7 +641,7 @@ and gen_binop op x1 x2 =
                 | "load" -> BrOp(OpLoad(x1,x2))
                 | "store" -> BrOp(OpStore(x1,x2))
                 | "load_address" -> BrOp(OpLoadAddress(x1,x2))
-                | "load_indrect" -> BrOp(OpLoadIndirect(x1,x2))
+                | "load_indirect" -> BrOp(OpLoadIndirect(x1,x2))
                 | "store_indirect" -> BrOp(OpStoreIndirect(x1,x2))
                 | "branch_on_true" -> BrOp(OpBranchOnTrue(x1,x2))
                 | "branch_on_false" -> BrOp(OpBranchOnFalse(x1,x2))
