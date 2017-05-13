@@ -374,7 +374,7 @@ and gen_br_expr_array_val scope nreg id idxs =
     gen_br_expr_array_addr scope nreg id idxs;
     gen_binop "load_indirect" nreg nreg
 
-and gen_br_expr_array_addr scope nreg id idxs = (*array*)
+and gen_br_expr_array_addr scope nreg id idxs =
     let (symkind,symtype,nslot,optn_bounds) =
         Hashtbl.find (get_scope_st scope) id
     in 
@@ -630,7 +630,33 @@ and get_reg_usage scope = function
     (
         match elem with
         | Elem(id,None) -> 0
-        | Elem(id,Some idxs) -> (*array*) 0
+        | Elem(id,Some idxs) ->
+        (
+            let reg_usage_total = ref 0
+            in
+            (
+                if (List.length idxs) = 1 then
+                (
+                    let idx = List.hd idxs
+                    in
+                    reg_usage_total := max ((get_reg_usage scope idx)+1) 2
+                )
+                else
+                (
+                    List.iter
+                    (fun idx ->
+                        (
+                            let reg_usage_1 = ((get_reg_usage scope idx)+2)
+                            in
+                            reg_usage_total := max
+                                                reg_usage_1 !reg_usage_total
+                        )
+                    )
+                    idxs
+                );
+                !reg_usage_total
+            )
+        )
     )
 
 and gen_br_expr_binop_bool scope nreg lexpr_nreg rexpr_nreg = function
