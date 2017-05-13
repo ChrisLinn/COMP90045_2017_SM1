@@ -4,7 +4,7 @@ open Snick_analyze
 open Format
 (* 
     | OP_MOVE
-    | OP_ADD_OFFSET | OP_SUB_OFFSET
+    | OP_ADD_OFFSET
 *)
 
 type opType =
