@@ -1,7 +1,12 @@
 # Todo
 
 + [ ] error handling
-    - [ ] array/func/elem undelcared/duplicated
+    - [ ] undelcared
+        - [ ] elem/array
+        - [ ] func
+    - [ ] duplicated decl/def
+        - [ ] elem/array
+        - [ ] func
     + [X] analyse_assign in analyze logic error 
     + [X] analyze (recursively) assign/if/while/read
     + [X] semantic error report in analyze

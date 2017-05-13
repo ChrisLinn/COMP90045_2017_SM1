@@ -10,7 +10,6 @@ let ht_scopes = Hashtbl.create ht_inis
 
 let rec analyse prog =
     gen_sym_table prog;
-    (* print_all_sts "whatever"; *)
     check_main prog;
     List.iter error_detect_proc prog
 
@@ -106,7 +105,35 @@ and error_detect_proc ((proc_id,_),prog_body) =
 and error_detect_decls scope decls =
     List.iter (error_detect_decl scope) decls
 
-and error_detect_decl scope decl = () (*todo*)
+and error_detect_decl scope (_,(Variable(id,optn_intvls))) =
+    (
+        let cnt = List.length (Hashtbl.find_all (get_scope_st scope) id)
+        in
+        if (cnt > 1) then
+            failwith ("Declaration "^
+                        id^" duplicated in proc: "^
+                        (get_scope_id scope))
+        else
+            match optn_intvls with
+            | None -> ()
+            | Some intvls ->
+            (
+                List.iter
+                (fun (lo_bound,up_bound) ->
+                    (
+                        if (lo_bound > up_bound) then
+                            failwith ("lo_bound > up_bound for "^
+                                        id^" in proc: "^
+                                        (get_scope_id scope))
+                        else if (lo_bound < 0) then
+                            failwith ("negative bound for "^
+                                        id^" in proc: "^
+                                        (get_scope_id scope))
+                    )
+                )
+                intvls
+            )
+    )
 
 and error_detect_stmts scope stmts =
     List.iter (error_detect_stmt scope) stmts
