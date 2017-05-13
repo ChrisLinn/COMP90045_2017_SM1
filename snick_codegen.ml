@@ -271,16 +271,22 @@ and gen_br_read scope (Elem(id,optn_idxs)) =
             | SYM_INT -> gen_call_builtin "read_int"
             | SYM_REAL -> gen_call_builtin "read_real"
         );
-        if optn_idxs <> None then (*array*)
+        match optn_idxs with
+        | Some idxs ->
         (
-        )
-        else if symkind = SYM_PARAM_REF then
-        (
-            gen_binop "load" 1 nslot;
+            gen_br_expr_array_addr scope 1 id idxs;
             gen_binop "store_indirect" 1 0
         )
-        else
-            gen_binop "store" nslot 0
+        | None ->
+        (
+             if symkind = SYM_PARAM_REF then
+            (
+                gen_binop "load" 1 nslot;
+                gen_binop "store_indirect" 1 0
+            )
+            else
+                gen_binop "store" nslot 0
+        )
     )
 
 and gen_br_write scope write_expr = 
@@ -323,11 +329,16 @@ and gen_br_call scope proc_id args =
                                 (
                                     if symkind = SYM_PARAM_REF then
                                         gen_binop "load" !nreg nslot
-                                    else if optn_idxs <> None then
-                                        gen_br_expr_array_addr
-                                            scope !nreg id optn_idxs
                                     else
-                                        gen_binop "load_address" !nreg nslot
+                                    (
+                                        match optn_idxs with
+                                        | Some idxs ->
+                                            gen_br_expr_array_addr
+                                                scope !nreg id idxs
+                                        | None ->
+                                            gen_binop
+                                                "load_address" !nreg nslot
+                                    )
                                 )
                             )
                             | _ -> 
@@ -356,20 +367,43 @@ and gen_br_expr_array_val scope nreg id idxs = (*array*)
     gen_br_expr_array_addr scope nreg id idxs;
     gen_binop "load_indirect" nreg nreg
 
-and get_offset idxs bounds = ()(* 
-    try
+and gen_br_expr_array_addr scope nreg id idxs = (*array*)
+    let (symkind,symtype,nslot,optn_bounds) =
+        Hashtbl.find (get_scope_st scope) id
+    in 
     (
-        match (List.hd bounds) with
-        | (lo_bound,up_bound) ->
-            ((List.hd idxs)-lo_bound)*(get_offset_base (List.tl bounds))+
-            (get_offset (List.tl idxs) (List.tl bounds)) 
+        (* List.iter
+        (fun idx ->
+            (
+            )
+        )
+        idxs; *)
+        gen_binop "load_address" (nreg+1) nslot;
+        gen_triop "sub_offset" nreg (nreg+1) nreg
     )
-    with
-    | _ -> () *)
 
-and get_offset_bases = ()
+and gen_offset nreg = 
 
-and gen_br_expr_array_addr scope nreg id idxs = () (*array*)
+
+and get_offset_bases bounds =
+    let offset_bases = ref [1]
+    in
+    (
+        List.iter
+        (fun (lo_bound,up_bound) ->
+            (
+                offset_bases := List.append
+                                [((up_bound-lo_bound)*
+                                    (List.hd !offset_bases))]
+                                !offset_bases
+            )
+        )
+        (List.rev bounds);
+        offset_bases := List.tl !offset_bases;
+        offset_bases := List.append [0] (List.tl (List.rev !offset_bases));
+        offset_bases := List.rev !offset_bases;
+        !offset_bases
+    )
 
 and gen_br_ifthen scope expr stmts =
     gen_comment "if";
