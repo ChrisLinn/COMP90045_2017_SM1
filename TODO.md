@@ -1,10 +1,10 @@
 # Todo
 
-+ [ ] error handling
-    - [ ] undelcared
-        - [ ] elem/array
-        - [ ] func
-    - [ ] duplicated decl/def
++ [X] error handling
+    - [X] undelcared
+        - [X] elem/array
+        - [X] func
+    - [X] duplicated decl/def
         - [X] elem/array
         - [X] func
     + [X] analyse_assign in analyze logic error 

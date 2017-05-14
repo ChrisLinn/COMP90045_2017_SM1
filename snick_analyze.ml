@@ -112,34 +112,32 @@ and error_detect_decls scope decls =
     List.iter (error_detect_decl scope) decls
 
 and error_detect_decl scope (_,(Variable(id,optn_intvls))) =
-    (
-        let cnt = List.length (Hashtbl.find_all (get_scope_st scope) id)
-        in
-        if (cnt > 1) then
-            failwith ("Declaration "^
-                        id^" duplicated in proc: "^
-                        (get_scope_id scope))
-        else
-            match optn_intvls with
-            | None -> ()
-            | Some intvls ->
-            (
-                List.iter
-                (fun (lo_bound,up_bound) ->
-                    (
-                        if (lo_bound > up_bound) then
-                            failwith ("lo_bound > up_bound for "^
-                                        id^" in proc: "^
-                                        (get_scope_id scope))
-                        else if (lo_bound < 0) then
-                            failwith ("negative bound for "^
-                                        id^" in proc: "^
-                                        (get_scope_id scope))
-                    )
+    let cnt = List.length (Hashtbl.find_all (get_scope_st scope) id)
+    in
+    if (cnt > 1) then
+        failwith ("Declare "^
+                    id^" more than once in proc: "^
+                    (get_scope_id scope))
+    else
+        match optn_intvls with
+        | None -> ()
+        | Some intvls ->
+        (
+            List.iter
+            (fun (lo_bound,up_bound) ->
+                (
+                    if (lo_bound > up_bound) then
+                        failwith ("lo_bound > up_bound for "^
+                                    id^" in proc: "^
+                                    (get_scope_id scope))
+                    else if (lo_bound < 0) then
+                        failwith ("negative bound for "^
+                                    id^" in proc: "^
+                                    (get_scope_id scope))
                 )
-                intvls
             )
-    )
+            intvls
+        )
 
 and error_detect_stmts scope stmts =
     List.iter (error_detect_stmt scope) stmts
@@ -196,7 +194,30 @@ and error_detect_elem scope (Elem(id,optn_idxs)) =
                                 ^(get_scope_id scope))
                 )
             )
-            idxs
+            idxs;
+            let (_,_,_,optn_intvls) = Hashtbl.find (get_scope_st scope) id
+            in
+            match optn_intvls with
+            | Some intvls ->
+            (
+                List.iter2
+                (fun idx (lo_bound,up_bound) ->
+                    (
+                        match idx with
+                        | Eint(int_idx) ->
+                        (
+                            if ((int_idx<lo_bound)||(int_idx>up_bound)) then
+                                failwith ("Array "^id^
+                                    "index out of bound in proc: "^
+                                    (get_scope_id scope))
+                        )
+                        | _ -> ()
+                    )
+                )
+                idxs
+                intvls
+            )
+            | _ -> ()
         )
     )
     else
