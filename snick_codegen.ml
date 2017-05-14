@@ -20,6 +20,7 @@ open Format
     | OP_ADD_OFFSET
 *)
 
+(* Available operations in Brill *)
 type opType =
     | OpCall of string
     | OpHalt
@@ -91,20 +92,23 @@ type brProg = brLines
 
 let indent = "    "
 let width = -19
-let brprog = ref []
+let brprog = ref [] (* Brill program to be generated *)
 let out_of_bounds_label = 0
 let div_by_zero_label = 1
 let next_label = ref 2
 
+(* Strip any parentheses around a expression *)
+let rec strip_paren expr = match expr with
+    | Eparen paren_expr -> strip_paren paren_expr
+    | _ -> expr
+
 (* Start compiling program *)
 let rec compile prog =
     analyse prog; (* First analyse the program into symbol table *)
+    (* Generate brill program *)
     gen_br_program (simplify_prog prog);
+    (* Print brill program *)
     print_lines !brprog
-    
-and strip_paren expr = match expr with
-    | Eparen paren_expr -> strip_paren paren_expr
-    | _ -> expr
 
 and is_idxs_all_static idxs =
     List.for_all
@@ -147,7 +151,7 @@ and calc_static_offset idxs bases bounds =
         | _ -> failwith ("Impossible error")
     )
 
-
+(* Brill program generation *)
 and gen_br_program prog =
     gen_call "main";
     gen_halt "whatever";
@@ -957,6 +961,7 @@ and gen_call_builtin bltin_func =
     in
     brprog := List.append !brprog [line]
 
+(* Print lines of brill program *)
 and print_lines lines = List.iter print_line lines
 
 and print_line = function

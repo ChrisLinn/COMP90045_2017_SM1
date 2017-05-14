@@ -15,8 +15,8 @@ open Snick_ast
 open Snick_symbol
 open Format
 
-let isValid = ref true
 
+(* let isValid = ref true *)
 
 let ht_inis = 20
 let ht_scopes = Hashtbl.create ht_inis
@@ -111,6 +111,7 @@ and check_main prog =
     | true -> ()
     | false -> failwith ("No \'main\' procedure definition!")
 
+(* Error detection functions *)
 and error_detect_proc ((proc_id,_),prog_body) =
     let cnt = List.length (Hashtbl.find_all ht_scopes proc_id)
     in
@@ -392,6 +393,7 @@ and error_detect_expr scope = function
     )
     | _ -> ()
 
+(* Optimization functions *)
 and simplify_prog prog =
     List.map simplify_proc prog
 
@@ -579,6 +581,7 @@ and get_elem_type scope (Elem(id,_)) =
     in
     sym_type
 
+(* Print all symbol tables for debugging purposes *)
 and print_all_sts = function
     | _ -> Hashtbl.iter
             (fun scope_id _ -> 
