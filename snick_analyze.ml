@@ -95,12 +95,18 @@ and check_main prog =
     | false -> failwith ("No \'main\' procedure definition!")
 
 and error_detect_proc ((proc_id,_),prog_body) =
-    let scope = Hashtbl.find ht_scopes proc_id
+    let cnt = List.length (Hashtbl.find_all ht_scopes proc_id)
     in
-    (
-        error_detect_decls scope prog_body.decls;
-        error_detect_stmts scope prog_body.stmts
-    )
+    if (cnt > 1) then
+        failwith ("Proc "^ proc_id^
+                    " defined more than once!")
+    else
+        let scope = Hashtbl.find ht_scopes proc_id
+        in
+        (
+            error_detect_decls scope prog_body.decls;
+            error_detect_stmts scope prog_body.stmts
+        )
 
 and error_detect_decls scope decls =
     List.iter (error_detect_decl scope) decls

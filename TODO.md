@@ -6,7 +6,7 @@
         - [ ] func
     - [ ] duplicated decl/def
         - [X] elem/array
-        - [ ] func
+        - [X] func
     + [X] analyse_assign in analyze logic error 
     + [X] analyze (recursively) assign/if/while/read
     + [X] semantic error report in analyze
