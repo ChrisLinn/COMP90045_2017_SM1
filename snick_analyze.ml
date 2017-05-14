@@ -1,3 +1,16 @@
+(*
+** File:          snick_analyze.ml
+** Description:   Semantic analyzer for a snick program.
+** Last Modified: Mon. 15th May 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
 open Snick_ast
 open Snick_symbol
 open Format
@@ -8,9 +21,13 @@ let isValid = ref true
 let ht_inis = 20
 let ht_scopes = Hashtbl.create ht_inis
 
+(* Start semantic analyzing for the program *)
 let rec analyse prog =
+    (* Get symbol tables of the program *)
     gen_sym_table prog;
+    (* Verify we have a main procedure *)
     check_main prog;
+    (* Detect for any other semantic errors in program *)
     List.iter error_detect_proc prog
 
 and gen_sym_table prog =

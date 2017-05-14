@@ -1,3 +1,16 @@
+(*
+** File:          snick_codegen.ml
+** Description:   Module to generate brill code from a parsed snick program.
+** Last Modified: Mon. 15th May 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
 open Snick_ast
 open Snick_symbol
 open Snick_analyze
@@ -83,8 +96,9 @@ let out_of_bounds_label = 0
 let div_by_zero_label = 1
 let next_label = ref 2
 
+(* Start compiling program *)
 let rec compile prog =
-    analyse prog;
+    analyse prog; (* First analyse the program into symbol table *)
     gen_br_program (simplify_prog prog);
     print_lines !brprog
     
