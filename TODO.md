@@ -18,10 +18,10 @@
     + [X] gen_br_call params args num unmatch
 + [X] array
     + [X] option type
-    - [ ] analyze
+    - [X] analyze
         - [X] dynamic out_of_bound
         - [X] decls negative interval num / lo_bound>upbound
-        - [ ] static out_of_bound
+        - [X] static out_of_bound
     - [X] codegen
         - [X] gen_br_init_array
         - [X] gen_br_assign
