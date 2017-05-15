@@ -35,12 +35,8 @@ type symbol = (symKind * symType * nslot * bound list option)
 type htScopeSt = (string, symbol) Hashtbl.t
 
 (* Description of a scope *)
+(* identifier of scope (proc), symbol table of this scope, parameters, size*)
 type scope = Scope of (ident * htScopeSt * param list * nslot)
-
-(* type symValType =
-    | ParamVal of param 
-    | DeclVal of decl *)
-
 
 let get_scope_id (Scope(id,_,_,_)) = id
 
