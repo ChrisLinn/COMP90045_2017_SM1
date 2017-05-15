@@ -30,7 +30,7 @@ let string = '"' [^'"']* '"'    (* string constant for write statement *)
 
 rule token = parse
     | commment                          { token lexbuf } (* skip comments *)
-    | [' ' '\t']                        { token lexbuf } (* skip blanks*)
+    | [' ' '\t' '\r']                        { token lexbuf } (* skip blanks*)
     | '\n'                              { Lexing.new_line lexbuf ; token lexbuf }
     | '-'? digits as lxm                { INT_CONST (int_of_string lxm) }
     | '-'? floating as lxm              { FLOAT_CONST (float_of_string lxm) }

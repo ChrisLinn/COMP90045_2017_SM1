@@ -1,7 +1,7 @@
 (*
 ** File:          snick_symbol.ml
-** Description:   Defines the data structure and data types for
-**                the Snick language.
+** Description:   Defines the data structure and data types for Snick
+**                also provides getters of Scope objects.
 ** Last Modified: Mon. 15th May 2017 
 ** 
 ** Group name: Mainframe
