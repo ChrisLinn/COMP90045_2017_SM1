@@ -71,6 +71,7 @@ type opType =
     | OpCmpGeReal of (int * int * int)
     | OpSubOffset of (int * int * int)
 
+(* Types of builtin calls *)
 type bltInType =
     | BltInReadInt
     | BltInReadReal
@@ -80,6 +81,7 @@ type bltInType =
     | BltInPrintBool
     | BltInPrintString
 
+(* Representation of a line in a brill program *)
 type brLine =
     | BrProc of string
     | BrOp of opType
@@ -180,6 +182,7 @@ and gen_br_div_by_zero = function
         gen_halt "whatever"
     )
 
+(*  *)
 and gen_br_proc ((proc_id,params),proc_body) =
     let scope = Hashtbl.find ht_scopes proc_id
     in

@@ -30,9 +30,13 @@ let rec analyse prog =
     (* Detect for any other semantic errors in program *)
     List.iter error_detect_proc prog
 
+(* Generate the symbol tables of program *)
 and gen_sym_table prog =
+    (* Symbol tables with different scopes are maintained for
+    ** each procedure in program *)
     List.iter generate_scope prog
 
+(* Generate the symbol table of a precedure *)
 and generate_scope ((proc_id,params),proc_body) =
     create_scope proc_id params;
     generate_params_symbols (Hashtbl.find ht_scopes proc_id) params;

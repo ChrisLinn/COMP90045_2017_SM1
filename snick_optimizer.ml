@@ -1,6 +1,8 @@
 (*
 ** File:          snick_optimizer.ml
 ** Description:   Module to do simple local optimizations to a program.
+**				  At this stage, it is only evaluating values of expressions
+**				  before turning into brill code.
 ** Last Modified: Mon. 15th May 2017 
 ** 
 ** Group name: Mainframe
