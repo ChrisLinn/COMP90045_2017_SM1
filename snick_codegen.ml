@@ -14,6 +14,7 @@
 open Snick_ast
 open Snick_symbol
 open Snick_analyze
+open Snick_optimizer
 open Format
 (* 
     | OP_MOVE
@@ -159,6 +160,7 @@ and gen_br_program prog =
     gen_br_div_by_zero "whatever";
     List.iter gen_br_proc prog    
 
+(* Create a label for the index out of bound error *)
 and gen_br_out_of_bounds = function
     | _ ->
     (
@@ -168,6 +170,7 @@ and gen_br_out_of_bounds = function
         gen_halt "whatever"
     )
 
+(* Create a label for the division by zero error *)
 and gen_br_div_by_zero = function
     | _ ->
     (

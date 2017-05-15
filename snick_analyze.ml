@@ -13,6 +13,7 @@
 
 open Snick_ast
 open Snick_symbol
+open Snick_optimizer
 open Format
 
 
@@ -193,7 +194,7 @@ and error_detect_assign scope elem expr =
             ()
         else
             failwith ("Error in proc \'"^(get_scope_id scope)^
-                        "\': assign type unmatch!")
+                        "\': unmatched types for assignment!")
 
 and error_detect_elem scope (Elem(id,optn_idxs)) =
     if (Hashtbl.mem (get_scope_st scope) id) then
@@ -394,7 +395,7 @@ and error_detect_expr scope = function
     | _ -> ()
 
 (* Optimization functions *)
-and simplify_prog prog =
+(* and simplify_prog prog =
     List.map simplify_proc prog
 
 and simplify_proc ((proc_id,proc_params),proc_body) = 
@@ -551,7 +552,7 @@ and simplify_expr proc_id = function
         | _ -> Eunop(optr,simplified_expr)
     )
     | ori_expr -> ori_expr
-
+*)
 and get_expr_type scope = function
     | Eelem(elem) -> get_elem_type scope elem
     | Ebool(_) -> SYM_BOOL
@@ -582,7 +583,7 @@ and get_elem_type scope (Elem(id,_)) =
     sym_type
 
 (* Print all symbol tables for debugging purposes *)
-and print_all_sts = function
+let rec print_all_sts = function
     | _ -> Hashtbl.iter
             (fun scope_id _ -> 
                 (

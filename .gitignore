@@ -7,6 +7,7 @@
 !*.md
 !snick.ml
 !snick_symbol.ml
+!snick_optimizer.ml
 !snick_analyze.ml
 !snick_codegen.ml
 !snick.ml
