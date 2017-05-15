@@ -1,3 +1,16 @@
+(*
+** File:          snick_optimizer.ml
+** Description:   Module to do simple local optimizations to a program.
+** Last Modified: Mon. 15th May 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
 open Snick_ast
 open Snick_symbol
 open Format

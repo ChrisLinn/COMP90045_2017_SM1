@@ -16,7 +16,6 @@ open Snick_symbol
 open Snick_optimizer
 open Format
 
-
 (* let isValid = ref true *)
 
 let ht_inis = 20
@@ -394,6 +393,35 @@ and error_detect_expr scope = function
     )
     | _ -> ()
 
+and get_expr_type scope = function
+    | Eelem(elem) -> get_elem_type scope elem
+    | Ebool(_) -> SYM_BOOL
+    | Eint(_) -> SYM_INT
+    | Efloat(_) -> SYM_REAL
+    | Eparen(expr) -> get_expr_type scope expr
+    | Ebinop(lexpr,optr,rexpr) ->
+    (
+        match optr with
+        | Op_or| Op_and | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge ->
+            SYM_BOOL
+        | Op_add | Op_sub | Op_mul | Op_div ->
+        (
+            if (((get_expr_type scope lexpr)=SYM_REAL)
+            ||((get_expr_type scope rexpr)=SYM_REAL)) then
+                SYM_REAL
+            else
+                SYM_INT
+        )
+        | _ -> failwith ("Error in proc \'"^(get_scope_id scope)^
+                        "\': invalid unoptr in Ebinop. ")
+    )
+    | Eunop(optr,expr) -> get_expr_type scope expr
+
+and get_elem_type scope (Elem(id,_)) =
+    let (_,sym_type,_,_) = Hashtbl.find (get_scope_st scope) id
+    in
+    sym_type
+
 (* Optimization functions *)
 (* and simplify_prog prog =
     List.map simplify_proc prog
@@ -553,34 +581,7 @@ and simplify_expr proc_id = function
     )
     | ori_expr -> ori_expr
 *)
-and get_expr_type scope = function
-    | Eelem(elem) -> get_elem_type scope elem
-    | Ebool(_) -> SYM_BOOL
-    | Eint(_) -> SYM_INT
-    | Efloat(_) -> SYM_REAL
-    | Eparen(expr) -> get_expr_type scope expr
-    | Ebinop(lexpr,optr,rexpr) ->
-    (
-        match optr with
-        | Op_or| Op_and | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge ->
-            SYM_BOOL
-        | Op_add | Op_sub | Op_mul | Op_div ->
-        (
-            if (((get_expr_type scope lexpr)=SYM_REAL)
-            ||((get_expr_type scope rexpr)=SYM_REAL)) then
-                SYM_REAL
-            else
-                SYM_INT
-        )
-        | _ -> failwith ("Error in proc \'"^(get_scope_id scope)^
-                        "\': invalid unoptr in Ebinop. ")
-    )
-    | Eunop(optr,expr) -> get_expr_type scope expr
 
-and get_elem_type scope (Elem(id,_)) =
-    let (_,sym_type,_,_) = Hashtbl.find (get_scope_st scope) id
-    in
-    sym_type
 
 (* Print all symbol tables for debugging purposes *)
 let rec print_all_sts = function
