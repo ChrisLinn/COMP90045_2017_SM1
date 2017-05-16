@@ -13,14 +13,11 @@
 
 open Snick_ast
 open Snick_symbol
+open Snick_err
 open Snick_analyze
 open Snick_br_ast
 open Snick_optimizer
 open Format
-(* 
-    | OP_MOVE
-    | OP_ADD_OFFSET
-*)
 
 let brprog = ref [] (* Brill program to be generated *)
 let out_of_bounds_label = 0
@@ -51,7 +48,7 @@ and is_idxs_all_static idxs =
 
 and calc_static_offset idxs bases bounds =
     match idxs with
-    | [] -> failwith ("Impossible error")
+    | [] -> error_undefined ""
     | idx::[] ->
     (
         match idx with
@@ -59,11 +56,9 @@ and calc_static_offset idxs bases bounds =
         (
             match (List.hd bounds) with
             | (lo_bound,_) ->
-            (
-                int_idx - lo_bound
-            )
+                ( int_idx - lo_bound )
         )
-        | _ -> failwith ("Impossible error")
+        | _ -> error_undefined ""
     )
     | idx::idxs_tail ->
     (
@@ -78,7 +73,7 @@ and calc_static_offset idxs bases bounds =
                         (idxs_tail) (List.tl bases) (List.tl bounds)
             )
         )
-        | _ -> failwith ("Impossible error")
+        | _ -> error_undefined ""
     )
 
 (* Brill program generation *)

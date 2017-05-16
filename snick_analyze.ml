@@ -127,7 +127,7 @@ and check_main prog =
     match is_there_main with
     | true -> ()
     (* raise error if main procedure not found *)
-    | false -> error_no_main
+    | false -> error_no_main ""
 
 (* Error detection functions *)
 (* Look for errors procedure by procedure *)
@@ -446,7 +446,7 @@ and get_elem_type scope (Elem(id,_)) =
     in sym_type
 
 (* Print all symbol tables for debugging purposes *)
-let rec print_all_sts = function
+and print_all_sts = function
     | _ -> Hashtbl.iter
             (fun scope_id _ -> 
                 ( print_st scope_id )

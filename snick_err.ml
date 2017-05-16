@@ -15,7 +15,9 @@
 open Snick_symbol
 
 (* Potential errors could be raised while analyzing *)
-let error_no_main = failwith ("No \'main\' procedure definition!")
+let error_no_main _ = failwith ("No \'main\' procedure definition!")
+
+let error_undefined _ = failwith ("Undefined error!")
 
 let error_dup_proc proc_id = 
     failwith ("Proc "^proc_id^" defined more than once!")
@@ -65,4 +67,3 @@ let error_optr_type_mismatch scope =
 let error_invalid_operation scope = 
     failwith ("Error in proc \'"^scope
                 ^"\': Invalid operation.")
-
