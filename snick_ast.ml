@@ -1,6 +1,6 @@
 (*
 ** File:          snick_ast.ml
-** Description:   Specification of the abstract syntax tree for Snick
+** Description:   Specification of the abstract syntax tree for Snick.
 ** Last Modified: Sun. 9th April 2017
 ** 
 ** Group name: Mainframe

@@ -2,14 +2,20 @@ snick.cmo : snick_pprint.cmi snick_parse.cmi snick_lex.cmo snick_codegen.cmo
 snick.cmx : snick_pprint.cmx snick_parse.cmx snick_lex.cmx snick_codegen.cmx
 snick.cmo : snick_pprint.cmi snick_parse.cmi snick_lex.cmo snick_codegen.cmo
 snick.cmx : snick_pprint.cmx snick_parse.cmx snick_lex.cmx snick_codegen.cmx
-snick_analyze.cmo : snick_symbol.cmo snick_optimizer.cmo snick_ast.cmo
-snick_analyze.cmx : snick_symbol.cmx snick_optimizer.cmx snick_ast.cmx
+snick_analyze.cmo : snick_symbol.cmo snick_optimizer.cmo snick_err.cmo \
+    snick_ast.cmo
+snick_analyze.cmx : snick_symbol.cmx snick_optimizer.cmx snick_err.cmx \
+    snick_ast.cmx
 snick_ast.cmo :
 snick_ast.cmx :
-snick_codegen.cmo : snick_symbol.cmo snick_optimizer.cmo snick_ast.cmo \
-    snick_analyze.cmo
-snick_codegen.cmx : snick_symbol.cmx snick_optimizer.cmx snick_ast.cmx \
-    snick_analyze.cmx
+snick_br_ast.cmo :
+snick_br_ast.cmx :
+snick_codegen.cmo : snick_symbol.cmo snick_optimizer.cmo snick_br_ast.cmo \
+    snick_ast.cmo snick_analyze.cmo
+snick_codegen.cmx : snick_symbol.cmx snick_optimizer.cmx snick_br_ast.cmx \
+    snick_ast.cmx snick_analyze.cmx
+snick_err.cmo : snick_symbol.cmo
+snick_err.cmx : snick_symbol.cmx
 snick_lex.cmo : snick_parse.cmi
 snick_lex.cmx : snick_parse.cmx
 snick_optimizer.cmo : snick_symbol.cmo snick_ast.cmo

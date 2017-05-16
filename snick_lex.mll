@@ -1,5 +1,5 @@
 (*
-** File:          snick_ast.ml
+** File:          snick_lex.ml
 ** Description:   Specification of a lexer for Snick
 ** Last Modified: Tue. 4th April 2017
 ** 

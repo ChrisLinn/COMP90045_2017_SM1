@@ -2,7 +2,7 @@
 ** File:          snick_analyze.ml
 ** Description:   Semantic analyzer for a snick program,
 **                also checks for any semantic errors in program.
-** Last Modified: Mon. 15th May 2017 
+** Last Modified: Tue. 16th May 2017 
 ** 
 ** Group name: Mainframe
 ** 
@@ -15,6 +15,7 @@
 open Snick_ast
 open Snick_symbol
 open Snick_optimizer
+open Snick_err
 open Format
 
 let ht_inis = 20
@@ -126,7 +127,7 @@ and check_main prog =
     match is_there_main with
     | true -> ()
     (* raise error if main procedure not found *)
-    | false -> failwith ("No \'main\' procedure definition!")
+    | false -> error_no_main
 
 (* Error detection functions *)
 (* Look for errors procedure by procedure *)
@@ -134,8 +135,7 @@ and error_detect_proc ((proc_id,_),prog_body) =
     let cnt = List.length (Hashtbl.find_all ht_scopes proc_id)
     in
     if (cnt > 1) then
-        failwith ("Proc "^ proc_id^
-                    " defined more than once!")
+        error_dup_proc proc_id
     else
         (* symbol table of curent scope (procedure) *)
         let scope = Hashtbl.find ht_scopes proc_id
@@ -157,9 +157,7 @@ and error_detect_decl scope (_,(Variable(id,optn_intvls))) =
     let cnt = List.length (Hashtbl.find_all (get_scope_st scope) id)
     in
     if (cnt > 1) then
-        failwith ("Declare "^
-                    id^" more than once in proc: "^
-                    (get_scope_id scope))
+        error_dup_decl (get_scope_id scope) id
     else
         match optn_intvls with
         | None -> () (* element declaration *)
@@ -169,14 +167,8 @@ and error_detect_decl scope (_,(Variable(id,optn_intvls))) =
             (* Check for index out of bound error *)
             (fun (lo_bound,up_bound) ->
                 (
-                    if (lo_bound > up_bound) then
-                        failwith ("lo_bound > up_bound for "^
-                                    id^" in proc: "^
-                                    (get_scope_id scope))
-                    else if (lo_bound < 0) then
-                        failwith ("negative bound for "^
-                                    id^" in proc: "^
-                                    (get_scope_id scope))
+                    if (lo_bound>up_bound) || (lo_bound<0) then
+                        error_illegal_bound (get_scope_id scope) id
                 )
             )
             intvls
@@ -211,7 +203,7 @@ and error_detect_stmt scope = function
     )
 
 (* look for possible errors in an assignment:
-**      assignment type unmatch *)
+**      assignment type mismatch *)
 and error_detect_assign scope elem expr =
     (* First check for error on either side of assignment *)
     error_detect_elem scope elem;
@@ -223,8 +215,7 @@ and error_detect_assign scope elem expr =
         || ((l_type = SYM_REAL)&&(r_type = SYM_INT))) then
             ()
         else
-            failwith ("Error in proc \'"^(get_scope_id scope)^
-                        "\': unmatched types for assignment!")
+            error_assign_type_mismatch (get_scope_id scope)
 
 (* Look for possible errors in an element:
 **      undeclared variable
@@ -244,9 +235,7 @@ and error_detect_elem scope (Elem(id,optn_idxs)) =
                     match (get_expr_type scope idx) with
                     | SYM_INT -> ()
                     (* error illegal indexing *)
-                    | _ -> failwith ("Array \'"^id^
-                            "\' non-int index in proc: "
-                                ^(get_scope_id scope))
+                    | _ -> error_illegal_index (get_scope_id scope) id
                 )
             )
             idxs;
@@ -264,9 +253,7 @@ and error_detect_elem scope (Elem(id,optn_idxs)) =
                         | Eint(int_idx) ->
                         (
                             if ((int_idx<lo_bound)||(int_idx>up_bound)) then
-                                failwith ("Array "^id^
-                                    "index out of bound in proc: "^
-                                    (get_scope_id scope))
+                                error_idx_out_of_bound (get_scope_id scope) id
                         )
                         | _ -> ()
                     )
@@ -277,10 +264,8 @@ and error_detect_elem scope (Elem(id,optn_idxs)) =
             | _ -> ()
         )
     )
-    else
-        (* error variable undeclared *)
-        failwith ("Variable name \'"^id^"\' is not declared in proc: "^
-                    (get_scope_id scope))
+    (* error variable undeclared *)
+    else error_undecl_var (get_scope_id scope) id
 
 (* Look for possible errors in a write statement,
 ** error may only exist in the expression being written *)
@@ -304,7 +289,7 @@ and error_detect_call scope id exprs =
             let scan_result = 
                 (* check if arguements in procedure call matches
                 ** procedure declaration in types,
-                ** throws exception if unmatching number of arguement *)
+                ** throws exception if mismatching number of arguement *)
                 List.for_all2
                 (fun (param_indc,param_type,_) arg ->
                     (
@@ -327,20 +312,15 @@ and error_detect_call scope id exprs =
             in
             match scan_result with
             | true -> ()
-            (* error parameters type unmatch *)
-            | false -> failwith ("Arguement types unmatch"^
-                                    " for calling proc \'"^id^"\' in proc: "^
-                                    (get_scope_id scope))
+            (* error parameters type mismatch *)
+            | false -> error_arg_type_mismatch (get_scope_id scope) id
         )
         with
         (* error incorrect number of parameters *)
-        | Invalid_argument(_) -> failwith ("Number of arguements unmatch"^
-                                    " for calling proc \'"^id^"\' in proc: "^
-                                    (get_scope_id scope))
+        | Invalid_argument(_) -> error_arg_count_mismatch (get_scope_id scope) id
     )
     (* error procedure undefined *)
-    else failwith ("Calling non-existing proc \'"^id^"\' in proc: "^
-                        (get_scope_id scope))
+    else error_undef_proc (get_scope_id scope) id
 
 (* Look for possible errors in an expression,
 ** depending on the type of expression *)
@@ -371,13 +351,9 @@ and error_detect_binop scope lexpr optr rexpr =
             match optr with
             | Op_eq | Op_ne
             | Op_or | Op_and -> () 
-            | _ -> failwith ("Error in proc \'"^
-                            (get_scope_id scope)^
-                            "\': Illegal operation for type bool.")
+            | _ -> error_illegal_optr (get_scope_id scope) "bool"
         )
-        | SYM_INT | SYM_REAL -> failwith ("Error in proc \'"^
-                                        (get_scope_id scope)^
-                                        "\': Type mismatch for operation.")
+        | SYM_INT | SYM_REAL -> error_optr_type_mismatch (get_scope_id scope)
     )
     | SYM_INT -> (* LHS *)
     (
@@ -388,22 +364,16 @@ and error_detect_binop scope lexpr optr rexpr =
             | Op_eq | Op_ne 
             | Op_lt | Op_gt | Op_le | Op_ge 
             | Op_add | Op_sub | Op_mul | Op_div -> ()
-            | _ -> failwith ("Error in proc \'"^
-                            (get_scope_id scope)^
-                            "\': Illegal operation on type int.")
+            | _ -> error_illegal_optr (get_scope_id scope) "int"
         )
         | SYM_REAL -> (* INT binop FLOAT *)
         (
             match optr with
             | Op_lt | Op_gt | Op_le | Op_ge 
             | Op_add | Op_sub | Op_mul | Op_div -> ()
-            | _ -> failwith ("Error in proc \'"^
-                            (get_scope_id scope)^
-                            "\': Type mismatch for operation.")
+            | _ -> error_optr_type_mismatch (get_scope_id scope)
         )
-        | SYM_BOOL -> failwith ("Error in proc \'"^
-                                (get_scope_id scope)^
-                                "\': Type mismatch for operation.")
+        | SYM_BOOL -> error_optr_type_mismatch (get_scope_id scope)
     )
     | SYM_REAL -> (* LHS *)
     (
@@ -413,9 +383,7 @@ and error_detect_binop scope lexpr optr rexpr =
             match optr with
             | Op_lt | Op_gt | Op_le | Op_ge 
             | Op_add | Op_sub | Op_mul | Op_div -> ()
-            | _ -> failwith ("Error in proc \'"^
-                            (get_scope_id scope)^
-                            "\': Type mismatch for operation.")
+            | _ -> error_optr_type_mismatch (get_scope_id scope)
         )
         | SYM_REAL -> (* FLOAT binop FLOAT *)
         (
@@ -423,13 +391,9 @@ and error_detect_binop scope lexpr optr rexpr =
             | Op_eq | Op_ne 
             | Op_lt | Op_gt | Op_le | Op_ge 
             | Op_add | Op_sub | Op_mul | Op_div -> ()
-            | _ -> failwith ("Error in proc \'"^
-                            (get_scope_id scope)^
-                            "\': Illegal operation on type float.")
+            | _ -> error_illegal_optr (get_scope_id scope) "float"
         )
-        | SYM_BOOL -> failwith ("Error in proc \'"^
-                                (get_scope_id scope)^
-                                "\': Type mismatch for operation.")
+        | SYM_BOOL -> error_optr_type_mismatch (get_scope_id scope)
     )
 
 (* Look for possible errors in a unary operation:
@@ -442,17 +406,13 @@ and error_detect_unop scope optr expr =
     (
         match optr with
         | Op_not -> ()
-        | _ -> failwith ("Error in proc \'"^
-                        (get_scope_id scope)^
-                        "\': Illegal operation on type bool.")
+        | _ -> error_illegal_optr (get_scope_id scope) "bool"
     )
     | _ ->
     (
         match optr with
         | Op_minus -> ()
-        | _ -> failwith ("Error in proc \'"^
-                        (get_scope_id scope)^
-                        "\': Illegal operation on numeric type.")
+        | _ -> error_illegal_optr (get_scope_id scope) "numeric"
     )
 
 (* Get the type of an expression given its scope (procedure),
@@ -476,8 +436,7 @@ and get_expr_type scope = function
             else
                 SYM_INT
         )
-        | _ -> failwith ("Error in proc \'"^(get_scope_id scope)^
-                        "\': invalid unoptr in Ebinop. ")
+        | _ -> error_invalid_operation (get_scope_id scope)
     )
     | Eunop(optr,expr) -> get_expr_type scope expr
 
@@ -490,9 +449,7 @@ and get_elem_type scope (Elem(id,_)) =
 let rec print_all_sts = function
     | _ -> Hashtbl.iter
             (fun scope_id _ -> 
-                (
-                    print_st scope_id
-                )
+                ( print_st scope_id )
             )
             ht_scopes
 
