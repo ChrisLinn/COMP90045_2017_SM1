@@ -211,7 +211,8 @@ and gen_br_init_array scope nslot nreg bounds =
         (* Calculate total number of elements in array *)
         List.iter
             (fun (lo_bound,up_bound) ->
-                ( num := ((up_bound - lo_bound) +1)*(!num) )
+                (* num = (up - lo + 1) * num *)
+                ( num := (up_bound - lo_bound + 1) * !num )
             )
             bounds;
         (* store elements of array *)
@@ -388,6 +389,7 @@ and gen_br_call scope proc_id args =
         gen_call proc_id (* generate instruction for procedure call *)
     )
 
+(* Generate load for value at idxs of array id in scope *)
 and gen_br_expr_array_val scope nreg id idxs =    
     if (is_idxs_all_static idxs) then
         gen_op_static_idx scope nreg "load" id idxs
@@ -397,6 +399,8 @@ and gen_br_expr_array_val scope nreg id idxs =
         gen_binop "load_indirect" nreg nreg
     )
 
+(* Generate load from register for element at idxs of array id
+** at nreg *)
 and gen_br_expr_array_addr scope nreg id idxs =
     let (symkind,symtype,nslot,optn_bounds) =
         Hashtbl.find (get_scope_st scope) id
@@ -413,6 +417,7 @@ and gen_br_expr_array_addr scope nreg id idxs =
         gen_triop "sub_offset" nreg (nreg+1) nreg
     )
 
+(* Generate instruction for operations on static indexing *)
 and gen_op_static_idx scope nreg op_str id idxs =
     let (symkind,symtype,nslot,optn_bounds) =
             Hashtbl.find (get_scope_st scope) id
@@ -426,11 +431,14 @@ and gen_op_static_idx scope nreg op_str id idxs =
             | None -> error_undefined ""
         )
         in match op_str with
+        (* generate specified operation *)
         | "store" -> gen_binop "store" (nslot+static_offset) 0
         | "load" -> gen_binop "load" nreg (nslot+static_offset)
         | _ -> ()
     )
 
+(* Generate dynamic offset *)
+(* Calculate the offset for static indices *)
 and gen_dynamic_offset scope nreg idxs bases bounds =
     match idxs with
     | [] -> error_undefined ""
@@ -486,7 +494,7 @@ and get_offset_bases bounds =
     (
         List.iter
         (fun (lo_bound,up_bound) ->
-            (
+            (   (* base = (up - lo + 1) * last_base *)
                 offset_bases := List.append
                                 [((up_bound - lo_bound + 1)*
                                     (List.hd !offset_bases))]
