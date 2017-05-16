@@ -1,7 +1,7 @@
 (*
 ** File:          snick_codegen.ml
 ** Description:   Module to generate brill code from a parsed snick program.
-** Last Modified: Tue. 16th May 2017 
+** Last Modified: Tue. 17th May 2017 
 ** 
 ** Group name: Mainframe
 ** 
@@ -438,7 +438,6 @@ and gen_op_static_idx scope nreg op_str id idxs =
     )
 
 (* Generate dynamic offset *)
-(* Calculate the offset for static indices *)
 and gen_dynamic_offset scope nreg idxs bases bounds =
     match idxs with
     | [] -> error_undefined ""
