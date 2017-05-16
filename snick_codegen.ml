@@ -79,45 +79,52 @@ and calc_static_offset idxs bases bounds =
 (* Brill program generation *)
 and gen_br_program prog =
     gen_call "main";
-    gen_halt "whatever";
-    gen_br_out_of_bounds "whatever";
-    gen_br_div_by_zero "whatever";
+    gen_halt "";
+    gen_br_out_of_bounds "";
+    gen_br_div_by_zero "";
     List.iter gen_br_proc prog    
 
-(* Create a label for the index out of bound error *)
+(* Create a label and instructions for the index out of bound error *)
 and gen_br_out_of_bounds = function
     | _ ->
     (
         gen_label out_of_bounds_label;
         gen_string_const 0 "\"[FATAL]: array element out of bounds!\\n\"";
         gen_call_builtin "print_string";
-        gen_halt "whatever"
+        gen_halt ""
     )
 
-(* Create a label for the division by zero error *)
+(* Create a label and instructions for the division by zero error *)
 and gen_br_div_by_zero = function
     | _ ->
     (
         gen_label div_by_zero_label;
         gen_string_const 0 "\"[FATAL]: division by zero!\\n\"";
         gen_call_builtin "print_string";
-        gen_halt "whatever"
+        gen_halt ""
     )
 
-(*  *)
+(* Generate a block of brill instructions for a snick procedure *)
 and gen_br_proc ((proc_id,params),proc_body) =
     let scope = Hashtbl.find ht_scopes proc_id
     in
     (
+        (* generate label *)
         gen_proc_label proc_id;
+        (* generate prologue *)
         gen_br_prologue scope params proc_body.decls;
+        (* generate instructions of statments in procedure *)
         gen_br_stmts scope proc_body.stmts;
+        (* generate epilogue *)
         gen_br_epilogue scope            
     )
 
+(* Generate prologue of procedure *)
 and gen_br_prologue scope params decls =
-    gen_comment "prologue";
+    gen_comment "prologue"; (* mark with comment *)
+    (* push this scope to stack *)
     gen_unop "push" (get_scope_nslot scope);
+    (*  *)
     gen_br_params scope 0 params;
     gen_br_decls scope decls;
     
@@ -611,7 +618,7 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
             gen_br_expr scope !lexpr_nreg lexpr
         );
 
-        (*check div_by_0*)
+        (* check div_by_0 *)
         if optr = Op_div then
         (
             if rexpr_type = SYM_REAL then
@@ -636,13 +643,14 @@ and gen_br_expr_binop scope nreg lexpr optr rexpr =
             gen_br_expr_binop_bool
                 scope nreg !lexpr_nreg !rexpr_nreg optr
         else if ((lexpr_type = SYM_REAL) || (rexpr_type = SYM_REAL)) then
-            gen_br_expr_binop_by_type
+            gen_br_expr_binop_numeric
                 "real" nreg !lexpr_nreg !rexpr_nreg optr
         else
-            gen_br_expr_binop_by_type
+            gen_br_expr_binop_numeric
                 "int" nreg !lexpr_nreg !rexpr_nreg optr
     )
 
+(* Get use of register by an expression in scope *)
 and get_reg_usage scope = function
     | Ebool(_) -> 0
     | Eint(_) -> 0
@@ -676,11 +684,11 @@ and get_reg_usage scope = function
                 expr_reg_usage
         )
     ) 
-    | Eelem(elem) ->
+    | Eelem(elem) -> (* other elements *)
     (
         match elem with
         | Elem(id,None) -> 0
-        | Elem(id,Some idxs) ->
+        | Elem(id,Some idxs) -> (* for array *)
         (
             if (is_idxs_all_static idxs) then
                 0
@@ -714,14 +722,16 @@ and get_reg_usage scope = function
         )
     )
 
+(* Generate instruction for snick binary operation of bool types *)
 and gen_br_expr_binop_bool scope nreg lexpr_nreg rexpr_nreg = function
     | Op_or -> gen_triop "or" nreg lexpr_nreg rexpr_nreg
     | Op_and -> gen_triop "and" nreg lexpr_nreg rexpr_nreg
     | Op_eq -> gen_triop "cmp_eq_int" nreg lexpr_nreg rexpr_nreg
     | Op_ne -> gen_triop "cmp_ne_int" nreg lexpr_nreg rexpr_nreg
-    | _ -> failwith "Invalid operator for bool type!"
+    | _ -> error_illegal_optr "" "bool"
 
-and gen_br_expr_binop_by_type type_str nreg lexpr_nreg rexpr_nreg = function
+(* Generate instruction for snick binary operation of numeric types *)
+and gen_br_expr_binop_numeric type_str nreg lexpr_nreg rexpr_nreg = function
     | Op_add -> gen_triop ("add_"^type_str) nreg lexpr_nreg rexpr_nreg
     | Op_sub -> gen_triop ("sub_"^type_str) nreg lexpr_nreg rexpr_nreg
     | Op_mul -> gen_triop ("mul_"^type_str) nreg lexpr_nreg rexpr_nreg
@@ -732,8 +742,9 @@ and gen_br_expr_binop_by_type type_str nreg lexpr_nreg rexpr_nreg = function
     | Op_le -> gen_triop ("cmp_le_"^type_str) nreg lexpr_nreg rexpr_nreg
     | Op_gt -> gen_triop ("cmp_gt_"^type_str) nreg lexpr_nreg rexpr_nreg
     | Op_ge -> gen_triop ("cmp_ge_"^type_str) nreg lexpr_nreg rexpr_nreg
-    | _ -> failwith "Invalid operator for numeric types!"
+    | _ -> error_illegal_optr "" "numeric"
 
+(* Generate instruction for snick unary operation *)
 and gen_br_expr_unop scope nreg optr expr =
     gen_br_expr scope nreg expr;
     let expr_type = get_expr_type scope expr
@@ -751,58 +762,71 @@ and gen_br_expr_unop scope nreg optr expr =
             gen_real_const (nreg+1) 0.0;
             gen_triop "sub_real" nreg (nreg+1) nreg
         )
-        else
-            failwith "invalid optr for unop expr!"
+        else error_invalid_operation ""
     )
 
+(* Generate loading instructions for expressions *)
 and gen_br_expr_id scope nreg id =
     let (symkind,_,nslot,_) = Hashtbl.find (get_scope_st scope) id
     in
     (
         match symkind with
-        | SYM_PARAM_REF ->
+        | SYM_PARAM_REF -> (* if the expression is a ref parameter *)
         (
+            (* load referenced register *)
             gen_binop "load" nreg nslot;
             gen_binop "load_indirect" nreg nreg
         )
         | _ -> gen_binop "load" nreg nslot
     )
 
+(* Append epilogue section of a procedure (scope) to brill program *)
 and gen_br_epilogue scope =
     gen_comment "epilogue";
     gen_unop "pop" (get_scope_nslot scope);
-    gen_return "whatever"
+    gen_return ""
 
+(* Append a comment to brill program *)
 and gen_comment comment =
     brprog := List.append !brprog [BrComment(comment)]
 
+(* Append call procedure instruction to brill program *)
 and gen_call proc_id =
     brprog := List.append !brprog [BrOp(OpCall(proc_id))]
 
-and gen_halt = function
-    | _ -> brprog := List.append !brprog [BrOp(OpHalt)]
+(* Append halt instruction to brill program *)
+and gen_halt _ = 
+    brprog := List.append !brprog [BrOp(OpHalt)]
 
+(* Append procedure name as label to brill program *)
 and gen_proc_label proc_id =
     brprog := List.append !brprog [BrProc(proc_id)]
 
+(* Append a label to brill program *)
 and gen_label nlabel = 
     brprog := List.append !brprog [BrLabel(nlabel)]
 
+(* Append int const declaration to brill program *)
 and gen_int_const nreg int_const =
     brprog := List.append !brprog [BrOp(OpIntConst(nreg,int_const))]
 
+(* Append float const declaration to brill program *)
 and gen_real_const nreg real_const =
     brprog := List.append !brprog [BrOp(OpRealConst(nreg,real_const))]
 
+(* Append string const declaration to brill program *)
 and gen_string_const nreg string_const =
     brprog := List.append !brprog [BrOp(OpStringConst(nreg,string_const))]
 
-and gen_return = function
-    | _ -> brprog := List.append !brprog [BrOp(OpReturn)]
+(* Append return command to brill program *)
+and gen_return _ = 
+    brprog := List.append !brprog [BrOp(OpReturn)]
 
-and gen_debug_stack = function
-    | _ -> brprog := List.append !brprog [BrOp(OpDebugStack)]
+(* Append debug stack to brill program *)
+and gen_debug_stack _ =
+    brprog := List.append !brprog [BrOp(OpDebugStack)]
 
+(* Append unary operation to brill program *)
 and gen_unop op x =
     let line = match op with
                 | "push" -> BrOp(OpPush(x))
@@ -813,6 +837,7 @@ and gen_unop op x =
                 | _ -> failwith ("operation "^op^" not yet supported")
     in brprog := List.append !brprog [line]
 
+(* Append binary operation to brill program *)
 and gen_binop op x1 x2 =
     let line = match op with
                 | "load" -> BrOp(OpLoad(x1,x2))
@@ -827,6 +852,7 @@ and gen_binop op x1 x2 =
                 | _ -> failwith ("operation "^op^" not yet supported")
     in brprog := List.append !brprog [line]
 
+(* Append tri operation to brill program *)
 and gen_triop op x1 x2 x3 =
     let line = match op with
                 | "or" -> BrOp(OpOr(x1,x2,x3))
@@ -855,6 +881,7 @@ and gen_triop op x1 x2 x3 =
                 | _ -> failwith ("operation "^op^" not yet supported")
     in brprog := List.append !brprog [line]
 
+(* Append builtin call to brill program *)
 and gen_call_builtin bltin_func =
     let line = match bltin_func with
                 | "read_int" -> BrBltIn(BltInReadInt)

@@ -67,7 +67,7 @@ let error_arg_count_mismatch scope id =
 let error_undef_proc scope id = 
     failwith ("Call to procedure \'"^id^"\' is undefined in proc: "^scope)
 
-(* illegal operator for variable of type in scope *)
+(* illegal operator for variables of type in scope *)
 let error_illegal_optr scope var_type = 
     failwith ("Error in proc \'"^scope
             	^"\': Illegal operation on type "^var_type^".")

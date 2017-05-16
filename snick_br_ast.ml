@@ -92,6 +92,7 @@ let width = -19
 (* Print lines of brill program *)
 let rec print_prog prog = List.iter print_line prog
 
+(* Print a single line depending on its type *)
 and print_line = function
     | BrProc(proc_id) -> print_br_proc proc_id
     | BrOp(brOp) -> print_br_op brOp
@@ -99,9 +100,11 @@ and print_line = function
     | BrBltIn(brBltIn) -> print_br_bltin brBltIn
     | BrComment(brComment) -> print_br_comment brComment
 
+(* Print procedure name as a label *)
 and print_br_proc proc_id =
     fprintf std_formatter "proc_%s:\n" proc_id
 
+(* Print lines for brill operations *)
 and print_br_op = function
     | OpCall(proc_id) ->
         fprintf std_formatter "%s%*s proc_%s\n"
@@ -236,9 +239,11 @@ and print_br_op = function
         fprintf std_formatter "%s%*s\n"
             indent width "debug_stack"
 
+(* Print a brill label *)
 and print_br_label nlabel =
     fprintf std_formatter "label%d:\n" nlabel
 
+(* Print brill builtin functions *)
 and print_br_bltin = function
     | BltInReadInt ->
         fprintf std_formatter "%s%*s read_int\n"
@@ -262,5 +267,6 @@ and print_br_bltin = function
         fprintf std_formatter "%s%*s print_string\n"
             indent width "call_builtin"
 
+(* Print brill comments *)
 and print_br_comment brComment =
     fprintf std_formatter "# %s\n" brComment
