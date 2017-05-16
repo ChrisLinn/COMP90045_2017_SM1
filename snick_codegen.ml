@@ -811,8 +811,7 @@ and gen_unop op x =
                 | "debug_reg" -> BrOp(OpDebugReg(x))
                 | "debug_slot" -> BrOp(OpDebugSlot(x))
                 | _ -> failwith ("operation "^op^" not yet supported")
-    in
-    brprog := List.append !brprog [line]
+    in brprog := List.append !brprog [line]
 
 and gen_binop op x1 x2 =
     let line = match op with
@@ -826,8 +825,7 @@ and gen_binop op x1 x2 =
                 | "int_to_real" -> BrOp(OpIntToReal(x1,x2))
                 | "not" -> BrOp(OpNot(x1,x2))
                 | _ -> failwith ("operation "^op^" not yet supported")
-    in
-    brprog := List.append !brprog [line]
+    in brprog := List.append !brprog [line]
 
 and gen_triop op x1 x2 x3 =
     let line = match op with
@@ -855,8 +853,7 @@ and gen_triop op x1 x2 x3 =
                 | "cmp_ge_real" -> BrOp(OpCmpGeReal(x1,x2,x3))
                 | "sub_offset" -> BrOp(OpSubOffset(x1,x2,x3))
                 | _ -> failwith ("operation "^op^" not yet supported")
-    in
-    brprog := List.append !brprog [line]
+    in brprog := List.append !brprog [line]
 
 and gen_call_builtin bltin_func =
     let line = match bltin_func with
@@ -869,5 +866,4 @@ and gen_call_builtin bltin_func =
                 | "print_string" -> BrBltIn(BltInPrintString)
                 | _ -> failwith
                         ("bltin_func "^bltin_func^" not yet supported")
-    in
-    brprog := List.append !brprog [line]
+    in brprog := List.append !brprog [line]
