@@ -10,6 +10,7 @@
 !snick_err.ml
 !snick_optimizer.ml
 !snick_analyze.ml
+!snick_br_ast.ml
 !snick_codegen.ml
 !snick.ml
 !snick_ast.ml
