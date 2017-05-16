@@ -55,8 +55,7 @@ and create_scope scope_id params =
 (* Create symbols for procedure arguements *)
 and generate_params_symbols scope params =
     let scope_id = get_scope_id scope
-    in 
-    List.iter (generate_param_symbol scope_id) params
+    in List.iter (generate_param_symbol scope_id) params
 
 (* Create a symbol for a single procedure arguement *)
 and generate_param_symbol scope_id (indc,paramtype,paramid) =
@@ -68,7 +67,7 @@ and generate_param_symbol scope_id (indc,paramtype,paramid) =
     and sym_type = sym_type_from_ast_type paramtype
     in
     (
-        (* Insert symbol with attribues to symbol table *)
+        (* Insert symbol with attribues to symbol table of current scope *)
         Hashtbl.add ht_st paramid (sym_kind,sym_type,nslot,None);
         Hashtbl.replace ht_scopes scopeid 
             (Scope(scopeid,ht_st,params,nslot+1))
@@ -124,10 +123,9 @@ and check_main prog =
             )
             prog
     in
-    match is_there_main with
-    | true -> ()
+    if is_there_main then ()
     (* raise error if main procedure not found *)
-    | false -> error_no_main ""
+    else error_no_main ""
 
 (* Error detection functions *)
 (* Look for errors procedure by procedure *)
@@ -310,10 +308,9 @@ and error_detect_call scope id exprs =
                 params
                 exprs
             in
-            match scan_result with
-            | true -> ()
+            if scan_result then ()
             (* error parameters type mismatch *)
-            | false -> error_arg_type_mismatch (get_scope_id scope) id
+            else error_arg_type_mismatch (get_scope_id scope) id
         )
         with
         (* error incorrect number of parameters *)

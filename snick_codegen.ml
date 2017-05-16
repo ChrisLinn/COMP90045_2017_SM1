@@ -37,6 +37,8 @@ let rec compile prog =
     (* Print brill program *)
     print_prog !brprog
 
+(* Check if indices are static, i.e. all indices are int
+** e.g. A[1,2] *)
 and is_idxs_all_static idxs =
     List.for_all
     (fun idx ->
@@ -46,33 +48,23 @@ and is_idxs_all_static idxs =
     )
     idxs
 
+(* Calculate the offset for static indices *)
 and calc_static_offset idxs bases bounds =
+    let (lo_bound, _) = List.hd bounds in
     match idxs with
     | [] -> error_undefined ""
     | idx::[] ->
     (
         match idx with
-        | Eint(int_idx) ->
-        (
-            match (List.hd bounds) with
-            | (lo_bound,_) ->
-                ( int_idx - lo_bound )
-        )
+        | Eint(int_idx) -> int_idx - lo_bound
         | _ -> error_undefined ""
     )
     | idx::idxs_tail ->
     (
+        let offset = calc_static_offset 
+                        (idxs_tail) (List.tl bases) (List.tl bounds) in
         match idx with
-        | Eint(int_idx) ->
-        (
-            match (List.hd bounds) with
-            | (lo_bound,_) ->
-            (
-                (int_idx - lo_bound) * (List.hd bases) +
-                    calc_static_offset
-                        (idxs_tail) (List.tl bases) (List.tl bounds)
-            )
-        )
+        | Eint(int_idx) -> (int_idx - lo_bound) * (List.hd bases) + offset
         | _ -> error_undefined ""
     )
 
@@ -124,10 +116,12 @@ and gen_br_prologue scope params decls =
     gen_comment "prologue"; (* mark with comment *)
     (* push this scope to stack *)
     gen_unop "push" (get_scope_nslot scope);
-    (*  *)
+    (* store reference to procedure parameters *)
     gen_br_params scope 0 params;
+    (* store declared variables in scope *)
     gen_br_decls scope decls;
     
+(* Generate instruction to store brill procedure parameters *)
 and gen_br_params scope cnt = function
     | [] -> ()
     | x::xs ->
@@ -136,19 +130,21 @@ and gen_br_params scope cnt = function
             gen_br_params scope (cnt+1) xs
         )
 
+(* Generate a intruction to save a parameter to register *)
 and gen_br_param scope cnt (_, _, param_id) =
     let sym = Hashtbl.find (get_scope_st scope) param_id
-    in
-    match sym with
+    in match sym with
     | (_,_,nslot,_) -> gen_binop "store" nslot cnt
     
+(* Generate instructions for declaration in scope *)
+(* Declared bool value will be evaluate in runtime *)
 and gen_br_decls scope decls =
-    let cnt = ref 0
-    and ints_flag = ref false
-    and int_reg = ref 0
-    and reals_flag = ref false
-    and real_reg = ref 0
-    and reg = ref 0
+    let cnt = ref 0             (* count of declarations in scope *)
+    and ints_flag = ref false   (* if int or bool has been declared *)
+    and int_reg = ref 0         (* register for int variable *)
+    and reals_flag = ref false  (* if float has been declared *)
+    and real_reg = ref 0        (* register for float variable *)
+    and reg = ref 0             (* current assigned register *)
     in
     (
         List.iter
@@ -159,13 +155,16 @@ and gen_br_decls scope decls =
                     in
                     (
                         if (not !reals_flag) && (sym_type = SYM_REAL) then
-                        (
+                        (   (* if current declaration is for float, and 
+                            ** there hasn't been a float declaration before *)
                             reals_flag := true;
                             real_reg := !cnt;
                             incr cnt
                         )
                         else if (not !ints_flag) then
-                        (
+                        (   (* if current declaration is for int or bool,
+                            ** and there hasn't been a int or float 
+                            ** declaration before *)
                             ints_flag := true;
                             int_reg := !cnt;
                             incr cnt
@@ -175,10 +174,10 @@ and gen_br_decls scope decls =
             )
             decls;
 
-        if !ints_flag then
-            gen_int_const !int_reg 0;
-        if !reals_flag then
-            gen_real_const !real_reg 0.0;
+        (* initialize int to 0 and float false *)
+        if !ints_flag then gen_int_const !int_reg 0;
+        (* initialize float to 0.0 *)
+        if !reals_flag then gen_real_const !real_reg 0.0;
 
         List.iter
             (fun (_, Variable(id,_)) ->
@@ -187,14 +186,16 @@ and gen_br_decls scope decls =
                             Hashtbl.find (get_scope_st scope) id
                     in
                     (
-                        if sym_type = SYM_REAL then
-                            reg := !real_reg
-                        else
-                            reg := !int_reg;
+                        (* refer to float register if symbol is float *)
+                        if sym_type = SYM_REAL then reg := !real_reg
+                        (* refer to int register if symbol is int or bool *)
+                        else reg := !int_reg;
 
+                        (* generate instruction to store declared variable *)
                         match optn_bounds with
                         | None -> gen_binop "store" nslot !reg
-                        | Some bounds ->
+                        (* generate instructions for array declaration *)
+                        | Some bounds -> 
                             gen_br_init_array scope nslot !reg bounds
                     )
                 )
@@ -202,24 +203,29 @@ and gen_br_decls scope decls =
             decls;
     )
 
+(* Generate instruction for array initialization *)
 and gen_br_init_array scope nslot nreg bounds =
-    let num = ref 1
+    let num = ref 1 (* number of element in array *)
     in
     (
+        (* Calculate total number of elements in array *)
         List.iter
-        (fun (lo_bound,up_bound) ->
-            ( num := ((up_bound - lo_bound) +1)*(!num) )
-        )
-        bounds;
-
+            (fun (lo_bound,up_bound) ->
+                ( num := ((up_bound - lo_bound) +1)*(!num) )
+            )
+            bounds;
+        (* store elements of array *)
         for offset = 0 to (!num-1) do
             gen_binop "store" (nslot+offset) nreg
         done
     )
 
+(* Generate instructions for procedure statements *)
 and gen_br_stmts scope stmts =
     List.iter (gen_br_stmt scope) stmts
 
+(* Generate instruction for a single statements,
+** depending on statement type *)
 and gen_br_stmt scope stmt = match stmt with
     | Assign(elem,expr) -> gen_br_assign scope elem expr 
     | Read(elem) -> gen_br_read scope elem 
@@ -230,8 +236,9 @@ and gen_br_stmt scope stmt = match stmt with
         gen_br_ifthenelse scope expr then_stmts else_stmts 
     | While(expr,stmts) -> gen_br_while scope expr stmts
 
+(* Generate instruction for assignment *)
 and gen_br_assign scope (Elem(id,optn_idxs)) expr =
-    gen_comment "assignment";
+    gen_comment "assignment"; (* mark with comment *)
     let (symkind,symtype,nslot,optn_bounds) = 
         Hashtbl.find (get_scope_st scope) id
     and expr_type = get_expr_type scope expr
@@ -239,31 +246,16 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
     (
         gen_br_expr scope 0 expr;
 
+        (* type casting from int to float *)
         if ((symtype = SYM_REAL) && (expr_type = SYM_INT)) then
             gen_binop "int_to_real" 0 0;
 
         match optn_idxs with
-        | Some idxs ->
+        | Some idxs -> (* if LHS of assign is an element of array *)
         (
-            match (is_idxs_all_static idxs) with
-            | true ->
-            (
-                let (symkind,symtype,nslot,optn_bounds) =
-                        Hashtbl.find (get_scope_st scope) id
-                in
-                (
-                    let static_offset =
-                    ( 
-                        match optn_bounds with
-                        | Some bounds -> calc_static_offset idxs
-                                            (get_offset_bases bounds) bounds
-                        | None -> failwith "Impossible error."
-                    )
-                    in
-                    gen_binop "store" (nslot+static_offset) 0
-                )
-            )
-            | false ->
+            if (is_idxs_all_static idxs) then
+                gen_op_static_idx scope 0 "store" id idxs
+            else
             (
                 gen_br_expr_array_addr scope 1 id idxs;
                 gen_binop "store_indirect" 1 0
@@ -271,87 +263,80 @@ and gen_br_assign scope (Elem(id,optn_idxs)) expr =
         )
         | None ->
         (
+            (* load register of LHS if LHS is a ref parameter
+            ** of current scope, then rewites the register *)
             if symkind = SYM_PARAM_REF then
             (
                 gen_binop "load" 1 nslot;
                 gen_binop "store_indirect" 1 0
             )
-            else
-                gen_binop "store" nslot 0
+            (* else store the new value *)
+            else gen_binop "store" nslot 0
         )
     )
 
+(* Generate instructions for snick read operation *)
 and gen_br_read scope (Elem(id,optn_idxs)) =
-    gen_comment "read";
+    gen_comment "read"; (* mark with comment *)
     let (symkind,symtype,nslot,optn_bounds) 
         = Hashtbl.find (get_scope_st scope) id
     in
     (
-        (
+        (   (* call builtin read depending on type of
+            ** element being read *)
             match symtype with
             | SYM_BOOL -> gen_call_builtin "read_bool"
             | SYM_INT -> gen_call_builtin "read_int"
             | SYM_REAL -> gen_call_builtin "read_real"
         );
         match optn_idxs with
-        | Some idxs ->
+        | Some idxs -> (* if LHS of assign is an element of array *)
         (
-            match (is_idxs_all_static idxs) with
-            | true ->
-            (
-                let (symkind,symtype,nslot,optn_bounds) =
-                        Hashtbl.find (get_scope_st scope) id
-                in
-                (
-                    let static_offset =
-                    ( 
-                        match optn_bounds with
-                        | Some bounds -> calc_static_offset idxs
-                                            (get_offset_bases bounds) bounds
-                        | None -> failwith "Impossible error."
-                    )
-                    in
-                    gen_binop "store" (nslot+static_offset) 0
-                )
-            )
-            | false ->
+            if (is_idxs_all_static idxs) then
+                gen_op_static_idx scope 0 "store" id idxs
+            else
             (
                 gen_br_expr_array_addr scope 1 id idxs;
                 gen_binop "store_indirect" 1 0
             )
         )
         | None ->
-        (
+        (   (* load register of LHS if LHS is a ref parameter
+            ** of current scope, then rewites the register *)
              if symkind = SYM_PARAM_REF then
             (
                 gen_binop "load" 1 nslot;
                 gen_binop "store_indirect" 1 0
             )
-            else
-                gen_binop "store" nslot 0
+            (* else store the new value *)
+            else gen_binop "store" nslot 0
         )
     )
 
+(* Generate instructions for snick write operation *)
 and gen_br_write scope write_expr = 
     gen_comment "write";
     match write_expr with
     | Expr(expr) ->
     (
-        gen_br_expr scope 0 expr;
+        (* first determine what to be written *)
+        gen_br_expr scope 0 expr; 
+        (* call builtin write depending on type of
+        ** element being read *)
         match (get_expr_type scope expr) with
         | SYM_BOOL -> gen_call_builtin "print_bool"
         | SYM_INT -> gen_call_builtin "print_int"
         | SYM_REAL -> gen_call_builtin "print_real"
     )
-    | String(string_const) ->
+    | String(string_const) -> (* write string *)
     (
         gen_string_const 0 string_const;
         gen_call_builtin "print_string"
     )
 
-
+(* Generate instructions for snick procedure call *)
 and gen_br_call scope proc_id args =
-    gen_comment "proc call";
+    gen_comment "proc call"; (* mark with comment *)
     let params = get_scope_params (Hashtbl.find ht_scopes proc_id)
     and nreg = ref 0
     in
@@ -361,7 +346,7 @@ and gen_br_call scope proc_id args =
                 (
                     (
                         match param with
-                        | (Ref,_,_) ->
+                        | (Ref,_,_) -> (* for ref parameter *)
                         (
                             match (strip_paren arg) with
                             | Eelem(Elem(id,optn_idxs)) ->
@@ -384,17 +369,14 @@ and gen_br_call scope proc_id args =
                                     )
                                 )
                             )
-                            | _ -> 
-                                failwith ("Weird errpr in call_"^proc_id^
-                                        " in proc_"^(get_scope_id scope)^
-                                        ": can't pass non-elem to a ref. "^
-                                        "Should have been reported.")
+                            | _ -> error_undefined ""
                         )
-                        | (Val,param_type,_) ->
+                        | (Val,param_type,_) -> (* for val parameter *)
                         (
                             gen_br_expr scope !nreg arg;
+                            (* type cast from int to real *)
                             if (((get_expr_type scope arg) = SYM_INT)
-                            && (param_type = Float)) then
+                                    && (param_type = Float)) then
                                 gen_binop "int_to_real" !nreg !nreg
                         )
                     );
@@ -403,29 +385,13 @@ and gen_br_call scope proc_id args =
             )
             args
             params;
-        gen_call proc_id
+        gen_call proc_id (* generate instruction for procedure call *)
     )
 
 and gen_br_expr_array_val scope nreg id idxs =    
-    match (is_idxs_all_static idxs) with
-    | true ->
-    (
-        let (symkind,symtype,nslot,optn_bounds) =
-                Hashtbl.find (get_scope_st scope) id
-        in
-        (
-            let static_offset =
-            ( 
-                match optn_bounds with
-                | Some bounds -> calc_static_offset idxs
-                                    (get_offset_bases bounds) bounds
-                | None -> failwith "Impossible error."
-            )
-            in
-            gen_binop "load" nreg (nslot+static_offset)
-        )
-    )
-    | false ->
+    if (is_idxs_all_static idxs) then
+        gen_op_static_idx scope nreg "load" id idxs
+    else
     (
         gen_br_expr_array_addr scope nreg id idxs;
         gen_binop "load_indirect" nreg nreg
@@ -441,24 +407,33 @@ and gen_br_expr_array_addr scope nreg id idxs =
             | Some bounds -> 
                 gen_dynamic_offset scope nreg idxs 
                     (get_offset_bases bounds) bounds
-            | _ ->
-                failwith ("Impossible error. "^
-                            id^" should be an array in proc: "^
-                            (get_scope_id scope))
+            | _ -> error_undefined ""
         );
         gen_binop "load_address" (nreg+1) nslot;
         gen_triop "sub_offset" nreg (nreg+1) nreg
     )
 
+and gen_op_static_idx scope nreg op_str id idxs =
+    let (symkind,symtype,nslot,optn_bounds) =
+            Hashtbl.find (get_scope_st scope) id
+    in
+    (
+        let static_offset =
+        ( 
+            match optn_bounds with
+            | Some bounds -> calc_static_offset idxs
+                                (get_offset_bases bounds) bounds
+            | None -> error_undefined ""
+        )
+        in match op_str with
+        | "store" -> gen_binop "store" (nslot+static_offset) 0
+        | "load" -> gen_binop "load" nreg (nslot+static_offset)
+        | _ -> ()
+    )
 
-(*
-    offset idxs bases = (idx - lo_bound) * base + (offset idxs.tl bases.tl)
-    except that: offset idx base = idx - lo_bound
-*)
 and gen_dynamic_offset scope nreg idxs bases bounds =
     match idxs with
-    | [] -> failwith ("Impossible error in proc: "^
-                        (get_scope_id scope))
+    | [] -> error_undefined ""
     | idx::[] ->
     (
         match (List.hd bounds) with
@@ -504,7 +479,7 @@ and gen_dynamic_offset scope nreg idxs bases bounds =
         )
     )
 
-
+(* Get a list of starting slot of bounds of an array *)
 and get_offset_bases bounds =
     let offset_bases = ref [1]
     in
@@ -523,20 +498,23 @@ and get_offset_bases bounds =
         !offset_bases
     )
 
+(* Generate instruction for if-then statement *)
 and gen_br_ifthen scope expr stmts =
-    gen_comment "if";
+    gen_comment "if"; (* mark with comment *)
     let after_label = !next_label
     in
     (
         incr next_label;
-        gen_br_expr scope 0 expr;
+        gen_br_expr scope 0 expr; (* guard expression *)
+        (* exist statment if false *)
         gen_binop "branch_on_false" 0 after_label;
         gen_br_stmts scope stmts;
         gen_label after_label
     )
 
+(* Generate instruction for if-then-else statement *)
 and gen_br_ifthenelse scope expr then_stmts else_stmts =
-    gen_comment "if";
+    gen_comment "if"; (* mark with comment *)
     let else_label = !next_label
     in
     (
@@ -545,9 +523,11 @@ and gen_br_ifthenelse scope expr then_stmts else_stmts =
         in
         (
             incr next_label;
-            gen_br_expr scope 0 expr;
+            gen_br_expr scope 0 expr; (* guard expression *)
+            (* to else if false *)
             gen_binop "branch_on_false" 0 else_label;
             gen_br_stmts scope then_stmts;
+            (* exit statement when finished then block *)
             gen_unop "branch_uncond" after_label;
             gen_label else_label;
             gen_br_stmts scope else_stmts;
@@ -555,8 +535,9 @@ and gen_br_ifthenelse scope expr then_stmts else_stmts =
         )
     )
 
+(* Generate instruction for while statement *)
 and gen_br_while scope expr stmts =
-    gen_comment "while";
+    gen_comment "while"; (* mark with comment *)
     let begin_label = !next_label
     in
     (
@@ -565,21 +546,23 @@ and gen_br_while scope expr stmts =
         in
         (
             incr next_label;
-            gen_label begin_label;
-            gen_br_expr scope 0 expr;
+            gen_label begin_label; (* start while *)
+            gen_br_expr scope 0 expr; (* guard expression *)
+            (* exit while if guard is false *)
             gen_binop "branch_on_false" 0 after_label;
             gen_br_stmts scope stmts;
+            (* back to start of loop *)
             gen_unop "branch_uncond" begin_label;
-            gen_label after_label
+            gen_label after_label (* exit while *)
         )
     )
 
+(* Generate instruction for expressions *)
 and gen_br_expr scope nreg = function
     | Ebool(bool_const) ->
-    (
-        match bool_const with
-         | true -> gen_int_const nreg 1
-         | false -> gen_int_const nreg 0
+    (   (* evaluate bool constant to int *)
+        if bool_const then gen_int_const nreg 1
+        else gen_int_const nreg 0
     )
     | Eint(int_const) -> gen_int_const nreg int_const
     | Efloat(float_const) -> gen_real_const nreg float_const
@@ -588,19 +571,20 @@ and gen_br_expr scope nreg = function
         gen_br_expr_binop scope nreg lexpr optr rexpr
     | Eunop(optr,expr) -> gen_br_expr_unop scope nreg optr expr
     | Eelem(elem) ->
-    (
+    (   (* variable or array indexing *)
         match elem with
         | Elem(id,None) -> gen_br_expr_id scope nreg id
         | Elem(id,Some idxs) -> gen_br_expr_array_val scope nreg id idxs
     )
 
+(* Generate instruction for snick binary operation *)
 and gen_br_expr_binop scope nreg lexpr optr rexpr =
-    let lexpr_type = get_expr_type scope lexpr
-    and rexpr_type = get_expr_type scope rexpr
-    and lexpr_reg_usage = get_reg_usage scope lexpr
-    and rexpr_reg_usage = get_reg_usage scope rexpr
-    and lexpr_nreg = ref 0
-    and rexpr_nreg = ref 0
+    let lexpr_type = get_expr_type scope lexpr      (* LHS type *)
+    and rexpr_type = get_expr_type scope rexpr      (* RHS type *)
+    and lexpr_reg_usage = get_reg_usage scope lexpr (* LHS register *)
+    and rexpr_reg_usage = get_reg_usage scope rexpr (* RHS register *)
+    and lexpr_nreg = ref 0  (* new register for LHS *)
+    and rexpr_nreg = ref 0  (* new register for RHS *)
     in
     (
         if lexpr_reg_usage >= rexpr_reg_usage then
@@ -667,10 +651,8 @@ and get_reg_usage scope = function
         let reg_usage_total = max max_count (min_count+1)
         in
         (
-            if optr = Op_div then
-                (max reg_usage_total 2)
-            else
-                reg_usage_total
+            if optr = Op_div then (max reg_usage_total 2)
+            else reg_usage_total
         )
     )
     | Eunop(optr,expr) ->
@@ -678,10 +660,8 @@ and get_reg_usage scope = function
         let expr_reg_usage = get_reg_usage scope expr
         in
         (
-            if optr = Op_minus then
-                (max expr_reg_usage 1)
-            else
-                expr_reg_usage
+            if optr = Op_minus then (max expr_reg_usage 1)
+            else expr_reg_usage
         )
     ) 
     | Eelem(elem) -> (* other elements *)
