@@ -400,7 +400,7 @@ and gen_br_expr_array_val scope nreg id idxs =
     )
 
 (* Generate load from register for element at idxs of array id
-** at nreg *)
+** at nreg, if the indexings are not integers, i.e. requires evaluation *)
 and gen_br_expr_array_addr scope nreg id idxs =
     let (symkind,symtype,nslot,optn_bounds) =
         Hashtbl.find (get_scope_st scope) id
@@ -437,7 +437,9 @@ and gen_op_static_idx scope nreg op_str id idxs =
         | _ -> ()
     )
 
-(* Generate dynamic offset *)
+(* Generate intruction for offset of an indexins of an array,
+** if the indexing is not integers, i.e. requires evaluation
+** of expression *)
 and gen_dynamic_offset scope nreg idxs bases bounds =
     match idxs with
     | [] -> error_undefined ""
@@ -446,6 +448,7 @@ and gen_dynamic_offset scope nreg idxs bases bounds =
         match (List.hd bounds) with
         | (lo_bound,up_bound) ->
         (
+            (* evaluate indexing expression *)
             gen_br_expr scope nreg idx;
 
             gen_int_const (nreg+1) lo_bound;
