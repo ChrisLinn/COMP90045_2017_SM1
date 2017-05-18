@@ -1,7 +1,7 @@
 (*
 ** File:          snick_codegen.ml
 ** Description:   Module to generate brill code from a parsed snick program.
-** Last Modified: Tue. 17th May 2017 
+** Last Modified: Wed. 18th May 2017 
 ** 
 ** Group name: Mainframe
 ** 
@@ -81,7 +81,8 @@ and gen_br_out_of_bounds = function
     | _ ->
     (
         gen_label out_of_bounds_label;
-        gen_string_const 0 "\"[FATAL]: array element out of bounds!\\n\"";
+        gen_string_const 0 "\"ARRAY INDEXING OUT OF BOUND\\n\"";
+        (* gen_string_const 0 "\"[FATAL]: array element out of bounds!\\n\""; *)
         gen_call_builtin "print_string";
         gen_halt ""
     )
@@ -91,7 +92,8 @@ and gen_br_div_by_zero = function
     | _ ->
     (
         gen_label div_by_zero_label;
-        gen_string_const 0 "\"[FATAL]: division by zero!\\n\"";
+        gen_string_const 0 "\"DIVIDE BY ZERO\\n\"";
+        (* gen_string_const 0 "\"[FATAL]: division by zero!\\n\""; *)
         gen_call_builtin "print_string";
         gen_halt ""
     )
