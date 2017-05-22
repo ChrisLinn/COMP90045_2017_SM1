@@ -1,0 +1,2933 @@
+============================================
+vis/zequnm.out
+17:34:10_Monday_22_May_2017
+============================================
+COMP90045 project - Test of semantic analysis and code generation.
+User:  zequnm
+
+--- Makefile found ---
+--- Running Makefile ---
+ocamlopt  -g -c snick_ast.ml
+ocamlyacc snick_parse.mly
+ocamlc  -g -c snick_ast.ml
+ocamlc  -c snick_parse.mli
+ocamlopt  -g -c snick_parse.ml
+ocamllex snick_lex.mll
+96 states, 5679 transitions, table size 23292 bytes
+ocamlopt  -g -c snick_lex.ml
+ocamlopt  -g -c snick_pprint.ml
+ocamlopt  -g -c snick_br_ast.ml
+ocamlopt  -g -c snick_symbol.ml
+ocamlopt  -g -c snick_err.ml
+ocamlopt  -g -c snick_optimizer.ml
+ocamlopt  -g -c snick_analyze.ml
+ocamlopt  -g -c snick_codegen.ml
+ocamlopt  -g -c snick.ml
+ocamlopt -g -o snick snick_ast.cmx snick_lex.cmx snick_parse.cmx snick_pprint.cmx snick_br_ast.cmx snick_symbol.cmx snick_err.cmx snick_optimizer.cmx snick_analyze.cmx snick_codegen.cmx snick.cmx
+
+--- Succeeded ---
+
+
+PLEASE NOTE: These cases are very basic and are not intended to be
+comprehensive. Passing these does not guarantee a correct compiler!
+
+--- Running basic test of each milestone ---
+Milestone 1: Expressions and write statement
+PASS
+Milestone 2: Read and assignment statements
+PASS
+Milestone 3: If and while statements
+PASS
+Milestone 4: Procedure arguments and calls (by-value only)
+PASS
+Milestone 5: By-reference arguments
+PASS
+Milestone 6: Structures
+PASS
+Milestone 7: Semantic errors
+PASS:
+Compiler output:
+Fatal error: exception Failure("Semantic Error: Arguement types mismatch for calling proc 'p' in proc: main")
+
+--- Running simple tests ---
+vis/*.snick)
+bell:               PASS
+gcd:                PASS
+hail:               PASS
+power:              PASS
+sort:               PASS
+stddev:             PASS
+trig:               PASS
+tute_question_38:   PASS
+tute_question_40:   PASS
+tute_question_41:   PASS
+tute_question_42:   PASS
+11/11 cases passed
+
+--- Running peer-contributed tests ---
+(contributed/*.snick)
+#classTeamName=metajoke: PASS
+123:                PASS
+GGWP:               PASS
+Mainframe:          PASS
+OHarrytheCaml:      PASS
+PSZ:                PASS
+Shimada Brothers:   PASS
+SuperCaptain:       PASS
+candidate:          PASS
+cantparseus:        PASS
+eclipse:            PASS
+nechiko:            PASS
+snark:              PASS
+teamFoobar:         PASS
+zz:                 PASS
+15/15 cases passed
+
+
+--- End of testing for zequnm ---\n
+
+============================================
+src/snick_br_ast.ml
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick_br_ast.ml
+** Description:   Specification of the abstract syntax tree for Snick,
+**                also provides functions for printin out a brill program.
+** Last Modified: Mon. 15th May 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+open Format
+
+(* Available operations in Brill *)
+type opType =
+    | OpCall of string
+    | OpHalt
+    | OpReturn
+    | OpIntConst of (int * int)
+    | OpRealConst of (int * float)
+    | OpStringConst of (int * string)
+    | OpDebugReg of int
+    | OpDebugSlot of int
+    | OpDebugStack
+    (*unop*)
+    | OpPush of int
+    | OpPop of int
+    | OpBranchUncond of int
+    (*binop*)
+    | OpLoad of (int * int)
+    | OpStore of (int * int)
+    | OpLoadAddress of (int * int)
+    | OpLoadIndirect of (int * int)
+    | OpStoreIndirect of (int * int)
+    | OpBranchOnTrue of (int * int)
+    | OpBranchOnFalse of (int * int)
+    | OpIntToReal of (int * int)
+    | OpNot of (int * int)
+    (*triop*)
+    | OpOr of (int * int * int)
+    | OpAnd of (int * int * int)
+    | OpAddInt of (int * int * int)
+    | OpSubInt of (int * int * int)
+    | OpMulInt of (int * int * int)
+    | OpDivInt of (int * int * int)
+    | OpCmpEqInt of (int * int * int)
+    | OpCmpNeInt of (int * int * int)
+    | OpCmpLtInt of (int * int * int)
+    | OpCmpLeInt of (int * int * int)
+    | OpCmpGtInt of (int * int * int)
+    | OpCmpGeInt of (int * int * int)
+    | OpAddReal of (int * int * int)
+    | OpSubReal of (int * int * int)
+    | OpMulReal of (int * int * int)
+    | OpDivReal of (int * int * int)
+    | OpCmpEqReal of (int * int * int)
+    | OpCmpNeReal of (int * int * int)
+    | OpCmpLtReal of (int * int * int)
+    | OpCmpLeReal of (int * int * int)
+    | OpCmpGtReal of (int * int * int)
+    | OpCmpGeReal of (int * int * int)
+    | OpSubOffset of (int * int * int)
+
+(* Types of builtin calls *)
+type bltInType =
+    | BltInReadInt
+    | BltInReadReal
+    | BltInReadBool
+    | BltInPrintInt
+    | BltInPrintReal
+    | BltInPrintBool
+    | BltInPrintString
+
+(* Representation of a line in a brill program *)
+type brLine =
+    | BrProc of string
+    | BrOp of opType
+    | BrLabel of int
+    | BrBltIn of bltInType
+    | BrComment of string
+
+type brLines = brLine list option
+
+type brProg = brLines
+
+let indent = "    "
+let width = -19
+
+(* Print lines of brill program *)
+let rec print_prog prog = List.iter print_line prog
+
+(* Print a single line depending on its type *)
+and print_line = function
+    | BrProc(proc_id) -> print_br_proc proc_id
+    | BrOp(brOp) -> print_br_op brOp
+    | BrLabel(nlabel) -> print_br_label nlabel
+    | BrBltIn(brBltIn) -> print_br_bltin brBltIn
+    | BrComment(brComment) -> print_br_comment brComment
+
+(* Print procedure name as a label *)
+and print_br_proc proc_id =
+    fprintf std_formatter "proc_%s:\n" proc_id
+
+(* Print lines for brill operations *)
+and print_br_op = function
+    | OpCall(proc_id) ->
+        fprintf std_formatter "%s%*s proc_%s\n"
+            indent width "call" proc_id
+    | OpHalt ->
+        fprintf std_formatter "%shalt\n"
+            indent
+    | OpPush(frame_size) ->
+        fprintf std_formatter "%s%*s %d\n"
+            indent width "push_stack_frame" frame_size
+    | OpPop(frame_size) ->
+        fprintf std_formatter "%s%*s %d\n"
+            indent width "pop_stack_frame" frame_size
+    | OpBranchUncond(nlabel) ->
+        fprintf std_formatter "%s%*s label%d\n"
+            indent width "branch_uncond" nlabel
+    | OpLoad(nreg,nslot) ->
+        fprintf std_formatter "%s%*s r%d, %d\n"
+            indent width "load" nreg nslot
+    | OpStore(nslot,nreg) ->
+        fprintf std_formatter "%s%*s %d, r%d\n"
+            indent width "store" nslot nreg
+    | OpLoadAddress(nreg,nslot) ->
+        fprintf std_formatter "%s%*s r%d, %d\n"
+            indent width "load_address" nreg nslot
+    | OpLoadIndirect(nreg1,nreg2) ->
+        fprintf std_formatter "%s%*s r%d, r%d\n"
+            indent width "load_indirect" nreg1 nreg2
+    | OpStoreIndirect(nreg1,nreg2) ->
+        fprintf std_formatter "%s%*s r%d, r%d\n"
+            indent width "store_indirect" nreg1 nreg2
+    | OpBranchOnTrue(nreg,nlabel) ->
+        fprintf std_formatter "%s%*s r%d, label%d\n"
+            indent width "branch_on_true" nreg nlabel
+    | OpBranchOnFalse(nreg,nlabel) ->
+        fprintf std_formatter "%s%*s r%d, label%d\n"
+            indent width "branch_on_false" nreg nlabel
+    | OpIntToReal(nreg_dest,nreg_scr) ->
+        fprintf std_formatter "%s%*s r%d, r%d\n"
+            indent width "int_to_real" nreg_dest nreg_scr
+    | OpNot(nreg_dest,nreg_scr) ->
+        fprintf std_formatter "%s%*s r%d, r%d\n"
+            indent width "not" nreg_dest nreg_scr
+    | OpOr(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "or" nreg_dest nreg1 nreg2
+    | OpAnd(nreg_dest,nreg1,nreg2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "and" nreg_dest nreg1 nreg2
+    | OpAddInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "add_int" nreg_dest nreg_int1 nreg_int2
+    | OpSubInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "sub_int" nreg_dest nreg_int1 nreg_int2
+    | OpMulInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "mul_int" nreg_dest nreg_int1 nreg_int2
+    | OpDivInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "div_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpEqInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_eq_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpNeInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_ne_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpLtInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_lt_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpLeInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_le_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpGtInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_gt_int" nreg_dest nreg_int1 nreg_int2
+    | OpCmpGeInt(nreg_dest,nreg_int1,nreg_int2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_ge_int" nreg_dest nreg_int1 nreg_int2
+    | OpAddReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "add_real" nreg_dest nreg_real1 nreg_real2
+    | OpSubReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "sub_real" nreg_dest nreg_real1 nreg_real2
+    | OpMulReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "mul_real" nreg_dest nreg_real1 nreg_real2
+    | OpDivReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "div_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpEqReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_eq_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpNeReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_ne_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpLtReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_lt_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpLeReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_le_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpGtReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_gt_real" nreg_dest nreg_real1 nreg_real2
+    | OpCmpGeReal(nreg_dest,nreg_real1,nreg_real2) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "cmp_ge_real" nreg_dest nreg_real1 nreg_real2
+    | OpSubOffset(nreg_dest,nreg_addr,nreg_offset) ->
+        fprintf std_formatter "%s%*s r%d, r%d, r%d\n"
+            indent width "sub_offset" nreg_dest nreg_addr nreg_offset
+    | OpReturn ->
+        fprintf std_formatter "%sreturn\n"
+            indent
+    | OpIntConst(nreg,int_const) ->
+        fprintf std_formatter "%s%*s r%d, %d\n"
+            indent width "int_const" nreg int_const
+    | OpRealConst(nreg,real_const) ->
+        fprintf std_formatter "%s%*s r%d, %f\n"
+            indent width "real_const" nreg real_const
+    | OpStringConst(nreg,string_const) ->
+        fprintf std_formatter "%s%*s r%d, %s\n"
+            indent width "string_const" nreg string_const
+    | OpDebugReg(nreg) ->
+        fprintf std_formatter "%s%*s r%d\n"
+            indent width "debug_reg" nreg
+    | OpDebugSlot(nslot) ->
+        fprintf std_formatter "%s%*s %d\n"
+            indent width "debug_slot" nslot
+    | OpDebugStack ->
+        fprintf std_formatter "%s%*s\n"
+            indent width "debug_stack"
+
+(* Print a brill label *)
+and print_br_label nlabel =
+    fprintf std_formatter "label%d:\n" nlabel
+
+(* Print brill builtin functions *)
+and print_br_bltin = function
+    | BltInReadInt ->
+        fprintf std_formatter "%s%*s read_int\n"
+            indent width "call_builtin"
+    | BltInReadReal ->
+        fprintf std_formatter "%s%*s read_real\n"
+            indent width "call_builtin"
+    | BltInReadBool ->
+        fprintf std_formatter "%s%*s read_bool\n"
+            indent width "call_builtin"
+    | BltInPrintInt ->
+        fprintf std_formatter "%s%*s print_int\n"
+            indent width "call_builtin"
+    | BltInPrintReal ->
+        fprintf std_formatter "%s%*s print_real\n"
+            indent width "call_builtin"
+    | BltInPrintBool ->
+        fprintf std_formatter "%s%*s print_bool\n"
+            indent width "call_builtin"
+    | BltInPrintString ->
+        fprintf std_formatter "%s%*s print_string\n"
+            indent width "call_builtin"
+
+(* Print brill comments *)
+and print_br_comment brComment =
+    fprintf std_formatter "# %s\n" brComment
+============================================
+src/snick_pprint.ml
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick_pprint.ml
+** Description:   Pretty-printer converts from snick source 
+**                code to well-formed style.
+** Last Modified: Sun. 9th April 2017
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+open Snick_ast
+open Format
+
+(* Print program as list of procedures. *)
+let rec print_program fmtr prog = print_procs fmtr prog
+
+(* Print list of procedures. *)
+and print_procs fmtr = function
+    | [] -> ()
+    | x::[] -> fprintf fmtr "%a@," print_proc x
+    | x::xs -> fprintf fmtr "%a@,%a" print_proc x print_procs xs
+
+(* Print a single procedure. *)
+and print_proc fmtr (header, body) =
+    fprintf fmtr "@[<v>proc %a@;<0 4>@[<v>%a@]@,end@]@."
+                print_proc_header header print_proc_body body
+
+(* Print procedure header. *)
+and print_proc_header fmtr (ident, params) =
+    fprintf fmtr "%s (%a)" ident print_params params
+
+(* Print the list of parameters in header. *)
+and print_params fmtr = function
+    | [] -> ()
+    | x :: [] -> fprintf fmtr "%a" print_param x
+    | x :: xs -> fprintf fmtr "%a, %a" print_param x print_params  xs
+
+(* Print a single procedure parameter. *)
+and print_param fmtr (indicator, param_type, ident) =
+    fprintf fmtr "%a %a %s" 
+        print_param_indc indicator print_type param_type ident
+
+(* Print the indicator of a procedure parameter. *)
+and print_param_indc fmtr = function
+    | Val -> fprintf fmtr "%s" "val"
+    | Ref -> fprintf fmtr "%s" "ref"
+
+(* Print the type of a procedure parameter. *)
+and print_type fmtr = function
+    | Bool -> fprintf fmtr "%s" "bool"
+    | Int -> fprintf fmtr "%s" "int"
+    | Float -> fprintf fmtr "%s" "float"
+
+(* Print procedure body as a list of declarations 
+** followed by a list of statements. *)
+and print_proc_body fmtr prog_body =
+    fprintf fmtr "%a@,%a" print_decls prog_body.decls 
+                          print_stmts prog_body.stmts
+    
+(* Print the list of declarations. *)
+and print_decls fmtr = function
+    | [] -> ()
+    | x :: [] -> fprintf fmtr "%a@," print_decl x
+    | x :: xs -> fprintf fmtr "%a@,%a" print_decl x print_decls xs
+
+(* Print the list of statements. *)
+and print_stmts fmtr = function
+    | [] -> ()
+    | x :: [] -> fprintf fmtr "%a" print_stmt x
+    | x :: xs -> fprintf fmtr "%a@,%a" print_stmt x print_stmts xs
+
+(* Print a single declaration. *)
+and print_decl fmtr (var_type, variable) =
+    fprintf fmtr "%a %a;" print_type var_type print_var variable
+
+(* Print a variable. *)
+and print_var fmtr = function
+    | Variable (ident, None) -> fprintf fmtr "%s" ident
+    | Variable (ident, Some itvls) -> fprintf fmtr "%s[%a]" 
+                                                    ident print_itvls itvls
+
+(* Print list of intervals. *)
+and print_itvls fmtr = function
+    | [] -> ()
+    | x::[] -> fprintf fmtr "%a" print_itvl x
+    | x::xs -> fprintf fmtr "%a,%a" print_itvl x print_itvls xs
+
+(* Print a single interval *)
+and print_itvl fmtr (st_pnt, end_pnt) =
+    fprintf fmtr "%d..%d" st_pnt end_pnt
+
+(* Print statement. *)
+and print_stmt fmtr = function
+    | Assign (elem, expr) -> fprintf fmtr "%a := %a;" print_elem elem 
+                                                      print_expr expr
+    | Read elem -> fprintf fmtr "read %a;" print_elem elem
+    | Write expr -> 
+        begin
+            match expr with
+            | Expr wexpr -> fprintf fmtr "write %a;" print_expr wexpr
+            | String str -> fprintf fmtr "write %s;" str
+        end
+    | Call (ident, exprs) -> fprintf fmtr "%s(%a);" ident print_exprs exprs
+    | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,fi"
+                                print_expr expr print_stmts stmts
+    | If_then_else (expr, then_stmts, else_stmts) ->
+        fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,else@;<0 4>@[<v>%a@]@,fi"
+                print_expr expr print_stmts then_stmts print_stmts else_stmts
+    | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[<v>%a@]@,od"
+                print_expr expr print_stmts stmts
+
+(* Print element to be assigned to or be read / written. *)
+and print_elem fmtr = function
+    | Elem (ident, None) -> fprintf fmtr "%s" ident
+    | Elem (ident, Some idxs) -> fprintf fmtr "%s[%a]" ident print_exprs idxs
+
+(* Print an expression. *)
+and print_expr fmtr = function
+    | Eelem elem -> fprintf fmtr "%a" print_elem elem
+    | Ebool bool_const -> fprintf fmtr "%B" bool_const
+    | Eint int_const -> fprintf fmtr "%d" int_const
+    | Efloat float_const -> fprintf fmtr "%f" float_const
+    (* Parentheses to be printed (or removed) in other functions,
+       so only print the expression within the parenthesis.
+    *)
+    | Eparen expr -> fprintf fmtr "%a" print_expr (strip_paren expr)
+    | Ebinop bin_expr -> fprintf fmtr "%a" print_binop bin_expr
+    | Eunop un_expr -> fprintf fmtr "%a" print_unop un_expr
+
+(* Print expressions. *)
+and print_exprs fmtr = function
+    | [] -> ()
+    | x::[] -> fprintf fmtr "%a" print_expr x
+    | x::xs -> fprintf fmtr "%a, %a" print_expr x print_exprs xs
+
+(* Print binary operations. 
+** Parenthese around an operation expression on LHS with higher
+** or equal precedence will be removed.
+** Parenthese around an operation expression on RHS with higher
+** precedence will be removed.
+*)
+and print_binop fmtr = function
+    | (Eparen lexpr_inside, optr, Eparen rexpr_inside) ->
+        begin
+            let
+                lexpr_inside_strip = strip_paren lexpr_inside
+            and
+                rexpr_inside_strip = strip_paren rexpr_inside
+            in
+                match lexpr_inside_strip with
+                | Ebinop _ | Eunop _ -> 
+                    begin
+                        match rexpr_inside_strip with
+                        | Ebinop _ | Eunop _ -> 
+                            let
+                                lcmpr_result = cmpr_prec lexpr_inside_strip optr
+                            and 
+                                rcmpr_result = cmpr_prec rexpr_inside_strip optr
+                            in
+                                if lcmpr_result>=0 && rcmpr_result>0 then
+                                    fprintf fmtr "%a %a %a"
+                                        print_expr lexpr_inside_strip
+                                        print_optr optr
+                                        print_expr rexpr_inside_strip
+                                else if lcmpr_result>=0 && rcmpr_result<=0 then 
+                                    fprintf fmtr "%a %a (%a)"
+                                        print_expr lexpr_inside_strip
+                                        print_optr optr
+                                        print_expr rexpr_inside_strip
+                                else if lcmpr_result<0 && rcmpr_result>0 then
+                                    fprintf fmtr "(%a) %a %a"
+                                        print_expr lexpr_inside_strip
+                                        print_optr optr
+                                        print_expr rexpr_inside_strip
+                                else
+                                    fprintf fmtr "(%a) %a (%a)"
+                                        print_expr lexpr_inside_strip
+                                        print_optr optr
+                                        print_expr rexpr_inside_strip
+                        | _ -> 
+                            let
+                                lcmpr_result = cmpr_prec lexpr_inside_strip optr
+                            in
+                                if lcmpr_result>=0 then
+                                    fprintf fmtr "%a %a %a"
+                                        print_expr lexpr_inside_strip
+                                        print_optr optr
+                                        print_expr rexpr_inside_strip
+                                else
+                                    fprintf fmtr "(%a) %a %a"
+                                        print_expr lexpr_inside_strip
+                                        print_optr optr
+                                        print_expr rexpr_inside_strip
+                    end
+                | _ ->  
+                    begin
+                        match rexpr_inside_strip with
+                        | Ebinop _ | Eunop _ -> 
+                            let
+                                rcmpr_result = cmpr_prec rexpr_inside_strip optr
+                            in
+                                if rcmpr_result>0 then
+                                    fprintf fmtr "%a %a %a"
+                                        print_expr lexpr_inside_strip
+                                        print_optr optr
+                                        print_expr rexpr_inside_strip
+                                else
+                                    fprintf fmtr "%a %a (%a)"
+                                        print_expr lexpr_inside_strip
+                                        print_optr optr
+                                        print_expr rexpr_inside_strip
+                        | _ -> 
+                            fprintf fmtr "%a %a %a"
+                                print_expr lexpr_inside_strip
+                                print_optr optr
+                                print_expr rexpr_inside_strip
+                    end
+        end
+    | (Eparen lexpr_inside, optr, rexpr) ->
+        begin
+            let
+                lexpr_inside_strip = strip_paren lexpr_inside
+            in
+                match lexpr_inside_strip with
+                | Ebinop _ | Eunop _ ->
+                    let 
+                        lcmpr_result = cmpr_prec lexpr_inside_strip optr
+                    in
+                        if lcmpr_result>=0 then
+                            fprintf fmtr "%a %a %a"
+                                print_expr lexpr_inside_strip 
+                                            print_optr optr print_expr rexpr
+                        else
+                            fprintf fmtr "(%a) %a %a"
+                                print_expr lexpr_inside_strip 
+                                            print_optr optr print_expr rexpr
+                | _ ->
+                    fprintf fmtr "%a %a %a"
+                        print_expr lexpr_inside_strip 
+                                            print_optr optr print_expr rexpr
+        end
+    | (lexpr, optr, Eparen rexpr_inside) ->
+        begin
+            let
+                rexpr_inside_strip = strip_paren rexpr_inside
+            in
+                match rexpr_inside_strip with
+                | Ebinop _ | Eunop _ ->
+                    let 
+                        rcmpr_result = cmpr_prec rexpr_inside_strip optr
+                    in
+                        if rcmpr_result>0 then
+                            fprintf fmtr "%a %a %a"
+                                print_expr lexpr print_optr optr 
+                                                print_expr rexpr_inside_strip
+                        else
+                            fprintf fmtr "%a %a (%a)"
+                                print_expr lexpr print_optr optr 
+                                                print_expr rexpr_inside_strip
+                | _ ->
+                    fprintf fmtr "%a %a %a"
+                        print_expr lexpr print_optr optr 
+                                                print_expr rexpr_inside_strip
+                        
+        end
+    | (lexpr, optr, rexpr) ->
+        begin
+            fprintf fmtr "%a %a %a"
+                print_expr lexpr print_optr optr print_expr rexpr 
+        end
+
+(* Print unary operations. 
+** Parenthese around an operation expression with higher precedence 
+** will be removed. *)
+and print_unop fmtr = function
+    | (optr, Eparen expr_inside) ->
+        begin
+            let
+                expr_inside_strip = strip_paren expr_inside
+            in
+                match expr_inside_strip with
+                | Ebinop _ | Eunop _ ->
+                    let 
+                        cmpr_result = cmpr_prec expr_inside_strip optr
+                    in
+                        if cmpr_result<0 then
+                            fprintf fmtr "%a (%a)"
+                                print_optr optr print_expr expr_inside_strip 
+                        else
+                            fprintf fmtr "%a %a"
+                                print_optr optr print_expr expr_inside_strip 
+                | _ ->
+                    fprintf fmtr "%a %a"
+                        print_optr optr print_expr expr_inside_strip 
+        end
+    | (optr, expr) ->
+        begin
+            fprintf fmtr "%a %a"
+                print_optr optr print_expr expr 
+        end
+
+(* compare operator precedence *)
+and cmpr_prec exp optr = match exp with
+    | Ebinop (_, exp_binoptr, _) -> (get_prec exp_binoptr) - (get_prec optr)
+    | Eunop (exp_unoptr, _) -> (get_prec exp_unoptr) - (get_prec optr)
+    | _ -> raise (Failure "Impossible!")
+
+(* get the precedence of an operator *)
+and get_prec optr = match optr with
+    | Op_minus -> 7
+    | Op_mul | Op_div -> 6
+    | Op_add | Op_sub -> 5
+    | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge -> 4
+    | Op_not -> 3
+    | Op_and -> 2
+    | Op_or -> 1
+
+(* print operator symbol *)
+and print_optr fmtr optr = match optr with
+    | Op_add -> fprintf fmtr "%s" "+"
+    | Op_sub -> fprintf fmtr "%s" "-"
+    | Op_mul -> fprintf fmtr "%s" "*"
+    | Op_div -> fprintf fmtr "%s" "/"
+    | Op_eq -> fprintf fmtr "%s" "="
+    | Op_ne -> fprintf fmtr "%s" "!="
+    | Op_lt -> fprintf fmtr "%s" "<"
+    | Op_gt -> fprintf fmtr "%s" ">"
+    | Op_le -> fprintf fmtr "%s" "<="
+    | Op_ge -> fprintf fmtr "%s" ">="
+    | Op_and -> fprintf fmtr "%s" "and"
+    | Op_or -> fprintf fmtr "%s" "or"
+    | Op_not -> fprintf fmtr "%s" "not"
+    | Op_minus -> fprintf fmtr "%s" "-"
+
+
+(* Strips parentheses in case there are multiple pairs of parentheses
+** around an expression.
+*)
+and strip_paren expr = match expr with
+    | Eparen paren_expr -> strip_paren paren_expr
+    | _ -> expr
+============================================
+src/Makefile.depend
+17:33:48_Monday_22_May_2017
+============================================
+snick.cmo : snick_pprint.cmi snick_parse.cmi snick_lex.cmo snick_codegen.cmo
+snick.cmx : snick_pprint.cmx snick_parse.cmx snick_lex.cmx snick_codegen.cmx
+snick.cmo : snick_pprint.cmi snick_parse.cmi snick_lex.cmo snick_codegen.cmo
+snick.cmx : snick_pprint.cmx snick_parse.cmx snick_lex.cmx snick_codegen.cmx
+snick_analyze.cmo : snick_symbol.cmo snick_optimizer.cmo snick_err.cmo \
+    snick_ast.cmo
+snick_analyze.cmx : snick_symbol.cmx snick_optimizer.cmx snick_err.cmx \
+    snick_ast.cmx
+snick_ast.cmo :
+snick_ast.cmx :
+snick_br_ast.cmo :
+snick_br_ast.cmx :
+snick_codegen.cmo : snick_symbol.cmo snick_optimizer.cmo snick_br_ast.cmo \
+    snick_ast.cmo snick_analyze.cmo
+snick_codegen.cmx : snick_symbol.cmx snick_optimizer.cmx snick_br_ast.cmx \
+    snick_ast.cmx snick_analyze.cmx
+snick_err.cmo : snick_symbol.cmo
+snick_err.cmx : snick_symbol.cmx
+snick_lex.cmo : snick_parse.cmi
+snick_lex.cmx : snick_parse.cmx
+snick_optimizer.cmo : snick_symbol.cmo snick_ast.cmo
+snick_optimizer.cmx : snick_symbol.cmx snick_ast.cmx
+snick_parse.cmo : snick_ast.cmo snick_parse.cmi
+snick_parse.cmx : snick_ast.cmx snick_parse.cmi
+snick_parse.cmi : snick_ast.cmo
+snick_pprint.cmo : snick_ast.cmo snick_pprint.cmi
+snick_pprint.cmx : snick_ast.cmx snick_pprint.cmi
+snick_pprint.cmi : snick_ast.cmo
+snick_symbol.cmo : snick_ast.cmo
+snick_symbol.cmx : snick_ast.cmx
+============================================
+src/snick_symbol.ml
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick_symbol.ml
+** Description:   Defines the data structure and data types for Snick
+**                also provides getters of Scope objects.
+** Last Modified: Mon. 15th May 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+open Snick_ast
+
+type symKind =
+    | SYM_LOCAL
+    | SYM_PARAM_VAL
+    | SYM_PARAM_REF
+
+type symType =
+    | SYM_BOOL
+    | SYM_REAL
+    | SYM_INT
+
+type nslot = int
+
+type bound = interval
+
+(* Representation of a single symbol *)
+type symbol = (symKind * symType * nslot * bound list option)
+
+(* Symbol table for a particular scope *)
+type htScopeSt = (string, symbol) Hashtbl.t
+
+(* Description of a scope *)
+(* identifier of scope (proc), symbol table of this scope, parameters, size*)
+type scope = Scope of (ident * htScopeSt * param list * nslot)
+
+let get_scope_id (Scope(id,_,_,_)) = id
+
+let get_scope_st (Scope(_,ht_st,_,_)) = ht_st
+
+let get_scope_params (Scope(_,_,params,_)) = params
+
+let get_scope_nslot (Scope(_,_,_,nslot)) = nslot
+
+let sym_type_from_ast_type = function
+    | Bool -> SYM_BOOL
+    | Int -> SYM_INT
+    | Float -> SYM_REAL
+
+let sym_kind_from_ast_indc = function
+    | Val -> SYM_PARAM_VAL
+    | Ref -> SYM_PARAM_REF
+
+let ast_type_from_sym_type = function
+    | SYM_BOOL -> Bool
+    | SYM_INT -> Int
+    | SYM_REAL -> Float============================================
+src/snick.ml
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick.ml
+** Description:   Main file for Snick compiler,
+**                modified based on given sample.
+** Last Modified: Sun. 9th April 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+module P = Snick_parse
+
+(* Argument parsing code *)
+let infile_name = ref None
+
+type compiler_mode = PrettyPrint | Compile
+let mode = ref Compile
+
+(* print current position of lexbuf *)
+let err_pos lexbuf =
+    let pos = Lexing.lexeme_start_p lexbuf in
+        Format.sprintf ": line %d, col %d."
+            (pos.Lexing.pos_lnum)
+            (pos.Lexing.pos_cnum - pos.Lexing.pos_bol + 1) 
+
+(* --------------------------------------------- *)
+(*  Specification for command-line options       *)
+(* --------------------------------------------- *)
+let (speclist:(Arg.key * Arg.spec * Arg.doc) list) =
+    ["-p",
+       Arg.Unit(fun () -> mode := PrettyPrint),
+       " Run the compiler in pretty-printer mode"
+    ]
+
+let main () =
+    (* Parse the command-line arguments *)
+    Arg.parse speclist
+        (begin fun fname -> infile_name := Some fname end)
+        "snick [-p] [snick source]" ;
+    (* Open the input file *)
+    let infile = match !infile_name with
+    | None -> stdin
+    | Some fname -> open_in fname in
+    (* Initialize lexing buffer *)
+    let lexbuf = Lexing.from_channel infile in
+    (* Call the parser *)
+    try
+        let prog = Snick_parse.program Snick_lex.token lexbuf in
+        match !mode with
+        | PrettyPrint ->
+            Snick_pprint.print_program Format.std_formatter prog
+        | Compile ->
+            Snick_codegen.compile prog
+    with
+        (* Handle failure from lexer, print error position. *)
+        | Snick_lex.LexErr ->
+            failwith ("Lexing Error" ^ (err_pos lexbuf))
+        (* Handle error from parser, print error position. *)
+        | Parsing.Parse_error ->
+            failwith ("Parsing Error" ^ (err_pos lexbuf))
+        | Failure x ->
+            failwith ("Semantic Error: "^x)
+
+let _ = main ()
+============================================
+src/snick_codegen.ml
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick_codegen.ml
+** Description:   Module to generate brill code from a parsed snick program.
+** Last Modified: Wed. 18th May 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+open Snick_ast
+open Snick_symbol
+open Snick_err
+open Snick_analyze
+open Snick_br_ast
+open Snick_optimizer
+open Format
+
+let brprog = ref [] (* Brill program to be generated *)
+let out_of_bounds_label = 0
+let div_by_zero_label = 1
+let next_label = ref 2
+
+(* Strip any parentheses around a expression *)
+let rec strip_paren expr = match expr with
+    | Eparen paren_expr -> strip_paren paren_expr
+    | _ -> expr
+
+(* Start compiling program *)
+let rec compile prog =
+    analyse prog; (* First analyse the program into symbol table *)
+    (* Generate brill program *)
+    gen_br_program (simplify_prog prog);
+    (* Print brill program *)
+    print_prog !brprog
+
+(* Check if indices are static, i.e. all indices are int
+** e.g. A[1,2] *)
+and is_idxs_all_static idxs =
+    List.for_all
+    (fun idx ->
+        match idx with
+        | Eint(_) -> true
+        | _ -> false
+    )
+    idxs
+
+(* Calculate the offset for static indices *)
+and calc_static_offset idxs bases bounds =
+    let (lo_bound, _) = List.hd bounds in
+    match idxs with
+    | [] -> error_undefined ""
+    | idx::[] ->
+    (
+        match idx with
+        | Eint(int_idx) -> int_idx - lo_bound
+        | _ -> error_undefined ""
+    )
+    | idx::idxs_tail ->
+    (
+        let offset = calc_static_offset 
+                        (idxs_tail) (List.tl bases) (List.tl bounds) in
+        match idx with
+        | Eint(int_idx) -> (int_idx - lo_bound) * (List.hd bases) + offset
+        | _ -> error_undefined ""
+    )
+
+(* Brill program generation *)
+and gen_br_program prog =
+    gen_call "main";
+    gen_halt "";
+    gen_br_out_of_bounds "";
+    gen_br_div_by_zero "";
+    List.iter gen_br_proc prog    
+
+(* Create a label and instructions for the index out of bound error *)
+and gen_br_out_of_bounds _ =
+    gen_label out_of_bounds_label;
+    gen_string_const 0 "\"ARRAY INDEXING OUT OF BOUND\\n\"";
+    (* gen_string_const 0 "\"[FATAL]: array element out of bounds!\\n\""; *)
+    gen_call_builtin "print_string";
+    gen_halt ""
+
+(* Create a label and instructions for the division by zero error *)
+and gen_br_div_by_zero _ =
+    gen_label div_by_zero_label;
+    gen_string_const 0 "\"DIVIDE BY ZERO\\n\"";
+    (* gen_string_const 0 "\"[FATAL]: division by zero!\\n\""; *)
+    gen_call_builtin "print_string";
+    gen_halt ""
+
+(* Generate a block of brill instructions for a snick procedure *)
+and gen_br_proc ((proc_id,params),proc_body) =
+    let scope = Hashtbl.find ht_scopes proc_id
+    in
+    (
+        (* generate label *)
+        gen_proc_label proc_id;
+        (* generate prologue *)
+        gen_br_prologue scope params proc_body.decls;
+        (* generate instructions of statments in procedure *)
+        gen_br_stmts scope proc_body.stmts;
+        (* generate epilogue *)
+        gen_br_epilogue scope            
+    )
+
+(* Generate prologue of procedure *)
+and gen_br_prologue scope params decls =
+    gen_comment "prologue"; (* mark with comment *)
+    (* push this scope to stack *)
+    gen_unop "push" (get_scope_nslot scope);
+    (* store reference to procedure parameters *)
+    gen_br_params scope 0 params;
+    (* store declared variables in scope *)
+    gen_br_decls scope decls;
+    
+(* Generate instruction to store brill procedure parameters *)
+and gen_br_params scope cnt = function
+    | [] -> ()
+    | x::xs ->
+        (
+            gen_br_param scope cnt x;
+            gen_br_params scope (cnt+1) xs
+        )
+
+(* Generate a intruction to save a parameter to register *)
+and gen_br_param scope cnt (_, _, param_id) =
+    let sym = Hashtbl.find (get_scope_st scope) param_id
+    in match sym with
+    | (_,_,nslot,_) -> gen_binop "store" nslot cnt
+    
+(* Generate instructions for declaration in scope *)
+(* Declared bool value will be evaluate in runtime *)
+and gen_br_decls scope decls =
+    let cnt = ref 0             (* count of declarations in scope *)
+    and ints_flag = ref false   (* if int or bool has been declared *)
+    and int_reg = ref 0         (* register for int variable *)
+    and reals_flag = ref false  (* if float has been declared *)
+    and real_reg = ref 0        (* register for float variable *)
+    and reg = ref 0             (* current assigned register *)
+    in
+    (
+        List.iter
+            (fun (_, Variable(id,_)) ->
+                (
+                    let (_,sym_type,_,_) =
+                        Hashtbl.find (get_scope_st scope) id
+                    in
+                    (
+                        if (not !reals_flag) && (sym_type = SYM_REAL) then
+                        (   (* if current declaration is for float, and 
+                            ** there hasn't been a float declaration before *)
+                            reals_flag := true;
+                            real_reg := !cnt;
+                            incr cnt
+                        )
+                        else if (not !ints_flag) then
+                        (   (* if current declaration is for int or bool,
+                            ** and there hasn't been a int or float 
+                            ** declaration before *)
+                            ints_flag := true;
+                            int_reg := !cnt;
+                            incr cnt
+                        )
+                    )
+                )
+            )
+            decls;
+
+        (* initialize int to 0 and float false *)
+        if !ints_flag then gen_int_const !int_reg 0;
+        (* initialize float to 0.0 *)
+        if !reals_flag then gen_real_const !real_reg 0.0;
+
+        List.iter
+            (fun (_, Variable(id,_)) ->
+                (
+                    let (_,sym_type,nslot,optn_bounds) =
+                            Hashtbl.find (get_scope_st scope) id
+                    in
+                    (
+                        (* refer to float register if symbol is float *)
+                        if sym_type = SYM_REAL then reg := !real_reg
+                        (* refer to int register if symbol is int or bool *)
+                        else reg := !int_reg;
+
+                        (* generate instruction to store declared variable *)
+                        match optn_bounds with
+                        | None -> gen_binop "store" nslot !reg
+                        (* generate instructions for array declaration *)
+                        | Some bounds -> 
+                            gen_br_init_array scope nslot !reg bounds
+                    )
+                )
+            )
+            decls;
+    )
+
+(* Generate instruction for array initialization *)
+and gen_br_init_array scope nslot nreg bounds =
+    let num = ref 1 (* number of element in array *)
+    in
+    (
+        (* Calculate total number of elements in array *)
+        List.iter
+            (fun (lo_bound,up_bound) ->
+                (* num = (up - lo + 1) * num *)
+                ( num := (up_bound - lo_bound + 1) * !num )
+            )
+            bounds;
+        (* store elements of array *)
+        for offset = 0 to (!num-1) do
+            gen_binop "store" (nslot+offset) nreg
+        done
+    )
+
+(* Generate instructions for procedure statements *)
+and gen_br_stmts scope stmts =
+    List.iter (gen_br_stmt scope) stmts
+
+(* Generate instruction for a single statements,
+** depending on statement type *)
+and gen_br_stmt scope stmt = match stmt with
+    | Assign(elem,expr) -> gen_br_assign scope elem expr 
+    | Read(elem) -> gen_br_read scope elem 
+    | Write(write_expr) -> gen_br_write scope write_expr 
+    | Call(proc_id,args) -> gen_br_call scope proc_id args 
+    | If_then(expr,stmts) -> gen_br_ifthen scope expr stmts 
+    | If_then_else(expr,then_stmts,else_stmts) ->
+        gen_br_ifthenelse scope expr then_stmts else_stmts 
+    | While(expr,stmts) -> gen_br_while scope expr stmts
+
+(* Generate instruction for assignment *)
+and gen_br_assign scope (Elem(id,optn_idxs)) expr =
+    gen_comment "assignment"; (* mark with comment *)
+    let (symkind,symtype,nslot,optn_bounds) = 
+        Hashtbl.find (get_scope_st scope) id
+    and expr_type = get_expr_type scope expr
+    in
+    (
+        gen_br_expr scope 0 expr;
+
+        (* type casting from int to float *)
+        if ((symtype = SYM_REAL) && (expr_type = SYM_INT)) then
+            gen_binop "int_to_real" 0 0;
+
+        match optn_idxs with
+        | Some idxs -> (* if LHS of assign is an element of array *)
+        (
+            if (is_idxs_all_static idxs) then
+                gen_op_static_idx scope 0 "store" id idxs
+            else
+            (
+                gen_br_expr_array_addr scope 1 id idxs;
+                gen_binop "store_indirect" 1 0
+            )
+        )
+        | None ->
+        (
+            (* load register of LHS if LHS is a ref parameter
+            ** of current scope, then rewites the register *)
+            if symkind = SYM_PARAM_REF then
+            (
+                gen_binop "load" 1 nslot;
+                gen_binop "store_indirect" 1 0
+            )
+            (* else store the new value *)
+            else gen_binop "store" nslot 0
+        )
+    )
+
+(* Generate instructions for snick read operation *)
+and gen_br_read scope (Elem(id,optn_idxs)) =
+    gen_comment "read"; (* mark with comment *)
+    let (symkind,symtype,nslot,optn_bounds) 
+        = Hashtbl.find (get_scope_st scope) id
+    in
+    (
+        (   (* call builtin read depending on type of
+            ** element being read *)
+            match symtype with
+            | SYM_BOOL -> gen_call_builtin "read_bool"
+            | SYM_INT -> gen_call_builtin "read_int"
+            | SYM_REAL -> gen_call_builtin "read_real"
+        );
+        match optn_idxs with
+        | Some idxs -> (* if LHS of assign is an element of array *)
+        (
+            if (is_idxs_all_static idxs) then
+                gen_op_static_idx scope 0 "store" id idxs
+            else
+            (
+                gen_br_expr_array_addr scope 1 id idxs;
+                gen_binop "store_indirect" 1 0
+            )
+        )
+        | None ->
+        (   (* load register of LHS if LHS is a ref parameter
+            ** of current scope, then rewites the register *)
+             if symkind = SYM_PARAM_REF then
+            (
+                gen_binop "load" 1 nslot;
+                gen_binop "store_indirect" 1 0
+            )
+            (* else store the new value *)
+            else gen_binop "store" nslot 0
+        )
+    )
+
+(* Generate instructions for snick write operation *)
+and gen_br_write scope write_expr = 
+    gen_comment "write";
+    match write_expr with
+    | Expr(expr) ->
+    (
+        (* first determine what to be written *)
+        gen_br_expr scope 0 expr; 
+        (* call builtin write depending on type of
+        ** element being read *)
+        match (get_expr_type scope expr) with
+        | SYM_BOOL -> gen_call_builtin "print_bool"
+        | SYM_INT -> gen_call_builtin "print_int"
+        | SYM_REAL -> gen_call_builtin "print_real"
+    )
+    | String(string_const) -> (* write string *)
+    (
+        gen_string_const 0 string_const;
+        gen_call_builtin "print_string"
+    )
+
+(* Generate instructions for snick procedure call *)
+and gen_br_call scope proc_id args =
+    gen_comment "proc call"; (* mark with comment *)
+    let params = get_scope_params (Hashtbl.find ht_scopes proc_id)
+    and nreg = ref 0
+    in
+    (
+        List.iter2
+            (fun arg param ->
+                (
+                    (
+                        match param with
+                        | (Ref,_,_) -> (* for ref parameter *)
+                        (
+                            match (strip_paren arg) with
+                            | Eelem(Elem(id,optn_idxs)) ->
+                            (
+                                let (symkind,symtype,nslot,optn_bounds) =
+                                    Hashtbl.find (get_scope_st scope) id
+                                in
+                                (
+                                    if symkind = SYM_PARAM_REF then
+                                        gen_binop "load" !nreg nslot
+                                    else
+                                    (
+                                        match optn_idxs with
+                                        | Some idxs ->
+                                            gen_br_expr_array_addr
+                                                scope !nreg id idxs
+                                        | None ->
+                                            gen_binop
+                                                "load_address" !nreg nslot
+                                    )
+                                )
+                            )
+                            | _ -> error_undefined ""
+                        )
+                        | (Val,param_type,_) -> (* for val parameter *)
+                        (
+                            gen_br_expr scope !nreg arg;
+                            (* type cast from int to real *)
+                            if (((get_expr_type scope arg) = SYM_INT)
+                                    && (param_type = Float)) then
+                                gen_binop "int_to_real" !nreg !nreg
+                        )
+                    );
+                    incr nreg
+                )
+            )
+            args
+            params;
+        gen_call proc_id (* generate instruction for procedure call *)
+    )
+
+(* Generate load for value at idxs of array id in scope *)
+and gen_br_expr_array_val scope nreg id idxs =    
+    if (is_idxs_all_static idxs) then
+        gen_op_static_idx scope nreg "load" id idxs
+    else
+    (
+        gen_br_expr_array_addr scope nreg id idxs;
+        gen_binop "load_indirect" nreg nreg
+    )
+
+(* Generate load from register for element at idxs of array id
+** at nreg, if the indexings are not integers, i.e. requires evaluation *)
+and gen_br_expr_array_addr scope nreg id idxs =
+    let (symkind,symtype,nslot,optn_bounds) =
+        Hashtbl.find (get_scope_st scope) id
+    in 
+    (
+        (
+            match optn_bounds with
+            | Some bounds -> 
+                gen_dynamic_offset scope nreg idxs 
+                    (get_offset_bases bounds) bounds
+            | _ -> error_undefined ""
+        );
+        gen_binop "load_address" (nreg+1) nslot;
+        gen_triop "sub_offset" nreg (nreg+1) nreg
+    )
+
+(* Generate instruction for operations on static indexing *)
+and gen_op_static_idx scope nreg op_str id idxs =
+    let (symkind,symtype,nslot,optn_bounds) =
+            Hashtbl.find (get_scope_st scope) id
+    in
+    (
+        let static_offset =
+        ( 
+            match optn_bounds with
+            | Some bounds -> calc_static_offset idxs
+                                (get_offset_bases bounds) bounds
+            | None -> error_undefined ""
+        )
+        in match op_str with
+        (* generate specified operation *)
+        | "store" -> gen_binop "store" (nslot+static_offset) 0
+        | "load" -> gen_binop "load" nreg (nslot+static_offset)
+        | _ -> ()
+    )
+
+(* Generate intruction for offset of an indexins of an array,
+** if the indexing is not integers, i.e. requires evaluation
+** of expression *)
+and gen_dynamic_offset scope nreg idxs bases bounds =
+    match idxs with
+    | [] -> error_undefined ""
+    | idx::[] ->
+    (
+        match (List.hd bounds) with
+        | (lo_bound,up_bound) ->
+        (
+            (* evaluate indexing expression *)
+            gen_br_expr scope nreg idx;
+
+            gen_int_const (nreg+1) lo_bound;
+            gen_triop "cmp_lt_int" (nreg+1) nreg (nreg+1);
+            gen_binop "branch_on_true" (nreg+1) out_of_bounds_label;
+            gen_int_const (nreg+1) up_bound;
+            gen_triop "cmp_gt_int" (nreg+1) nreg (nreg+1);
+            gen_binop "branch_on_true" (nreg+1) out_of_bounds_label;
+
+            gen_int_const (nreg+1) lo_bound;
+            gen_triop "sub_int" nreg nreg (nreg+1)
+        )
+    )
+    | idx::idxs_tail ->
+    (
+        match (List.hd bounds) with
+        | (lo_bound,up_bound) ->
+        (
+            gen_dynamic_offset scope nreg idxs_tail 
+                (List.tl bases) (List.tl bounds);
+
+            gen_br_expr scope (nreg+1) idx;
+
+            gen_int_const (nreg+2) lo_bound;
+            gen_triop "cmp_lt_int" (nreg+2) (nreg+1) (nreg+2);
+            gen_binop "branch_on_true" (nreg+2) out_of_bounds_label;
+            gen_int_const (nreg+2) up_bound;
+            gen_triop "cmp_gt_int" (nreg+2) (nreg+1) (nreg+2);
+            gen_binop "branch_on_true" (nreg+2) out_of_bounds_label;
+
+            gen_int_const (nreg+2) lo_bound;
+            gen_triop "sub_int" (nreg+1) (nreg+1) (nreg+2);
+
+            gen_int_const (nreg+2) (List.hd bases);
+            gen_triop "mul_int" (nreg+1) (nreg+1) (nreg+2);
+
+            gen_triop "add_int" nreg (nreg+1) nreg 
+        )
+    )
+
+(* Get a list of starting slot of bounds of an array *)
+and get_offset_bases bounds =
+    let offset_bases = ref [1]
+    in
+    (
+        List.iter
+        (fun (lo_bound,up_bound) ->
+            (   (* base = (up - lo + 1) * last_base *)
+                offset_bases := List.append
+                                [((up_bound - lo_bound + 1)*
+                                    (List.hd !offset_bases))]
+                                !offset_bases
+            )
+        )
+        (List.rev bounds);
+        offset_bases := List.tl !offset_bases;
+        !offset_bases
+    )
+
+(* Generate instruction for if-then statement *)
+and gen_br_ifthen scope expr stmts =
+    gen_comment "if"; (* mark with comment *)
+    let after_label = !next_label
+    in
+    (
+        incr next_label;
+        gen_br_expr scope 0 expr; (* guard expression *)
+        (* exist statment if false *)
+        gen_binop "branch_on_false" 0 after_label;
+        gen_br_stmts scope stmts;
+        gen_label after_label
+    )
+
+(* Generate instruction for if-then-else statement *)
+and gen_br_ifthenelse scope expr then_stmts else_stmts =
+    gen_comment "if"; (* mark with comment *)
+    let else_label = !next_label
+    in
+    (
+        incr next_label;
+        let after_label = !next_label
+        in
+        (
+            incr next_label;
+            gen_br_expr scope 0 expr; (* guard expression *)
+            (* to else if false *)
+            gen_binop "branch_on_false" 0 else_label;
+            gen_br_stmts scope then_stmts;
+            (* exit statement when finished then block *)
+            gen_unop "branch_uncond" after_label;
+            gen_label else_label;
+            gen_br_stmts scope else_stmts;
+            gen_label after_label
+        )
+    )
+
+(* Generate instruction for while statement *)
+and gen_br_while scope expr stmts =
+    gen_comment "while"; (* mark with comment *)
+    let begin_label = !next_label
+    in
+    (
+        incr next_label;
+        let after_label = !next_label
+        in
+        (
+            incr next_label;
+            gen_label begin_label; (* start while *)
+            gen_br_expr scope 0 expr; (* guard expression *)
+            (* exit while if guard is false *)
+            gen_binop "branch_on_false" 0 after_label;
+            gen_br_stmts scope stmts;
+            (* back to start of loop *)
+            gen_unop "branch_uncond" begin_label;
+            gen_label after_label (* exit while *)
+        )
+    )
+
+(* Generate instruction for expressions *)
+and gen_br_expr scope nreg = function
+    | Ebool(bool_const) ->
+    (   (* evaluate bool constant to int *)
+        if bool_const then gen_int_const nreg 1
+        else gen_int_const nreg 0
+    )
+    | Eint(int_const) -> gen_int_const nreg int_const
+    | Efloat(float_const) -> gen_real_const nreg float_const
+    | Eparen(expr) -> gen_br_expr scope nreg expr
+    | Ebinop(lexpr,optr,rexpr) ->
+        gen_br_expr_binop scope nreg lexpr optr rexpr
+    | Eunop(optr,expr) -> gen_br_expr_unop scope nreg optr expr
+    | Eelem(elem) ->
+    (   (* variable or array indexing *)
+        match elem with
+        | Elem(id,None) -> gen_br_expr_id scope nreg id
+        | Elem(id,Some idxs) -> gen_br_expr_array_val scope nreg id idxs
+    )
+
+(* Generate instruction for snick binary operation *)
+and gen_br_expr_binop scope nreg lexpr optr rexpr =
+    let lexpr_type = get_expr_type scope lexpr      (* LHS type *)
+    and rexpr_type = get_expr_type scope rexpr      (* RHS type *)
+    and lexpr_reg_usage = get_reg_usage scope lexpr (* LHS register *)
+    and rexpr_reg_usage = get_reg_usage scope rexpr (* RHS register *)
+    and lexpr_nreg = ref 0  (* new register for LHS *)
+    and rexpr_nreg = ref 0  (* new register for RHS *)
+    in
+    (
+        if lexpr_reg_usage >= rexpr_reg_usage then
+        (
+            lexpr_nreg := nreg;
+            rexpr_nreg := (nreg+1);
+            gen_br_expr scope !lexpr_nreg lexpr;
+            gen_br_expr scope !rexpr_nreg rexpr
+        )
+        else
+        (
+            lexpr_nreg := (nreg+1);
+            rexpr_nreg := nreg;
+            gen_br_expr scope !rexpr_nreg rexpr;
+            gen_br_expr scope !lexpr_nreg lexpr
+        );
+
+        (* check div_by_0 *)
+        if optr = Op_div then
+        (
+            if rexpr_type = SYM_REAL then
+            (
+                gen_real_const (nreg+2) 0.0;
+                gen_triop "cmp_eq_real" (nreg+2) (nreg+2) !rexpr_nreg
+            )
+            else
+            (
+                gen_int_const (nreg+2) 0;
+                gen_triop "cmp_eq_int" (nreg+2) (nreg+2) !rexpr_nreg
+            );
+            gen_binop "branch_on_true" (nreg+2) div_by_zero_label
+        );
+
+        if ((lexpr_type = SYM_INT) && (rexpr_type = SYM_REAL)) then
+            gen_binop "int_to_real" !lexpr_nreg !lexpr_nreg
+        else if ((lexpr_type = SYM_REAL) && (rexpr_type = SYM_INT)) then
+            gen_binop "int_to_real" !rexpr_nreg !rexpr_nreg;
+
+        if ((lexpr_type = SYM_BOOL) && (rexpr_type = SYM_BOOL)) then
+            gen_br_expr_binop_bool
+                scope nreg !lexpr_nreg !rexpr_nreg optr
+        else if ((lexpr_type = SYM_REAL) || (rexpr_type = SYM_REAL)) then
+            gen_br_expr_binop_numeric
+                "real" nreg !lexpr_nreg !rexpr_nreg optr
+        else
+            gen_br_expr_binop_numeric
+                "int" nreg !lexpr_nreg !rexpr_nreg optr
+    )
+
+(* Get use of register by an expression in scope *)
+and get_reg_usage scope = function
+    | Ebool(_) -> 0
+    | Eint(_) -> 0
+    | Efloat(_) -> 0
+    | Eparen(expr) -> get_reg_usage scope expr
+    | Ebinop(lexpr,optr,rexpr) ->
+    (
+        let lexpr_reg_usage = get_reg_usage scope lexpr
+        and rexpr_reg_usage = get_reg_usage scope rexpr
+        in
+        let min_count = min lexpr_reg_usage rexpr_reg_usage
+        and max_count = max lexpr_reg_usage rexpr_reg_usage
+        in
+        let reg_usage_total = max max_count (min_count+1)
+        in
+        (
+            if optr = Op_div then (max reg_usage_total 2)
+            else reg_usage_total
+        )
+    )
+    | Eunop(optr,expr) ->
+    (
+        let expr_reg_usage = get_reg_usage scope expr
+        in
+        (
+            if optr = Op_minus then (max expr_reg_usage 1)
+            else expr_reg_usage
+        )
+    ) 
+    | Eelem(elem) -> (* other elements *)
+    (
+        match elem with
+        | Elem(id,None) -> 0
+        | Elem(id,Some idxs) -> (* for array *)
+        (
+            if (is_idxs_all_static idxs) then
+                0
+            else
+                let reg_usage_total = ref 0
+                in
+                (
+                    if (List.length idxs) = 1 then
+                    (
+                        let idx = List.hd idxs
+                        in
+                        reg_usage_total :=
+                            max ((get_reg_usage scope idx)+1) 2
+                    )
+                    else
+                    (
+                        List.iter
+                        (fun idx ->
+                            (
+                                let reg_usage_1 =
+                                    max ((get_reg_usage scope idx)+2) 3
+                                in
+                                reg_usage_total :=
+                                    max reg_usage_1 !reg_usage_total
+                            )
+                        )
+                        idxs
+                    );
+                    !reg_usage_total
+                )
+        )
+    )
+
+(* Generate instruction for snick binary operation of bool types *)
+and gen_br_expr_binop_bool scope nreg lexpr_nreg rexpr_nreg = function
+    | Op_or -> gen_triop "or" nreg lexpr_nreg rexpr_nreg
+    | Op_and -> gen_triop "and" nreg lexpr_nreg rexpr_nreg
+    | Op_eq -> gen_triop "cmp_eq_int" nreg lexpr_nreg rexpr_nreg
+    | Op_ne -> gen_triop "cmp_ne_int" nreg lexpr_nreg rexpr_nreg
+    | _ -> error_illegal_optr "" "bool"
+
+(* Generate instruction for snick binary operation of numeric types *)
+and gen_br_expr_binop_numeric type_str nreg lexpr_nreg rexpr_nreg = function
+    | Op_add -> gen_triop ("add_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | Op_sub -> gen_triop ("sub_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | Op_mul -> gen_triop ("mul_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | Op_div -> gen_triop ("div_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | Op_eq -> gen_triop ("cmp_eq_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | Op_ne -> gen_triop ("cmp_ne_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | Op_lt -> gen_triop ("cmp_lt_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | Op_le -> gen_triop ("cmp_le_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | Op_gt -> gen_triop ("cmp_gt_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | Op_ge -> gen_triop ("cmp_ge_"^type_str) nreg lexpr_nreg rexpr_nreg
+    | _ -> error_illegal_optr "" "numeric"
+
+(* Generate instruction for snick unary operation *)
+and gen_br_expr_unop scope nreg optr expr =
+    gen_br_expr scope nreg expr;
+    let expr_type = get_expr_type scope expr
+    in
+    (
+        if ((expr_type = SYM_BOOL) && (optr = Op_not)) then
+            gen_binop "not" nreg nreg
+        else if ((expr_type = SYM_INT) && (optr = Op_minus)) then
+        (
+            gen_int_const (nreg+1) 0;
+            gen_triop "sub_int" nreg (nreg+1) nreg
+        )
+        else if ((expr_type = SYM_REAL) && (optr = Op_minus)) then
+        (
+            gen_real_const (nreg+1) 0.0;
+            gen_triop "sub_real" nreg (nreg+1) nreg
+        )
+        else error_invalid_operation ""
+    )
+
+(* Generate loading instructions for expressions *)
+and gen_br_expr_id scope nreg id =
+    let (symkind,_,nslot,_) = Hashtbl.find (get_scope_st scope) id
+    in
+    (
+        match symkind with
+        | SYM_PARAM_REF -> (* if the expression is a ref parameter *)
+        (
+            (* load referenced register *)
+            gen_binop "load" nreg nslot;
+            gen_binop "load_indirect" nreg nreg
+        )
+        | _ -> gen_binop "load" nreg nslot
+    )
+
+(* Append epilogue section of a procedure (scope) to brill program *)
+and gen_br_epilogue scope =
+    gen_comment "epilogue";
+    gen_unop "pop" (get_scope_nslot scope);
+    gen_return ""
+
+(* Append a comment to brill program *)
+and gen_comment comment =
+    brprog := List.append !brprog [BrComment(comment)]
+
+(* Append call procedure instruction to brill program *)
+and gen_call proc_id =
+    brprog := List.append !brprog [BrOp(OpCall(proc_id))]
+
+(* Append halt instruction to brill program *)
+and gen_halt _ = 
+    brprog := List.append !brprog [BrOp(OpHalt)]
+
+(* Append procedure name as label to brill program *)
+and gen_proc_label proc_id =
+    brprog := List.append !brprog [BrProc(proc_id)]
+
+(* Append a label to brill program *)
+and gen_label nlabel = 
+    brprog := List.append !brprog [BrLabel(nlabel)]
+
+(* Append int const declaration to brill program *)
+and gen_int_const nreg int_const =
+    brprog := List.append !brprog [BrOp(OpIntConst(nreg,int_const))]
+
+(* Append float const declaration to brill program *)
+and gen_real_const nreg real_const =
+    brprog := List.append !brprog [BrOp(OpRealConst(nreg,real_const))]
+
+(* Append string const declaration to brill program *)
+and gen_string_const nreg string_const =
+    brprog := List.append !brprog [BrOp(OpStringConst(nreg,string_const))]
+
+(* Append return command to brill program *)
+and gen_return _ = 
+    brprog := List.append !brprog [BrOp(OpReturn)]
+
+(* Append debug stack to brill program *)
+and gen_debug_stack _ =
+    brprog := List.append !brprog [BrOp(OpDebugStack)]
+
+(* Append unary operation to brill program *)
+and gen_unop op x =
+    let line = match op with
+                | "push" -> BrOp(OpPush(x))
+                | "pop" -> BrOp(OpPop(x))
+                | "branch_uncond" -> BrOp(OpBranchUncond(x))
+                | "debug_reg" -> BrOp(OpDebugReg(x))
+                | "debug_slot" -> BrOp(OpDebugSlot(x))
+                | _ -> failwith ("operation "^op^" not yet supported")
+    in brprog := List.append !brprog [line]
+
+(* Append binary operation to brill program *)
+and gen_binop op x1 x2 =
+    let line = match op with
+                | "load" -> BrOp(OpLoad(x1,x2))
+                | "store" -> BrOp(OpStore(x1,x2))
+                | "load_address" -> BrOp(OpLoadAddress(x1,x2))
+                | "load_indirect" -> BrOp(OpLoadIndirect(x1,x2))
+                | "store_indirect" -> BrOp(OpStoreIndirect(x1,x2))
+                | "branch_on_true" -> BrOp(OpBranchOnTrue(x1,x2))
+                | "branch_on_false" -> BrOp(OpBranchOnFalse(x1,x2))
+                | "int_to_real" -> BrOp(OpIntToReal(x1,x2))
+                | "not" -> BrOp(OpNot(x1,x2))
+                | _ -> failwith ("operation "^op^" not yet supported")
+    in brprog := List.append !brprog [line]
+
+(* Append tri operation to brill program *)
+and gen_triop op x1 x2 x3 =
+    let line = match op with
+                | "or" -> BrOp(OpOr(x1,x2,x3))
+                | "and" -> BrOp(OpAnd(x1,x2,x3))
+                | "add_int" -> BrOp(OpAddInt(x1,x2,x3))
+                | "sub_int" -> BrOp(OpSubInt(x1,x2,x3))
+                | "mul_int" -> BrOp(OpMulInt(x1,x2,x3))
+                | "div_int" -> BrOp(OpDivInt(x1,x2,x3))
+                | "cmp_eq_int" -> BrOp(OpCmpEqInt(x1,x2,x3))
+                | "cmp_ne_int" -> BrOp(OpCmpNeInt(x1,x2,x3))
+                | "cmp_lt_int" -> BrOp(OpCmpLtInt(x1,x2,x3))
+                | "cmp_le_int" -> BrOp(OpCmpLeInt(x1,x2,x3))
+                | "cmp_gt_int" -> BrOp(OpCmpGtInt(x1,x2,x3))
+                | "cmp_ge_int" -> BrOp(OpCmpGeInt(x1,x2,x3))
+                | "add_real" -> BrOp(OpAddReal(x1,x2,x3))
+                | "sub_real" -> BrOp(OpSubReal(x1,x2,x3))
+                | "mul_real" -> BrOp(OpMulReal(x1,x2,x3))
+                | "div_real" -> BrOp(OpDivReal(x1,x2,x3))
+                | "cmp_eq_real" -> BrOp(OpCmpEqReal(x1,x2,x3))
+                | "cmp_ne_real" -> BrOp(OpCmpNeReal(x1,x2,x3))
+                | "cmp_lt_real" -> BrOp(OpCmpLtReal(x1,x2,x3))
+                | "cmp_le_real" -> BrOp(OpCmpLeReal(x1,x2,x3))
+                | "cmp_gt_real" -> BrOp(OpCmpGtReal(x1,x2,x3))
+                | "cmp_ge_real" -> BrOp(OpCmpGeReal(x1,x2,x3))
+                | "sub_offset" -> BrOp(OpSubOffset(x1,x2,x3))
+                | _ -> failwith ("operation "^op^" not yet supported")
+    in brprog := List.append !brprog [line]
+
+(* Append builtin call to brill program *)
+and gen_call_builtin bltin_func =
+    let line = match bltin_func with
+                | "read_int" -> BrBltIn(BltInReadInt)
+                | "read_real" -> BrBltIn(BltInReadReal)
+                | "read_bool" -> BrBltIn(BltInReadBool)
+                | "print_int" -> BrBltIn(BltInPrintInt)
+                | "print_real" -> BrBltIn(BltInPrintReal)
+                | "print_bool" -> BrBltIn(BltInPrintBool)
+                | "print_string" -> BrBltIn(BltInPrintString)
+                | _ -> failwith
+                        ("bltin_func "^bltin_func^" not yet supported")
+    in brprog := List.append !brprog [line]
+============================================
+src/Makefile
+17:33:48_Monday_22_May_2017
+============================================
+#
+# Makefile
+#
+# Group Name: Mainframe
+#
+
+TARGETS = snick
+TARGETS_BYTE=$(TARGETS:%=%.byte)
+
+MODULES = snick_ast snick_lex snick_parse snick_pprint snick_br_ast snick_symbol snick_err snick_optimizer snick_analyze snick_codegen
+MLFILES = $(addsuffix .ml, $(MODULES))
+CMOFILES = $(addsuffix .cmo, $(MODULES))
+CMXFILES = $(addsuffix .cmx, $(MODULES))
+
+ALLMODULES = $(MODULES) snick
+
+OCAMLLEX = ocamllex
+OCAMLYACC = ocamlyacc
+OCAMLDEP = ocamldep
+
+OCAMLFLAGS =
+
+all : opt byte
+byte: $(TARGETS_BYTE)
+opt: $(TARGETS)
+
+%.cmi: %.mli
+	ocamlc $(OCAMLFLAGS) -c $<
+
+%.cmo: %.ml
+	ocamlc $(OCAMLFLAGS) -g -c $<
+
+%.cmx: %.ml
+	ocamlopt $(OCAMLOPTFLAGS) -g -c $<
+
+%.ml: %.mll
+	$(OCAMLLEX) $^
+
+%.ml %.mli: %.mly
+	$(OCAMLYACC) $^
+
+snick.byte : $(CMOFILES) snick.cmo
+	ocamlc -g -o $@ $^
+
+snick : $(CMXFILES) snick.cmx
+	ocamlopt -g -o $@ $^
+
+clean :
+	rm -f *.cmo *.cmi *.cmx *.o
+	rm -f snick_lex.ml snick_parse.ml snick_parse.mli
+
+clobber : clean
+	rm -f $(TARGETS) $(TARGETS_BYTE)
+
+.PHONY : clean clobber depend
+
+# include depend
+depend: snick_lex.ml snick_parse.ml
+	$(OCAMLDEP) snick.ml snick.mli $(ALLMODULES:%=%.mli) $(ALLMODULES:%=%.ml) >Makefile.depend
+
+-include Makefile.depend
+============================================
+src/snick_optimizer.ml
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick_optimizer.ml
+** Description:   Module to do simple local optimizations to a program.
+**				  At this stage, it is only evaluating values of expressions
+**				  before turning into brill code.
+** Last Modified: Tue. 16th May 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+open Snick_ast
+open Snick_symbol
+open Snick_err
+open Format
+
+(* Start optimization (simplification) procedure by procedure *)
+let rec simplify_prog prog =
+    List.map simplify_proc prog
+
+(* Simplify a procedure,
+** returns a procdure type with simplified procedure body *)
+and simplify_proc ((proc_id,proc_params),proc_body) = 
+    ((proc_id,proc_params),(simplify_proc_body proc_id proc_body))
+
+(* Return the same procedure body with simplified statments *)
+and simplify_proc_body proc_id proc_body = 
+    {decls=proc_body.decls;stmts=(simplify_stmts proc_id proc_body.stmts)}
+
+(* Simplify statement by statment *)
+and simplify_stmts proc_id stmts =
+    List.map (simplify_stmt proc_id) stmts
+
+(* Select simplification method depending on type of statement *)
+and simplify_stmt proc_id = function
+    | Assign(elem,expr) ->
+        Assign((simplify_elem proc_id elem),(simplify_expr proc_id expr)) 
+    | Read(elem) -> Read(simplify_elem proc_id elem)   
+    | Write(write_expr) -> Write(simplify_write_expr proc_id write_expr)
+    | Call(id,exprs) -> Call(id,(List.map (simplify_expr proc_id) exprs))
+    | If_then(expr,stmts) -> If_then((simplify_expr proc_id expr),
+                                (simplify_stmts proc_id stmts))
+    | If_then_else(expr,then_stmts,else_stmts) ->
+                            If_then_else((simplify_expr proc_id expr),
+                                (simplify_stmts proc_id then_stmts),
+                                (simplify_stmts proc_id else_stmts))
+    | While(expr,stmts) -> While((simplify_expr proc_id expr),
+                                (simplify_stmts proc_id stmts))
+
+(* For array indexing, return the value
+** otherwise, retrun as it is *)
+and simplify_elem proc_id = function
+    | Elem(id,Some idxs) ->
+        Elem(id,Some (List.map (simplify_expr proc_id) idxs))
+    | elem -> elem
+
+(* Run simplication on expression being written if not string *)
+and simplify_write_expr proc_id = function
+    | Expr(expr) -> Expr(simplify_expr proc_id expr)
+    | String(string_const) -> String(string_const)
+
+(* Evaluate a expression by its type if possible *)
+and simplify_expr proc_id = function
+    | Eparen(expr) -> simplify_expr proc_id expr
+    | Eelem(elem) -> Eelem(simplify_elem proc_id elem)
+    | Ebinop(lexpr,optr,rexpr) -> eval_binop proc_id lexpr optr rexpr
+    | Eunop(optr,expr) -> eval_unop proc_id optr expr
+    | ori_expr -> ori_expr
+
+(* Evaluate binary operation if possible *)
+and eval_binop proc_id lexpr optr rexpr =
+    let simplified_lexpr = simplify_expr proc_id lexpr
+    and simplified_rexpr = simplify_expr proc_id rexpr
+    in
+    match simplified_lexpr with
+    | Ebool(lbool) ->
+    (
+        match simplified_rexpr with
+        | Ebool(rbool) ->
+        (
+            match optr with
+            | Op_or -> Ebool(lbool||rbool)
+            | Op_and -> Ebool(lbool&&rbool)
+            | Op_eq -> Ebool(lbool=rbool)
+            | Op_ne -> Ebool(lbool<>rbool)
+            | _ -> error_invalid_operation proc_id
+        )
+        | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
+    )
+    | Eint(lint) ->
+    (
+        match simplified_rexpr with
+        | Eint(rint) ->
+        (
+            match optr with
+            | Op_eq -> Ebool(lint=rint)
+            | Op_ne -> Ebool(lint<>rint)
+            | Op_lt -> Ebool(lint<rint)
+            | Op_gt -> Ebool(lint>rint)
+            | Op_le -> Ebool(lint<=rint)
+            | Op_ge -> Ebool(lint>=rint)
+            | Op_add -> Eint(lint+rint)
+            | Op_sub -> Eint(lint-rint)
+            | Op_mul -> Eint(lint*rint)
+            | Op_div -> Eint(lint/rint)
+            | _ -> error_invalid_operation proc_id
+        )
+        | Efloat(rfloat) ->
+        (
+            match optr with
+            | Op_lt -> Ebool((float_of_int lint)<rfloat)
+            | Op_gt -> Ebool((float_of_int lint)>rfloat)
+            | Op_le -> Ebool((float_of_int lint)<=rfloat)
+            | Op_ge -> Ebool((float_of_int lint)>=rfloat)
+            | Op_add -> Efloat((float_of_int lint)+.rfloat)
+            | Op_sub -> Efloat((float_of_int lint)-.rfloat)
+            | Op_mul -> Efloat((float_of_int lint)*.rfloat)
+            | Op_div -> Efloat((float_of_int lint)/.rfloat)
+            | _ -> error_invalid_operation proc_id
+        )
+        | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
+    )
+    | Efloat(lfloat) ->
+    (
+        match simplified_rexpr with
+        | Eint(rint) ->
+        (
+            match optr with
+            | Op_lt -> Ebool(lfloat<(float_of_int rint))
+            | Op_gt -> Ebool(lfloat>(float_of_int rint))
+            | Op_le -> Ebool(lfloat<=(float_of_int rint))
+            | Op_ge -> Ebool(lfloat>=(float_of_int rint))
+            | Op_add -> Efloat(lfloat+.(float_of_int rint))
+            | Op_sub -> Efloat(lfloat-.(float_of_int rint))
+            | Op_mul -> Efloat(lfloat*.(float_of_int rint))
+            | Op_div -> Efloat(lfloat/.(float_of_int rint))
+            | _ -> error_invalid_operation proc_id
+        )
+        | Efloat(rfloat) ->
+        (
+            match optr with
+            | Op_eq -> Ebool(lfloat=rfloat)
+            | Op_ne -> Ebool(lfloat<>rfloat)
+            | Op_lt -> Ebool(lfloat<rfloat)
+            | Op_gt -> Ebool(lfloat>rfloat)
+            | Op_le -> Ebool(lfloat<=rfloat)
+            | Op_ge -> Ebool(lfloat>=rfloat)
+            | Op_add -> Efloat(lfloat+.rfloat)
+            | Op_sub -> Efloat(lfloat-.rfloat)
+            | Op_mul -> Efloat(lfloat*.rfloat)
+            | Op_div -> Efloat(lfloat/.rfloat)
+            | _ -> error_invalid_operation proc_id
+        )
+        | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
+    )
+    | _ -> Ebinop(simplified_lexpr,optr,simplified_rexpr)
+
+(* Evaluate unary operation if possible *)
+and eval_unop proc_id optr expr =
+    let simplified_expr = simplify_expr proc_id expr
+    in
+    match simplified_expr with
+    | Ebool(bool_const) -> Ebool(not bool_const)
+    | Eint(int_const) -> Eint(-int_const)
+    | Efloat(float_const) -> Efloat(-.float_const)
+    | _ -> Eunop(optr,simplified_expr)
+
+============================================
+src/snick_parse.mly
+17:33:48_Monday_22_May_2017
+============================================
+/*
+** File:          snick_ast.ml
+** Description:   Specification of a parser for Snick
+** Last Modified: Sun. 9th April 2017
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*/
+
+/* ocamlyacc parser for snick */
+%{
+open Snick_ast
+%}
+
+/* tokens */
+%token EOF
+%token PROC END
+%token SEMICOLON
+%token COMMA
+%token DOT
+%token WHILE DO OD
+%token IF THEN ELSE FI
+%token <bool> BOOL_CONST
+%token <int> INT_CONST
+%token <float> FLOAT_CONST
+%token <string> STRING_CONST
+%token VAL REF
+%token <string> IDENT
+%token BOOL INT FLOAT
+%token WRITE READ
+%token ASSIGN
+%token OR
+%token AND
+%token NOT
+%token EQ NE LT LE GT GE
+%token PLUS MINUS
+%token MULTI DIVID
+%token LSQBRACK RSQBRACK
+%token LPAREN RPAREN
+
+/* associativity */
+%left OR
+%left AND
+%nonassoc NOT
+%nonassoc EQ NE LT GT LE GE
+%left PLUS MINUS
+%left MULTI DIVID
+%nonassoc UMINUS
+
+%type <Snick_ast.program> program
+
+%start program
+%%
+
+program:
+    procs   { List.rev $1 }
+
+/* Builds procs in reverse order */
+procs:
+    | procs proc { $2 :: $1 }
+    | proc { [$1] }
+
+proc:
+    PROC proc_header proc_body END { ($2, $3) }
+
+proc_header:
+    IDENT LPAREN params RPAREN { ($1, List.rev $3) }
+
+/* Builds params in reverse order */
+params:
+    | params COMMA param { $3 :: $1 }
+    | param { [$1] }
+    | { [] }
+
+param:
+    param_indc typespec IDENT { ($1, $2, $3) }
+
+param_indc:
+    | VAL { Val }
+    | REF { Ref }
+
+typespec:
+    | BOOL { Bool }
+    | FLOAT { Float }
+    | INT { Int }
+
+proc_body:
+    decls stmts { { decls = List.rev $1; stmts = List.rev $2 } }
+
+/* Builds decls in reverse order */
+decls :
+    | decls decl { $2 :: $1 }
+    | { [] }  
+
+decl:
+    | typespec variable SEMICOLON { ($1, $2) }
+
+variable:
+    | IDENT { Variable ($1, None) }
+    | IDENT dimension { Variable ($1, Some $2) }
+
+dimension:
+    LSQBRACK intervals RSQBRACK { List.rev $2 }
+  
+/* Builds intervals in reverse order */
+intervals:
+    | intervals COMMA interval { $3 :: $1 }
+    | interval { [$1] }
+
+interval:
+    INT_CONST DOT DOT INT_CONST { ($1, $4) }
+
+/* Builds stmts in reverse order */
+stmts:
+    | stmts stmt { $2 :: $1 }
+    | stmt { [$1] }
+
+stmt:
+    | elem ASSIGN expr SEMICOLON { Assign ($1, $3) }
+    | READ elem SEMICOLON { Read $2 }
+    | WRITE STRING_CONST SEMICOLON { Write (String $2) }
+    | WRITE expr SEMICOLON { Write (Expr $2) }
+    | IDENT LPAREN exprs_emptiable RPAREN SEMICOLON { Call ($1, List.rev $3) }
+    | IF expr THEN stmts FI { If_then ($2, List.rev $4) }
+    | IF expr THEN stmts ELSE stmts FI { If_then_else 
+                                        ($2, List.rev $4, List.rev $6) }
+    | WHILE expr DO stmts OD { While ($2, List.rev $4) }
+
+elem:
+    | IDENT { Elem ($1, None) }
+    | IDENT LSQBRACK exprs RSQBRACK { Elem ($1, Some (List.rev $3)) }
+
+expr:
+    /* Variable element */
+    | elem { Eelem $1 }
+    /* Constants */
+    | BOOL_CONST { Ebool $1 }
+    | INT_CONST { Eint $1 }
+    | FLOAT_CONST { Efloat $1 }
+    /* Expression inside a pair of  parentheses */
+    | LPAREN expr RPAREN { Eparen $2 }
+    /* Binary operators */
+    | expr PLUS expr { Ebinop ($1, Op_add, $3) }
+    | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
+    | expr MULTI expr { Ebinop ($1, Op_mul, $3) }
+    | expr DIVID expr { Ebinop ($1, Op_div, $3) }
+    | expr EQ expr { Ebinop ($1, Op_eq, $3) }
+    | expr NE expr { Ebinop ($1, Op_ne, $3) }
+    | expr LT expr { Ebinop ($1, Op_lt, $3) }
+    | expr GT expr { Ebinop ($1, Op_gt, $3) }
+    | expr LE expr { Ebinop ($1, Op_le, $3) }
+    | expr GE expr { Ebinop ($1, Op_ge, $3) }
+    | expr AND expr { Ebinop ($1, Op_and, $3) }
+    | expr OR expr { Ebinop ($1, Op_or, $3) }
+    /* Unary operators */
+    | NOT expr { Eunop (Op_not, $2) }
+    | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
+
+
+/* Builds exprs in reverse order */
+exprs:
+    | exprs COMMA expr { $3 :: $1 }
+    | expr { [$1] }
+
+exprs_emptiable:
+    | exprs COMMA expr { $3 :: $1 }
+    | expr { [$1] }
+    | { [] }============================================
+src/snick_ast.ml
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick_ast.ml
+** Description:   Specification of the abstract syntax tree for Snick.
+** Last Modified: Sun. 9th April 2017
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+(* identifier *)
+type ident = string
+
+(* primitive types *)
+type snicktype =
+    | Bool
+    | Int
+    | Float 
+
+(* array dimensions *)
+type interval = (int * int)
+
+(* variable representations *)
+type variable = Variable of (ident * interval list option)
+
+(* single declation *)
+type decl = (snicktype * variable)
+
+(* operators *)
+type optr =
+    | Op_or
+    | Op_and 
+    | Op_not
+    | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge
+    | Op_add | Op_sub 
+    | Op_mul | Op_div
+    | Op_minus
+
+(* expression *)
+type expr =
+    (* variable element expression*)
+    | Eelem of elem
+    (* constant expression *)
+    | Ebool of bool
+    | Eint of int
+    | Efloat of float
+    (* expression inside a pair of parentheses *)
+    | Eparen of expr
+    (* operation expression *)
+    | Ebinop of (expr * optr * expr)
+    | Eunop of (optr * expr)
+(* element to read, write or assign *)
+and elem = Elem of (ident * expr list option)
+ 
+(* Expression that can be written (either an expression or string). *)
+type write_expr =
+    | Expr of expr
+    | String of string
+
+(* statement *)
+type stmt =
+(* atomic statement *)
+    | Assign of (elem * expr)
+    | Read of elem
+    | Write of write_expr
+    | Call of (ident * expr list)
+(* composite statement *)
+    | If_then of (expr * stmt list)
+    | If_then_else of (expr * stmt list * stmt list)
+    | While of (expr * stmt list)
+
+(* procedure body *)
+type proc_body = {
+  decls : decl list ;
+  stmts : stmt list
+}
+
+(* parameter indicator *)
+type param_indc =
+    | Val
+    | Ref
+
+(* procedure parameter *)
+type param = (param_indc * snicktype * ident)
+
+(* procedure header *)
+type proc_header = (ident * param list)
+
+(* procedure *)
+type proc = (proc_header * proc_body)
+
+(* list of procedures *)
+type procs = proc list
+
+(* program is a list of procedures *)
+type program = procs
+
+(* root node of the ast *)
+type t = program============================================
+src/snick_err.ml
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick_err.ml
+** Description:   Functions to raise errors may appear 
+**				  in a snick program.
+** Last Modified: Tue. 16th May 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+open Snick_symbol
+
+(* Potential errors could be raised while analyzing *)
+(* main function not found *)
+let error_no_main _ = failwith ("No \'main\' procedure definition!")
+
+(* undefined error *)
+let error_undefined _ = failwith ("Undefined error!")
+
+(* duplicate procedure defination *)
+let error_dup_proc proc_id = 
+    failwith ("Proc "^proc_id^" defined more than once!")
+
+(* duplicate variable declaration in scope *)
+let error_dup_decl scope id =
+    failwith ("Declare "^id^" more than once in proc: "^scope)
+
+(* illegal bound declared for array in scope *)
+let error_illegal_bound scope id =
+    failwith ("Illegal bound declared for "^id
+                ^" in proc: "^scope)
+
+(* variable undeclared in scope *)
+let error_undecl_var scope id =
+    failwith ("Variable name \'"^id^"\' is not declared in proc: "
+                ^scope)
+
+(* assignment type mismatch in scope *)
+let error_assign_type_mismatch scope =
+    failwith ("Error in proc \'" ^scope
+                ^"\': mismatched types for assignment!")
+
+(* illegal indexing for array in scope *)
+let error_illegal_index scope id =
+    failwith ("Illegal indexing for array \'" ^id^ "\' in proc: "
+                ^scope)
+
+(* indexing out of bound *)
+let error_idx_out_of_bound scope id =
+    failwith ("Array "^id^"index out of bound in proc: "^scope)
+
+(* arguements type mismatch in a procedure call *)
+let error_arg_type_mismatch scope id = 
+    failwith ("Arguement types mismatch for calling proc \'"
+                ^id^"\' in proc: "^scope)
+
+(* number of arguement mismatch in procedure call *)
+let error_arg_count_mismatch scope id =
+    failwith ("Number of arguements mismatch for calling proc \'"
+                ^id^"\' in proc: "^scope)
+
+(* undefined procedure in scope *)
+let error_undef_proc scope id = 
+    failwith ("Call to procedure \'"^id^"\' is undefined in proc: "^scope)
+
+(* illegal operator for variables of type in scope *)
+let error_illegal_optr scope var_type = 
+    failwith ("Error in proc \'"^scope
+            	^"\': Illegal operation on type "^var_type^".")
+
+(* type mismatch for operator *)
+let error_optr_type_mismatch scope = 
+    failwith ("Error in proc \'" ^scope
+                ^"\': Mismatching types for operation.")
+
+(* invalid operator *)
+let error_invalid_operation scope = 
+    failwith ("Error in proc \'"^scope^"\': Invalid operation.")
+============================================
+src/snick_lex.mll
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick_lex.ml
+** Description:   Specification of a lexer for Snick
+** Last Modified: Tue. 4th April 2017
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+{
+open Snick_parse
+
+exception LexErr
+}
+
+
+(* some regex patterns *)
+let digit = ['0' - '9']
+let digits = digit+
+let floating = digits '.' digits
+let alpha = ['a' - 'z' 'A' - 'Z']
+let alnum = alpha | '_' | '\'' | digit
+let ident = (alpha | '_') alnum*
+let commment = '#' [^'\n']*     (* comments *)
+let string = '"' [^'"']* '"'    (* string constant for write statement *)
+
+rule token = parse
+    | commment                      { token lexbuf } (* skip comments *)
+    | [' ' '\t' '\r']               { token lexbuf } (* skip blanks*)
+    | '\n'                          { Lexing.new_line lexbuf ; token lexbuf }
+    | '-'? digits as lxm            { INT_CONST (int_of_string lxm) }
+    | '-'? floating as lxm          { FLOAT_CONST (float_of_string lxm) }
+    | eof                           { EOF }
+    (*  keywords *)
+    | "not"                         { NOT }
+    | "and"                         { AND }
+    | "or"                          { OR }
+    | "float"                       { FLOAT }
+    | "int"                         { INT }
+    | "bool"                        { BOOL }
+    | "false"                       { BOOL_CONST false }
+    | "true"                        { BOOL_CONST true }
+    | "while"                       { WHILE }
+    | "do"                          { DO }
+    | "od"                          { OD }
+    | "if"                          { IF }
+    | "then"                        { THEN }
+    | "else"                        { ELSE }
+    | "fi"                          { FI }
+    | "proc"                        { PROC }
+    | "end"                         { END }
+    | "read"                        { READ }
+    | "write"                       { WRITE }
+    | "ref"                         { REF }
+    | "val"                         { VAL }
+    | ":="                          { ASSIGN }
+    | '('                           { LPAREN }
+    | ')'                           { RPAREN }
+    | '['                           { LSQBRACK }
+    | ']'                           { RSQBRACK }
+    | '='                           { EQ }
+    | '.'                           { DOT }
+    | "!="                          { NE }
+    | ">="                          { GE }
+    | "<="                          { LE }
+    | '>'                           { GT }
+    | '<'                           { LT }
+    | '+'                           { PLUS }
+    | '-'                           { MINUS }
+    | '*'                           { MULTI }
+    | '/'                           { DIVID }
+    | ','                           { COMMA }
+    | ';'                           { SEMICOLON }
+    | ident as lxm                  { IDENT lxm }
+    | string as lxm                 { STRING_CONST lxm}
+    | _                             { raise LexErr}
+============================================
+src/snick_analyze.ml
+17:33:48_Monday_22_May_2017
+============================================
+(*
+** File:          snick_analyze.ml
+** Description:   Semantic analyzer for a snick program,
+**                also checks for any semantic errors in program.
+** Last Modified: Tue. 16th May 2017 
+** 
+** Group name: Mainframe
+** 
+** Member names   | usernames
+** Xianzhuo REN   | xianzhuor 
+** Haoyu LIN      | haoyul3
+** Zequn MA       | zequnm
+*)
+
+open Snick_ast
+open Snick_symbol
+open Snick_optimizer
+open Snick_err
+open Format
+
+let ht_inis = 20
+(* Symbol tables of the program to be analyzed *)
+let ht_scopes = Hashtbl.create ht_inis
+
+(* Start semantic analyzing for the program *)
+let rec analyse prog =
+    (* Get symbol tables of the program *)
+    gen_sym_table prog;
+    (* Verify we have a main procedure *)
+    check_main prog;
+    (* Detect for any other semantic errors in program *)
+    List.iter error_detect_proc prog
+
+(* Generate the symbol tables of program *)
+and gen_sym_table prog =
+    (* Symbol tables with different scopes are maintained for
+    ** each procedure in program *)
+    List.iter generate_scope prog
+
+(* Generate the symbol table of a precedure *)
+and generate_scope ((proc_id,params),proc_body) =
+    create_scope proc_id params; (* Create new scope table *)
+    (* Insert parameter symbols to the table *)
+    generate_params_symbols (Hashtbl.find ht_scopes proc_id) params;
+    (* Insert symbols in procedure declarations to the table *)
+    generate_decls_symbols (Hashtbl.find ht_scopes proc_id) proc_body.decls;
+
+(* Insert a empty table for a new scope as an entry to ht_scopes *)
+and create_scope scope_id params =
+    Hashtbl.add
+        ht_scopes
+        scope_id
+        (Scope(scope_id, (Hashtbl.create ht_inis), params, 0))
+
+(* Create symbols for procedure arguements *)
+and generate_params_symbols scope params =
+    let scope_id = get_scope_id scope
+    in List.iter (generate_param_symbol scope_id) params
+
+(* Create a symbol for a single procedure arguement *)
+and generate_param_symbol scope_id (indc,paramtype,paramid) =
+    (* scope of proc *)
+    let (Scope(scopeid,ht_st,params,nslot)) = Hashtbl.find ht_scopes scope_id
+    (* attribute: arguement indicator *)
+    and sym_kind = sym_kind_from_ast_indc indc
+    (* attribute: arguement type *)
+    and sym_type = sym_type_from_ast_type paramtype
+    in
+    (
+        (* Insert symbol with attribues to symbol table of current scope *)
+        Hashtbl.add ht_st paramid (sym_kind,sym_type,nslot,None);
+        Hashtbl.replace ht_scopes scopeid 
+            (Scope(scopeid,ht_st,params,nslot+1))
+    )
+
+(* Create symbols for declarations in a procedure (scope) *)
+and generate_decls_symbols scope decls =
+    let scope_id = get_scope_id scope
+    in 
+    List.iter (generate_decl_symbol scope_id) decls
+
+(* Create symbol for a single declaration of a procedure *)
+and generate_decl_symbol scope_id (decltype, Variable(declid,optn_intvls)) =
+    (* scopt of proc *)
+    let (Scope(scopeid,ht_st,params,nslot)) = Hashtbl.find ht_scopes scope_id
+    (* attribute: type of the declaration *)
+    and sym_type = sym_type_from_ast_type decltype
+    in
+    (
+        (* Check if this is a declaration of an array *)
+        match optn_intvls with
+        | None -> (* Not an array *)
+        (
+            Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,None);
+            Hashtbl.replace ht_scopes scopeid 
+                (Scope(scopeid,ht_st,params,nslot+1))
+        )
+        | Some intvls -> (* Is an array *)
+        (
+            Hashtbl.add ht_st declid (SYM_LOCAL,sym_type,nslot,optn_intvls);
+            
+            let num = ref 1
+            in
+            (
+                List.iter
+                (* get number of slot required for the declared array size *)
+                (fun (lo_bound,up_bound) ->
+                    ( num := ((up_bound - lo_bound) +1)*(!num) )
+                )
+                intvls;
+                Hashtbl.replace ht_scopes scopeid 
+                    (Scope(scopeid,ht_st,params,nslot+(!num)))
+            )
+        )
+    )
+
+(* Check there is a main procedure in program *)
+and check_main prog =
+    let is_there_main =
+            List.exists
+            (fun ((proc_id,_),_) -> 
+                ( proc_id = "main" )
+            )
+            prog
+    in
+    if is_there_main then ()
+    (* raise error if main procedure not found *)
+    else error_no_main ""
+
+(* Error detection functions *)
+(* Look for errors procedure by procedure *)
+and error_detect_proc ((proc_id,_),prog_body) =
+    let cnt = List.length (Hashtbl.find_all ht_scopes proc_id)
+    in
+    if (cnt > 1) then
+        error_dup_proc proc_id
+    else
+        (* symbol table of curent scope (procedure) *)
+        let scope = Hashtbl.find ht_scopes proc_id
+        in
+        (
+            (* error detection in declarations *)
+            error_detect_decls scope prog_body.decls;
+            (* error detection in statements*)
+            error_detect_stmts scope prog_body.stmts
+        )
+
+(* Look for errors declaration by declaration *)
+and error_detect_decls scope decls =
+    List.iter (error_detect_decl scope) decls
+
+(* Look for possible errors in a single declaration:
+**      illegal declarations of array *)
+and error_detect_decl scope (_,(Variable(id,optn_intvls))) =
+    let cnt = List.length (Hashtbl.find_all (get_scope_st scope) id)
+    in
+    if (cnt > 1) then
+        error_dup_decl (get_scope_id scope) id
+    else
+        match optn_intvls with
+        | None -> () (* element declaration *)
+        | Some intvls -> (* array declaration *)
+        (
+            List.iter
+            (* Check for index out of bound error *)
+            (fun (lo_bound,up_bound) ->
+                (
+                    if (lo_bound>up_bound) || (lo_bound<0) then
+                        error_illegal_bound (get_scope_id scope) id
+                )
+            )
+            intvls
+        )
+
+(* Look for errors statement by statement *)
+and error_detect_stmts scope stmts =
+    List.iter (error_detect_stmt scope) stmts
+
+(* Look for possible errors in a single statement,
+** depending on type of statment *)
+and error_detect_stmt scope = function
+    | Assign(elem,expr) -> error_detect_assign scope elem expr
+    | Read(elem) -> error_detect_elem scope elem
+    | Write(write_expr) -> error_detect_write scope write_expr
+    | Call(id,exprs) -> error_detect_call scope id exprs
+    | If_then(expr,stmts) ->
+    (
+        error_detect_expr scope expr;
+        error_detect_stmts scope stmts
+    )
+    | If_then_else(expr,then_stmts,else_stmts) ->
+    (
+        error_detect_expr scope expr;
+        error_detect_stmts scope then_stmts;
+        error_detect_stmts scope else_stmts
+    )
+    | While(expr,stmts) ->
+    (
+        error_detect_expr scope expr;
+        error_detect_stmts scope stmts
+    )
+
+(* look for possible errors in an assignment:
+**      assignment type mismatch *)
+and error_detect_assign scope elem expr =
+    (* First check for error on either side of assignment *)
+    error_detect_elem scope elem;
+    error_detect_expr scope expr;
+    let l_type = get_elem_type scope elem (* type of LHS *)
+    and r_type = get_expr_type scope expr (* type of RHS *)
+    in
+        if ((l_type = r_type)
+        || ((l_type = SYM_REAL)&&(r_type = SYM_INT))) then
+            ()
+        else
+            error_assign_type_mismatch (get_scope_id scope)
+
+(* Look for possible errors in an element:
+**      undeclared variable
+**      illegal indexing of array;
+**      indexing out of bound *)
+and error_detect_elem scope (Elem(id,optn_idxs)) =
+    if (Hashtbl.mem (get_scope_st scope) id) then
+    (
+        match optn_idxs with
+        | None -> () (* singleton element *)
+        | Some idxs -> (* array indexing element *)
+        (
+            List.iter
+            (* check for illegal indexing *)
+            (fun idx ->
+                (
+                    match (get_expr_type scope idx) with
+                    | SYM_INT -> ()
+                    (* error illegal indexing *)
+                    | _ -> error_illegal_index (get_scope_id scope) id
+                )
+            )
+            idxs;
+            (* get size of array from the symbol table *)
+            let (_,_,_,optn_intvls) = Hashtbl.find (get_scope_st scope) id
+            in
+            match optn_intvls with
+            | Some intvls ->
+            (
+                List.iter2
+                (* check for indexing out of bound *)
+                (fun idx (lo_bound,up_bound) ->
+                    (
+                        match idx with
+                        | Eint(int_idx) ->
+                        (
+                            if ((int_idx<lo_bound)||(int_idx>up_bound)) then
+                                error_idx_out_of_bound (get_scope_id scope) id
+                        )
+                        | _ -> ()
+                    )
+                )
+                idxs
+                intvls
+            )
+            | _ -> ()
+        )
+    )
+    (* error variable undeclared *)
+    else error_undecl_var (get_scope_id scope) id
+
+(* Look for possible errors in a write statement,
+** error may only exist in the expression being written *)
+and error_detect_write scope = function
+    | Expr(expr) -> error_detect_expr scope expr
+    | String(string_const) -> ()
+
+(* Look for possible errors in a procedure call,
+**      procedure undefined
+**      incorrect parameter types
+**      incoorect number of parameters *)
+and error_detect_call scope id exprs =
+    if (Hashtbl.mem ht_scopes id) then
+    (
+        List.iter (error_detect_expr scope) exprs;
+        (* parameters in procedures symbol table *)
+        let params = get_scope_params (Hashtbl.find ht_scopes id)
+        in
+        try
+        (
+            let scan_result = 
+                (* check if arguements in procedure call matches
+                ** procedure declaration in types,
+                ** throws exception if mismatching number of arguement *)
+                List.for_all2
+                (fun (param_indc,param_type,_) arg ->
+                    (
+                        let arg_type = ast_type_from_sym_type
+                                            (get_expr_type scope arg)
+                        in
+                        (
+                            (param_type = arg_type)
+                            ||
+                            (
+                                (param_indc = Val)
+                                &&
+                                ((param_type=Float)&&(arg_type=Int))
+                            )
+                        )
+                    )
+                )
+                params
+                exprs
+            in
+            if scan_result then ()
+            (* error parameters type mismatch *)
+            else error_arg_type_mismatch (get_scope_id scope) id
+        )
+        with
+        (* error incorrect number of parameters *)
+        | Invalid_argument(_) -> 
+            error_arg_count_mismatch (get_scope_id scope) id
+    )
+    (* error procedure undefined *)
+    else error_undef_proc (get_scope_id scope) id
+
+(* Look for possible errors in an expression,
+** depending on the type of expression *)
+and error_detect_expr scope = function
+    | Eparen(expr) -> error_detect_expr scope expr
+    | Eelem(elem) -> error_detect_elem scope elem  
+    | Ebinop(lexpr,optr,rexpr) -> error_detect_binop scope lexpr optr rexpr
+    | Eunop(optr,expr) -> error_detect_unop scope optr expr
+    | _ -> ()
+
+(* Look for possible errors in a binary operation:
+**      illeal operation on type
+**      type missmatch for operation *)
+and error_detect_binop scope lexpr optr rexpr = 
+    (* First check for error on either side of binary operation *)
+    error_detect_expr scope lexpr;
+    error_detect_expr scope rexpr;
+    (* Get types of expression on either side of operation *)
+    let lexpr_type = get_expr_type scope lexpr
+    and rexpr_type = get_expr_type scope rexpr
+    in
+    match lexpr_type with
+    | SYM_BOOL -> (* LHS *)
+    (
+        match rexpr_type with (* RHS *)
+        | SYM_BOOL -> (* BOOL binop BOOL *)
+        (
+            match optr with
+            | Op_eq | Op_ne
+            | Op_or | Op_and -> () 
+            | _ -> error_illegal_optr (get_scope_id scope) "bool"
+        )
+        | SYM_INT | SYM_REAL -> error_optr_type_mismatch (get_scope_id scope)
+    )
+    | SYM_INT -> (* LHS *)
+    (
+        match rexpr_type with (* RHS *)
+        | SYM_INT -> (* INT binop INT *)
+        (
+            match optr with
+            | Op_eq | Op_ne 
+            | Op_lt | Op_gt | Op_le | Op_ge 
+            | Op_add | Op_sub | Op_mul | Op_div -> ()
+            | _ -> error_illegal_optr (get_scope_id scope) "int"
+        )
+        | SYM_REAL -> (* INT binop FLOAT *)
+        (
+            match optr with
+            | Op_lt | Op_gt | Op_le | Op_ge 
+            | Op_add | Op_sub | Op_mul | Op_div -> ()
+            | _ -> error_optr_type_mismatch (get_scope_id scope)
+        )
+        | SYM_BOOL -> error_optr_type_mismatch (get_scope_id scope)
+    )
+    | SYM_REAL -> (* LHS *)
+    (
+        match rexpr_type with (* RHS *)
+        | SYM_INT -> (* FLOAT binop INT *)
+        (
+            match optr with
+            | Op_lt | Op_gt | Op_le | Op_ge 
+            | Op_add | Op_sub | Op_mul | Op_div -> ()
+            | _ -> error_optr_type_mismatch (get_scope_id scope)
+        )
+        | SYM_REAL -> (* FLOAT binop FLOAT *)
+        (
+            match optr with
+            | Op_eq | Op_ne 
+            | Op_lt | Op_gt | Op_le | Op_ge 
+            | Op_add | Op_sub | Op_mul | Op_div -> ()
+            | _ -> error_illegal_optr (get_scope_id scope) "float"
+        )
+        | SYM_BOOL -> error_optr_type_mismatch (get_scope_id scope)
+    )
+
+(* Look for possible errors in a unary operation:
+**      illeal operation on type *)
+and error_detect_unop scope optr expr =
+    (* check for errors in expression *)
+    error_detect_expr scope expr;
+    match (get_expr_type scope expr) with
+    | SYM_BOOL ->
+    (
+        match optr with
+        | Op_not -> ()
+        | _ -> error_illegal_optr (get_scope_id scope) "bool"
+    )
+    | _ ->
+    (
+        match optr with
+        | Op_minus -> ()
+        | _ -> error_illegal_optr (get_scope_id scope) "numeric"
+    )
+
+(* Get the type of an expression given its scope (procedure),
+** also may raise invalid operater error *)
+and get_expr_type scope = function
+    | Eelem(elem) -> get_elem_type scope elem
+    | Ebool(_) -> SYM_BOOL
+    | Eint(_) -> SYM_INT
+    | Efloat(_) -> SYM_REAL
+    | Eparen(expr) -> get_expr_type scope expr
+    | Ebinop(lexpr,optr,rexpr) ->
+    (
+        match optr with
+        | Op_or | Op_and | Op_eq | Op_ne | Op_lt | Op_gt | Op_le | Op_ge ->
+            SYM_BOOL
+        | Op_add | Op_sub | Op_mul | Op_div ->
+        (
+            if (((get_expr_type scope lexpr)=SYM_REAL)
+            ||((get_expr_type scope rexpr)=SYM_REAL)) then
+                SYM_REAL
+            else
+                SYM_INT
+        )
+        | _ -> error_invalid_operation (get_scope_id scope)
+    )
+    | Eunop(optr,expr) -> get_expr_type scope expr
+
+(* Get the type of an element *)
+and get_elem_type scope (Elem(id,_)) =
+    let (_,sym_type,_,_) = Hashtbl.find (get_scope_st scope) id
+    in sym_type
+
+(* Print all symbol tables for debugging purposes *)
+and print_all_sts = function
+    | _ -> Hashtbl.iter
+            (fun scope_id _ -> 
+                ( print_st scope_id )
+            )
+            ht_scopes
+
+and print_st scope_id = 
+    let scope_st = get_scope_st (Hashtbl.find ht_scopes scope_id)
+    and scope_nslot = get_scope_nslot (Hashtbl.find ht_scopes scope_id)
+    in
+    (
+        fprintf std_formatter "symbol_table of scope: %s with slots: %d\n"
+                                scope_id scope_nslot;
+        fprintf std_formatter "-------------------------\n";
+        Hashtbl.iter
+        (fun id (_,_,nslot,_) ->
+            (
+                fprintf std_formatter "symbol:%s nslot:%d\n" id nslot
+            )
+        )
+        scope_st;
+        fprintf std_formatter "-------------------------\n\n";
+    )
