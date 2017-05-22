@@ -41,7 +41,8 @@ and print_params fmtr = function
 
 (* Print a single procedure parameter. *)
 and print_param fmtr (indicator, param_type, ident) =
-    fprintf fmtr "%a %a %s" print_param_indc indicator print_type param_type ident
+    fprintf fmtr "%a %a %s" 
+        print_param_indc indicator print_type param_type ident
 
 (* Print the indicator of a procedure parameter. *)
 and print_param_indc fmtr = function
@@ -54,9 +55,11 @@ and print_type fmtr = function
     | Int -> fprintf fmtr "%s" "int"
     | Float -> fprintf fmtr "%s" "float"
 
-(* Print procedure body as a list of declarations followed by a list of statements. *)
+(* Print procedure body as a list of declarations 
+** followed by a list of statements. *)
 and print_proc_body fmtr prog_body =
-    fprintf fmtr "%a@,%a" print_decls prog_body.decls print_stmts prog_body.stmts
+    fprintf fmtr "%a@,%a" print_decls prog_body.decls 
+                          print_stmts prog_body.stmts
     
 (* Print the list of declarations. *)
 and print_decls fmtr = function
@@ -75,11 +78,10 @@ and print_decl fmtr (var_type, variable) =
     fprintf fmtr "%a %a;" print_type var_type print_var variable
 
 (* Print a variable. *)
-and print_var fmtr = function(* 
-    | Single_variable ident -> fprintf fmtr "%s" ident
-    | Array_variable (ident, itvls) -> fprintf fmtr "%s[%a]" ident print_itvls itvls *)
+and print_var fmtr = function
     | Variable (ident, None) -> fprintf fmtr "%s" ident
-    | Variable (ident, Some itvls) -> fprintf fmtr "%s[%a]" ident print_itvls itvls
+    | Variable (ident, Some itvls) -> fprintf fmtr "%s[%a]" 
+                                                    ident print_itvls itvls
 
 (* Print list of intervals. *)
 and print_itvls fmtr = function
@@ -91,38 +93,10 @@ and print_itvls fmtr = function
 and print_itvl fmtr (st_pnt, end_pnt) =
     fprintf fmtr "%d..%d" st_pnt end_pnt
 
-(*
 (* Print statement. *)
 and print_stmt fmtr = function
-    | Atom_stmt atom_stmt -> fprintf fmtr "%a" print_atom_stmt atom_stmt
-    | Comps_stmt comps_stmt -> fprintf fmtr "%a" print_comps_stmt comps_stmt
-
-(* Print atomic statement. *)
-and print_atom_stmt fmtr = function
-    | Assign (elem, expr) -> fprintf fmtr "%a := %a;" print_elem elem print_expr expr
-    | Read elem -> fprintf fmtr "read %a;" print_elem elem
-    | Write expr -> 
-        begin
-            match expr with
-            | Expr wexpr -> fprintf fmtr "write %a;" print_expr wexpr
-            | String str -> fprintf fmtr "write %s;" str
-        end
-    | Call (ident, exprs) -> fprintf fmtr "%s(%a);" ident print_exprs exprs
-
-(* Print composite statement. *)
-and print_comps_stmt fmtr = function
-    | If_then (expr, stmts) -> fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,fi"
-                                print_expr expr print_stmts stmts
-    | If_then_else (expr, then_stmts, else_stmts) ->
-        fprintf fmtr "if %a then@;<0 4>@[<v>%a@]@,else@;<0 4>@[<v>%a@]@,fi"
-                print_expr expr print_stmts then_stmts print_stmts else_stmts
-    | While (expr, stmts) -> fprintf fmtr "while %a do@;<0 4>@[<v>%a@]@,od"
-                print_expr expr print_stmts stmts
-*)    
-
-(* Print statement. *)
-and print_stmt fmtr = function
-    | Assign (elem, expr) -> fprintf fmtr "%a := %a;" print_elem elem print_expr expr
+    | Assign (elem, expr) -> fprintf fmtr "%a := %a;" print_elem elem 
+                                                      print_expr expr
     | Read elem -> fprintf fmtr "read %a;" print_elem elem
     | Write expr -> 
         begin
@@ -140,9 +114,7 @@ and print_stmt fmtr = function
                 print_expr expr print_stmts stmts
 
 (* Print element to be assigned to or be read / written. *)
-and print_elem fmtr = function(* 
-    | Single_elem ident -> fprintf fmtr "%s" ident
-    | Array_elem (ident, idxs) -> fprintf fmtr "%s[%a]" ident print_exprs idxs *)
+and print_elem fmtr = function
     | Elem (ident, None) -> fprintf fmtr "%s" ident
     | Elem (ident, Some idxs) -> fprintf fmtr "%s[%a]" ident print_exprs idxs
 
@@ -260,13 +232,16 @@ and print_binop fmtr = function
                     in
                         if lcmpr_result>=0 then
                             fprintf fmtr "%a %a %a"
-                                print_expr lexpr_inside_strip print_optr optr print_expr rexpr
+                                print_expr lexpr_inside_strip 
+                                            print_optr optr print_expr rexpr
                         else
                             fprintf fmtr "(%a) %a %a"
-                                print_expr lexpr_inside_strip print_optr optr print_expr rexpr
+                                print_expr lexpr_inside_strip 
+                                            print_optr optr print_expr rexpr
                 | _ ->
                     fprintf fmtr "%a %a %a"
-                        print_expr lexpr_inside_strip print_optr optr print_expr rexpr
+                        print_expr lexpr_inside_strip 
+                                            print_optr optr print_expr rexpr
         end
     | (lexpr, optr, Eparen rexpr_inside) ->
         begin
@@ -280,13 +255,16 @@ and print_binop fmtr = function
                     in
                         if rcmpr_result>0 then
                             fprintf fmtr "%a %a %a"
-                                print_expr lexpr print_optr optr print_expr rexpr_inside_strip
+                                print_expr lexpr print_optr optr 
+                                                print_expr rexpr_inside_strip
                         else
                             fprintf fmtr "%a %a (%a)"
-                                print_expr lexpr print_optr optr print_expr rexpr_inside_strip
+                                print_expr lexpr print_optr optr 
+                                                print_expr rexpr_inside_strip
                 | _ ->
                     fprintf fmtr "%a %a %a"
-                        print_expr lexpr print_optr optr print_expr rexpr_inside_strip
+                        print_expr lexpr print_optr optr 
+                                                print_expr rexpr_inside_strip
                         
         end
     | (lexpr, optr, rexpr) ->
@@ -296,8 +274,8 @@ and print_binop fmtr = function
         end
 
 (* Print unary operations. 
-** Parenthese around an operation expression with higher precedence will be removed.
-*)
+** Parenthese around an operation expression with higher precedence 
+** will be removed. *)
 and print_unop fmtr = function
     | (optr, Eparen expr_inside) ->
         begin

@@ -77,26 +77,20 @@ and gen_br_program prog =
     List.iter gen_br_proc prog    
 
 (* Create a label and instructions for the index out of bound error *)
-and gen_br_out_of_bounds = function
-    | _ ->
-    (
-        gen_label out_of_bounds_label;
-        gen_string_const 0 "\"ARRAY INDEXING OUT OF BOUND\\n\"";
-        (* gen_string_const 0 "\"[FATAL]: array element out of bounds!\\n\""; *)
-        gen_call_builtin "print_string";
-        gen_halt ""
-    )
+and gen_br_out_of_bounds _ =
+    gen_label out_of_bounds_label;
+    gen_string_const 0 "\"ARRAY INDEXING OUT OF BOUND\\n\"";
+    (* gen_string_const 0 "\"[FATAL]: array element out of bounds!\\n\""; *)
+    gen_call_builtin "print_string";
+    gen_halt ""
 
 (* Create a label and instructions for the division by zero error *)
-and gen_br_div_by_zero = function
-    | _ ->
-    (
-        gen_label div_by_zero_label;
-        gen_string_const 0 "\"DIVIDE BY ZERO\\n\"";
-        (* gen_string_const 0 "\"[FATAL]: division by zero!\\n\""; *)
-        gen_call_builtin "print_string";
-        gen_halt ""
-    )
+and gen_br_div_by_zero _ =
+    gen_label div_by_zero_label;
+    gen_string_const 0 "\"DIVIDE BY ZERO\\n\"";
+    (* gen_string_const 0 "\"[FATAL]: division by zero!\\n\""; *)
+    gen_call_builtin "print_string";
+    gen_halt ""
 
 (* Generate a block of brill instructions for a snick procedure *)
 and gen_br_proc ((proc_id,params),proc_body) =
