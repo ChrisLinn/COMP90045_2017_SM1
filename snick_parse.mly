@@ -160,7 +160,6 @@ expr:
     | BOOL_CONST { Ebool $1 }
     | INT_CONST { Eint $1 }
     | FLOAT_CONST { Efloat $1 }
-    /*| STRING_CONST { Estring $1 }*/
     /* Expression inside a pair of  parentheses */
     | LPAREN expr RPAREN { Eparen $2 }
     /* Binary operators */
