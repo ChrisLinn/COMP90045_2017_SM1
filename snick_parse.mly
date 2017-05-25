@@ -102,8 +102,6 @@ decl:
 variable:
     | IDENT { Variable ($1, None) }
     | IDENT dimension { Variable ($1, Some $2) }
-/*    | IDENT { Single_variable $1 }  */
-/*    | IDENT dimension { Array_variable ($1, $2) }   */
 
 dimension:
     LSQBRACK intervals RSQBRACK { List.rev $2 }
@@ -121,22 +119,6 @@ stmts:
     | stmts stmt { $2 :: $1 }
     | stmt { [$1] }
 
-/* stmt: */
-/*     | atom_stmt { Atom_stmt $1 } */
-/*     | comps_stmt { Comps_stmt $1 } */
-
-/* atom_stmt: */
-/*     | elem ASSIGN expr SEMICOLON { Assign ($1, $3) } */
-/*     | READ elem SEMICOLON { Read $2 } */
-/*     | WRITE STRING_CONST SEMICOLON { Write (String $2) } */
-/*     | WRITE expr SEMICOLON { Write (Expr $2) } */
-/*     | IDENT LPAREN exprs_emptiable RPAREN SEMICOLON { Call ($1, List.rev $3) } */
-
-/* comps_stmt: */
-/*     | IF expr THEN stmts FI { If_then ($2, List.rev $4) } */
-/*     | IF expr THEN stmts ELSE stmts FI { If_then_else ($2, List.rev $4, List.rev $6) } */
-/*     | WHILE expr DO stmts OD { While ($2, List.rev $4) } */
-
 stmt:
     | elem ASSIGN expr SEMICOLON { Assign ($1, $3) }
     | READ elem SEMICOLON { Read $2 }
@@ -144,14 +126,13 @@ stmt:
     | WRITE expr SEMICOLON { Write (Expr $2) }
     | IDENT LPAREN exprs_emptiable RPAREN SEMICOLON { Call ($1, List.rev $3) }
     | IF expr THEN stmts FI { If_then ($2, List.rev $4) }
-    | IF expr THEN stmts ELSE stmts FI { If_then_else ($2, List.rev $4, List.rev $6) }
+    | IF expr THEN stmts ELSE stmts FI { If_then_else 
+                                        ($2, List.rev $4, List.rev $6) }
     | WHILE expr DO stmts OD { While ($2, List.rev $4) }
 
 elem:
     | IDENT { Elem ($1, None) }
     | IDENT LSQBRACK exprs RSQBRACK { Elem ($1, Some (List.rev $3)) }
-/*    | IDENT { Single_elem $1 }    */
-/*    | IDENT LSQBRACK exprs RSQBRACK { Array_elem ($1, List.rev $3) }*/
 
 expr:
     /* Variable element */

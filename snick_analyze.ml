@@ -314,7 +314,8 @@ and error_detect_call scope id exprs =
         )
         with
         (* error incorrect number of parameters *)
-        | Invalid_argument(_) -> error_arg_count_mismatch (get_scope_id scope) id
+        | Invalid_argument(_) -> 
+            error_arg_count_mismatch (get_scope_id scope) id
     )
     (* error procedure undefined *)
     else error_undef_proc (get_scope_id scope) id
